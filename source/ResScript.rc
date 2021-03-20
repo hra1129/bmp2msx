@@ -1,0 +1,451 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+//#include "afxres.h"
+#include "windows.h"
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 日本語 resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON    DISCARDABLE     "icon1.ico"
+IDI_ICONSCRIPT          ICON    DISCARDABLE     "ico00001.ico"
+IDI_HOLD                ICON    DISCARDABLE     "ico00002.ico"
+IDI_NOUSE               ICON    DISCARDABLE     "ico00003.ico"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "ﾌｧｲﾙ(&F)"
+    BEGIN
+        MENUITEM "ﾌｧｲﾙを開く(&O)",              IDM_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "ｽｸﾘﾌﾟﾄﾓｰﾄﾞ(&A)",              IDM_SCRIPT
+        MENUITEM SEPARATOR
+        MENUITEM "終了(&X)",                    IDM_EXIT
+    END
+    POPUP "編集(&E)"
+    BEGIN
+        MENUITEM "ｸﾘｯﾌﾟﾎﾞｰﾄﾞの画像を変換(&P)\tCtrl+V", IDM_PASTE
+    END
+    POPUP "ﾌﾟﾚﾋﾞｭｰ(&P)"
+    BEGIN
+        POPUP "表示(&V)"
+        BEGIN
+            MENUITEM "次の画像(&N)\t→",            IDM_NEXT
+            MENUITEM "前の画像(&P)\t←",            IDM_PREV
+            MENUITEM SEPARATOR
+            MENUITEM "変換元/変換結果切り替え\tSpace", IDM_CHANGE
+            MENUITEM "ｵﾘｼﾞﾅﾙ画像の表示\tCtrl+O",    IDM_ORIGNAL
+            MENUITEM SEPARATOR
+            MENUITEM "拡大\tF7",                    IDM_ZOOMUP
+            MENUITEM "縮小\tF8",                    IDM_ZOOMDOWN
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "ﾌﾟﾚﾋﾞｭｰのｸﾘｱ(&C)\tDel",       IDM_CLEAR
+        MENUITEM "ﾌﾟﾚﾋﾞｭｰの全ｸﾘｱ(&A)\tCtrl+A",  IDM_ALLCLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "保存",                        IDM_SAVE
+        MENUITEM "名前を付けて保存(&S)\tCtrl+S", IDM_SAVEAS
+        MENUITEM "BMPで保存",                   IDM_BMPSAVE
+        MENUITEM SEPARATOR
+        MENUITEM "再変換(&R)\tCtrl+R",          IDM_REDO
+    END
+    POPUP "設定(&S)"
+    BEGIN
+        MENUITEM "設定(&S)...\tCtrl+E",         IDM_SETTING
+        MENUITEM "設定の表示(&V)\tTab",         IDM_DATA
+        MENUITEM SEPARATOR
+        MENUITEM "設定を初期値に戻す(&D)",      IDM_DEFSET
+        MENUITEM SEPARATOR
+        MENUITEM "ﾌﾟﾗｸﾞｲﾝ設定",                 IDM_PLUGIN
+    END
+    POPUP "ﾍﾙﾌﾟ(&H)"
+    BEGIN
+        MENUITEM "ﾍﾙﾌﾟ(&H)...",                 IDM_HELP
+        MENUITEM "ﾊﾞｰｼﾞｮﾝ表示(&V)...",          IDM_VER
+    END
+END
+
+IDR_MENUSUB MENU DISCARDABLE 
+BEGIN
+    MENUITEM "閉じる(&X)",                  IDM_EXIT
+    POPUP "機能(&F)"
+    BEGIN
+        MENUITEM "等倍表示",                    IDM_SINGLE
+        MENUITEM "２倍表示",                    IDM_DOUBLE
+    END
+END
+
+IDR_MENUSCRIPT MENU DISCARDABLE 
+BEGIN
+    POPUP "ﾌｧｲﾙ(&F)"
+    BEGIN
+        MENUITEM "新規作成(&N)",                IDM_NEW
+        MENUITEM "開く(&O)",                    IDM_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "保存(&S)",                    IDM_SAVE
+        MENUITEM SEPARATOR
+        MENUITEM "閉じる(&X)",                  IDM_EXIT
+    END
+    MENUITEM "実行(&R)",                    IDM_RUN
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_VER DIALOG DISCARDABLE  0, 0, 210, 51
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "バージョン情報"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
+    ICON            IDI_ICON,IDC_STATIC,7,7,20,20
+    LTEXT           "BMP to MSX converter",IDC_STATIC,36,7,108,9
+    RTEXT           "v1.XXXX (C)2000 HRA!",IDC_VERSION,33,19,110,8
+END
+
+IDD_SETTING DIALOGEX 0, 0, 325, 353
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "設定"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,258,7,60,14
+    PUSHBUTTON      "ｷｬﾝｾﾙ",IDCANCEL,258,24,60,14
+    PUSHBUTTON      "ﾌｧｲﾙに保存(&S)...",IDC_SAVEAS,194,7,60,14
+    PUSHBUTTON      "ﾌｧｲﾙから読む(&L)...",IDC_LOAD,194,24,60,14
+    PUSHBUTTON      "ﾃﾞﾌｫﾙﾄへｺﾋﾟｰ",IDC_DEFAULT,258,39,60,14
+    CONTROL         "常に再変換をﾃﾞﾌｫﾙﾄ化",IDC_CHKDEF,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,233,41,85,12
+    COMBOBOX        IDC_CMBCNV,237,57,80,84,CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "変換時設定",IDC_LBLSSET,194,57,39,13,SS_CENTERIMAGE
+    COMBOBOX        IDC_CMBSCREEN,55,17,130,117,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_PREVIEW,55,33,130,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "192ﾗｲﾝ出力",IDC_192,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,16,51,58,11
+    CONTROL         "ﾌｧｲﾙ名自動決定",IDC_AUTONAME,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,90,51,71,11
+    CONTROL         "ｲﾝﾀｰﾚｰｽ",IDC_INTER,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,16,62,58,11
+    COMBOBOX        IDC_CMBERR,89,97,83,109,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CMBERR2,89,112,83,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "誤差拡散",IDC_GOSA,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,127,58,11
+    CONTROL         "Slider1",IDC_GOSAVAL,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,57,140,98,12
+    CONTROL         "Slider1",IDC_GOSAERR,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,57,152,98,12
+    COMBOBOX        IDC_SEIDO,250,97,61,63,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "50%:50%の網ﾀｲﾙ",IDC_TILE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,182,114,60,8
+    LTEXT           "自然画生成ｱﾙｺﾞﾘｽﾞﾑ",IDC_STATIC,183,126,80,8
+    COMBOBOX        IDC_CMBALGO,189,135,107,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "色差(JK)の再計算",IDC_JKRC,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,189,151,68,11
+    GROUPBOX        "                   ",IDC_STATIC,5,170,313,31
+    CONTROL         "ｻｲｽﾞ調整",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,14,171,45,8
+    LTEXT           "ﾘｻﾝﾌﾟﾙ",IDC_STATIC,10,186,27,9
+    COMBOBOX        IDC_RESAMPLE,38,183,56,174,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "ｻｲｽﾞ",IDC_STATIC,99,186,16,7
+    COMBOBOX        IDC_SIZEMODE,116,183,107,109,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "背景色",IDC_FILLC,229,184,31,12
+    CONTROL         "",IDC_FILLCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,261,
+                    184,32,12
+    CONTROL         "",IDC_COLTBL,"Static",SS_BLACKFRAME | SS_NOTIFY | 
+                    SS_SUNKEN,11,218,181,44
+    CONTROL         "Slider1",IDC_RED,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,201,220,81,12
+    CTEXT           "R=0",IDC_NRED,285,221,22,10
+    CONTROL         "Slider1",IDC_GREEN,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,201,234,81,12
+    CTEXT           "G=0",IDC_NGREEN,285,235,22,10
+    CONTROL         "Slider1",IDC_BLUE,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,201,248,81,12
+    CTEXT           "B=0",IDC_NBLUE,285,249,22,10
+    LTEXT           "COLOR=0",IDC_COL,12,265,32,11
+    COMBOBOX        IDC_PALEN,46,263,79,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "全て同じ許可(&A)",IDC_ENREVS,128,263,65,13
+    PUSHBUTTON      "MSX1色",IDC_MSX1COLOR,199,263,35,13
+    PUSHBUTTON      "ﾊﾟﾚｯﾄ読み込み(&P)",IDC_LOADPLT,237,264,76,12
+    LTEXT           "ｿｰﾄ",IDC_STATIC,12,281,18,10
+    COMBOBOX        IDC_SORT,46,278,79,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "ﾊﾟﾚｯﾄ保存",IDC_SAVEPLT,237,277,76,12
+    LTEXT           "ﾊﾟﾚｯﾄ出力",IDC_STATIC,10,295,35,9
+    COMBOBOX        IDC_CMBPLT,46,293,140,57,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "ｾﾞﾛ化",IDC_STATIC,13,317,21,9
+    COMBOBOX        IDC_FZERO,47,315,112,52,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "ゼロ化色(&C)",IDC_FZCOLOR,13,329,49,12
+    CONTROL         "",IDC_FZC,"Static",SS_BLACKFRAME | SS_NOTIFY | 
+                    SS_SUNKEN,63,330,25,11
+    EDITTEXT        IDC_FZ_X,93,329,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           ",",IDC_STATIC,127,331,8,8,0,WS_EX_TRANSPARENT
+    EDITTEXT        IDC_FZ_Y,135,329,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "パレット多分布選色",IDC_SELCOL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,198,294,72,11
+    CONTROL         "全固定パレット",IDC_PAL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,198,307,52,11
+    CONTROL         "0番を使わない",IDC_CHKZERO,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,198,320,59,11
+    RTEXT           "誤差係数",IDC_STATIC,18,142,34,9
+    LTEXT           "0.5",IDC_GOSAVALS,157,142,20,8
+    RTEXT           "切捨誤差",IDC_STATIC,19,152,32,9
+    LTEXT           "20",IDC_GOSAERRS,157,152,17,8
+    GROUPBOX        "出力モード",IDC_STATIC,5,5,185,76
+    GROUPBOX        "変換設定",IDC_STATIC,5,86,313,81
+    GROUPBOX        "パレット設定",IDC_STATIC,5,205,313,142
+    LTEXT           "ディザパターン",IDC_STATIC,14,100,73,10
+    LTEXT           "MSX側ﾓｰﾄﾞ",IDC_STATIC,10,20,43,10
+    LTEXT           "出力先",IDC_STATIC,11,35,43,9
+    LTEXT           "色再現精度",IDC_STATIC,183,100,65,8
+    LTEXT           "ディザ加算方法",IDC_STATIC,14,114,73,10
+END
+
+IDD_PROGRESS DIALOG DISCARDABLE  0, 0, 223, 43
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "しばらくお待ちください"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    CONTROL         "",IDC_FILENAME,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | 
+                    SS_CENTERIMAGE | SS_SUNKEN | WS_GROUP,7,7,209,10
+    CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH,
+                    7,22,209,14
+END
+
+IDD_DOTVIEW DIALOG DISCARDABLE  0, 0, 211, 145
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "スポイト"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
+    LTEXT           "色コード",IDC_STATIC,102,27,42,9
+    LTEXT           "　赤",IDC_STATIC,102,40,42,9
+    LTEXT           "　緑",IDC_STATIC,102,52,42,9
+    LTEXT           "　青",IDC_STATIC,102,63,42,9
+    LTEXT           "座標",IDC_STATIC,102,76,41,10
+    RTEXT           "00000000H",IDC_COLORCODE,146,27,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_RED,146,39,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_GREEN,146,52,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_BLUE,146,64,57,10,SS_SUNKEN
+    CTEXT           "(0,0)",IDC_ZAHYO,146,76,57,10,SS_SUNKEN
+    CONTROL         "",IDC_COLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,7,88,
+                    78
+    CONTROL         "",IDC_MSXCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,94,
+                    88,47
+    LTEXT           "　赤",IDC_STATIC,102,107,42,9
+    LTEXT           "　緑",IDC_STATIC,102,119,42,9
+    LTEXT           "　青",IDC_STATIC,102,130,42,9
+    RTEXT           "0",IDC_MSXRED,146,106,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_MSXGREEN,146,119,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_MSXBLUE,146,131,57,10,SS_SUNKEN
+    LTEXT           "MSXﾊﾟﾚｯﾄ参考値",IDC_STATIC,100,95,96,9
+END
+
+IDD_SCRIPT DIALOGEX 0, 0, 246, 217
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "ｽｸﾘﾌﾟﾄｳｨﾝﾄﾞｳ"
+MENU IDR_MENUSCRIPT
+FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_SCRIPT,19,19,190,148,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | 
+                    WS_VSCROLL | WS_HSCROLL,WS_EX_ACCEPTFILES
+END
+
+IDD_PLUGIN DIALOG DISCARDABLE  0, 0, 283, 45
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Plug In"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,229,6,50,14
+    PUSHBUTTON      "ｷｬﾝｾﾙ",IDCANCEL,229,23,50,14
+    LTEXT           "SUSIE plugin ﾌｫﾙﾀﾞ",IDC_STATIC,6,17,70,11
+    EDITTEXT        IDC_PATH,78,14,116,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_FOLDER,195,14,20,12
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_VER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 44
+    END
+
+    IDD_SETTING, DIALOG
+    BEGIN
+        RIGHTMARGIN, 323
+        VERTGUIDE, 89
+        VERTGUIDE, 318
+        BOTTOMMARGIN, 347
+    END
+
+    IDD_PROGRESS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 216
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 36
+    END
+
+    IDD_DOTVIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 204
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 138
+    END
+
+    IDD_SCRIPT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 239
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 210
+    END
+
+    IDD_PLUGIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 276
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 38
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_LOGO                BITMAP  DISCARDABLE     "bmp2msx.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_KEY ACCELERATORS DISCARDABLE 
+BEGIN
+    "A",            IDM_ALLCLEAR,           VIRTKEY, CONTROL, NOINVERT
+    "C",            IDM_COPY,               VIRTKEY, CONTROL, NOINVERT
+    "E",            IDM_SETTING,            VIRTKEY, CONTROL, NOINVERT
+    "N",            IDM_NEWDO,              VIRTKEY, CONTROL, NOINVERT
+    "O",            IDM_ORIGNAL,            VIRTKEY, CONTROL, NOINVERT
+    "R",            IDM_REDO,               VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_SAVEAS,             VIRTKEY, CONTROL, NOINVERT
+    "V",            IDM_PASTE,              VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      IDM_CLEAR,              VIRTKEY, NOINVERT
+    VK_DOWN,        IDM_NEXT,               VIRTKEY, NOINVERT
+    VK_F1,          IDM_HELP,               VIRTKEY, NOINVERT
+    VK_F7,          IDM_ZOOMUP,             VIRTKEY, NOINVERT
+    VK_F8,          IDM_ZOOMDOWN,           VIRTKEY, NOINVERT
+    VK_LEFT,        IDM_PREV,               VIRTKEY, NOINVERT
+    VK_RIGHT,       IDM_NEXT,               VIRTKEY, NOINVERT
+    VK_SPACE,       IDM_CHANGE,             VIRTKEY, NOINVERT
+    VK_TAB,         IDM_DATA,               VIRTKEY, NOINVERT
+    VK_UP,          IDM_PREV,               VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_SPOIT               CURSOR  DISCARDABLE     "cursor1.cur"
+IDC_CHGPAL              CURSOR  DISCARDABLE     "cur00001.cur"
+#endif    // 日本語 resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

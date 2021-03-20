@@ -1,0 +1,65 @@
+BMP to MSX の出力を MSX-BASIC で表示する方法
+
+　以下に例とその解説を示します。
+
+■SCREEN 5・インターレースなし・BSAVE内蔵形式パレット
+　ファイル名 TEST.SR5
+
+10 SCREEN 5
+20 COLOR 15,0,0
+30 BLOAD "TEST.SR5",S
+40 COLOR=RESTORE
+50 GOTO 50
+
+解説
+10 画面モードを SCREEN5 にする。
+20 テキストを 15番、背景を 0 番のパレットにする。
+30 画像を読み込む
+40 画像と一緒に読み込まれたパレットを有効にする
+50 無限ループ
+
+■SCREEN 7・インターレース有り・BSAVE内蔵形式パレット
+　ファイル名 TEST.SR1/TEST.SR2
+
+10 SCREEN 7,,,,,3
+20 COLOR 15,0,0
+30 SET PAGE 0,0
+40 BLOAD "TEST.SR2",S
+50 SET PAGE 1,1
+60 BLOAD "TEST.SR1",S
+70 COLOR=RESTORE
+80 GOTO 80
+
+解説
+10 画面モードを SCREEN7 にする。
+20 テキストを 15番、背景を 0 番のパレットにする。
+30 表示・描画画面を共に ページ 0 にする
+40 画像2を読み込む
+50 表示・描画画面を共に ページ 1 にする
+60 画像1を読み込む
+70 画像1と一緒に読み込まれたパレットを有効にする
+80 無限ループ
+
+■SCREEN 8・インターレース無し・BSAVE内蔵形式パレット
+　ファイル名 TEST.SR8
+
+10 SCREEN 8
+20 BLOAD "TEST.SR8",S
+30 GOTO 30
+
+解説
+10 画面モードを SCREEN8 にする。
+20 画像を読み込む
+30 無限ループ
+
+■SCREEN 12・インターレース無し・BSAVE内蔵形式パレット（MSX2+以降）
+　ファイル名 TEST.SRC
+
+10 SCREEN 12
+20 BLOAD "TEST.SRC",S
+30 GOTO 30
+
+解説
+10 画面モードを SCREEN12 にする。
+20 画像を読み込む
+30 無限ループ
