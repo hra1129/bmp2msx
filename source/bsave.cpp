@@ -111,7 +111,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 			ecode = _SaveBodyS3( hf, ptr, &outadr );
 			break;
 		default:		//	SCREEN 5 à»ç~
-			ecode = _SaveBodyAL( hf, ptr, width, height, swidth, &outadr );
+			ecode = _SaveBodyAL( hf, ptr, width, sheight, swidth, &outadr );
 		}
 		if( ecode != BSV_NOERR ) break;
 		

@@ -1487,17 +1487,17 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 
 	n = 0;
 	if( Mode->Mode<MD_SC8 || (Mode->Mode >= MD_SC5_256L && Mode->Mode < MD_SC8_256L) ){	// Screen 5, 6 or 7
-		j=0;
-		pp=0;
+		j = 0;
+		pp = 0;
 		if( Mode->Mode == MD_SC6 || Mode->Mode == MD_SC6_256L ) pnum = 4; else pnum = 16;
 		for( i = 0 ; i < pnum; ++i ){
 			if( Mode->NonZero && i == 0 ) continue;
 			if( Mode->PalEn[ i ] == PALEN_NONE ) continue;
 			++n;
 			if( Mode->PalEn[ i ] == PALEN_USE ){
-				Pal[pp]=RGB( cc[ Mode->Col[i].red	],
-							 cc[ Mode->Col[i].green	],
-							 cc[ Mode->Col[i].blue	] );
+				Pal[pp]=RGB( convert7to255[ Mode->Col[i].red	],
+							 convert7to255[ Mode->Col[i].green	],
+							 convert7to255[ Mode->Col[i].blue	] );
 				++pp;
 			}
 		}
@@ -1515,7 +1515,7 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 			cnvGetPalette( t, w, h, Pal, Mode->SelCol, n, pp, Mode->FourceZero != FZ_NONE,Mode->FZColor );
 			LocalFree( t );
 			// 最適パレットを固定パレットへ反映
-			j=pp;
+			j = pp;
 			for( i = 0; i < pnum; ++i ){
 				if( Mode->NonZero && i==0 ) continue;
 				if( Mode->PalEn[i]==PALEN_AUTO ){
@@ -1529,16 +1529,16 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 		n = pnum;
 		// 固定パレット
 		for( i = 0; i < pnum; ++i ){
-			Pal[i] = RGB(	cc[ Mode->Col[i].red   ],
-							cc[ Mode->Col[i].green ],
-							cc[ Mode->Col[i].blue  ] );
+			Pal[i] = RGB(	convert7to255[ Mode->Col[i].red   ],
+							convert7to255[ Mode->Col[i].green ],
+							convert7to255[ Mode->Col[i].blue  ] );
 		}
 	}else if( Mode->Mode==MD_SC8 || Mode->Mode==MD_SC8_256L ){	// Screen8
 		n=256;
-		for(i=0;i<256;i++){
-			Pal[i] = RGB(	cc[ ( i & 0x1C ) >> 2   ],
-							cc[ ( i & 0xE0 ) >> 5   ],
-							cb[   i & 0x03          ] );
+		for( i = 0; i < 256; i++ ){
+			Pal[i] = RGB(	convert7to255[ ( i & 0x1C ) >> 2  ],
+							convert7to255[ ( i & 0xE0 ) >> 5  ],
+							convert3to255[   i & 0x03         ] );
 		}
 	}
 	return true;

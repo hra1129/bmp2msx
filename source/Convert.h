@@ -227,9 +227,9 @@ bool cnvSaveBmpFile( const char *szInFileName, LPBYTE bmp, int width, int height
 
 
 // MSXŠK’²i 0`7 ) ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
-extern const int cc[8];
+extern const int convert7to255[8];
 
 // MSXŠK’²i 0`3 ) SCREEN8Â ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
-extern const int cb[4];
+extern const int convert3to255[4];
 
 #endif	// ndef _CONVERTER_H_

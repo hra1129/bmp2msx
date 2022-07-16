@@ -1,0 +1,20 @@
+﻿  bsave.cpp
+  calc.cpp
+  Convert.cpp
+  fileuty.cpp
+  main.cpp
+  PlugProc.cpp
+  PreView.cpp
+  ProgProc.cpp
+  ScriptProc.cpp
+  Setting.cpp
+  SpitProc.cpp
+  splug.cpp
+  SubProc.cpp
+  utils.cpp
+  Ver.cpp
+  winuty.cpp
+  WndProc.cpp
+  コードを生成中...
+bsave.obj : warning LNK4075: /EDITANDCONTINUE は /INCREMENTAL:NO の指定によって無視されます。
+  BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\bmp2msx\source\DebugE\BMP2MSXE.exe

@@ -20,11 +20,11 @@
 // -------------------------------------------------------------
 //	変数
 
-EXTERN	char		g_sPlug[ 260 ];								//	プラグインフォルダ
-EXTERN	char		*cmd;										//	コマンドライン
+EXTERN	char		g_sPlug[ 260 ];						//	プラグインフォルダ
+EXTERN	char		*cmd;								//	コマンドライン
 EXTERN	HWND		hOrgWnd;									//	オリジナル画像ウィンドウ
-EXTERN	HINSTANCE	hIns;										// インスタンスハンドル:main.cpp
-EXTERN	HMENU		hMenu;										// メニューハンドル:main.cpp
+EXTERN	HINSTANCE	hIns;								// インスタンスハンドル:main.cpp
+EXTERN	HMENU		hMenu;								// メニューハンドル:main.cpp
 
 // -------------------------------------------------------------
 //	後始末

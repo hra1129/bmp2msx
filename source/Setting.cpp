@@ -1843,9 +1843,9 @@ static void UpdateColor( int c )
 	if( bDisable ) {
 		hBr = CreateSolidBrush( GetSysColor( COLOR_APPWORKSPACE ) );
 	} else {
-		hBr = CreateSolidBrush( RGB( cc[ EdtMode.Col[ c ].red   ],
-									 cc[ EdtMode.Col[ c ].green ],
-									 cc[ EdtMode.Col[ c ].blue  ] ) );
+		hBr = CreateSolidBrush( RGB( convert7to255[ EdtMode.Col[ c ].red   ],
+									 convert7to255[ EdtMode.Col[ c ].green ],
+									 convert7to255[ EdtMode.Col[ c ].blue  ] ) );
 	}
 	FillRect( hMemDC, &r, hBr );
 	DeleteBrush( hBr );

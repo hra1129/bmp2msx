@@ -1,0 +1,3 @@
+﻿  bsave.cpp
+bsave.obj : warning LNK4075: /EDITANDCONTINUE は /INCREMENTAL:NO の指定によって無視されます。
+  BMP2MSX.vcxproj -> C:\Users\hra\Documents\github\bmp2msx\source\Debug\BMP2MSX.exe

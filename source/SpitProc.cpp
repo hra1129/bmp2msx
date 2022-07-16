@@ -163,7 +163,7 @@ EVENT( onSpPaint )
 	hCol = GetDlgItem( hWnd,IDC_MSXCOLOR );
 	hDC = GetDC( hCol );
 	GetClientRect( hCol,&rc );
-	hBr = CreateSolidBrush( RGB( cc[r], cc[g], cc[b] ) );
+	hBr = CreateSolidBrush( RGB( convert7to255[r], convert7to255[g], convert7to255[b] ) );
 	FillRect( hDC,&rc,hBr );
 	DeleteBrush( hBr );
 	ReleaseDC( hCol,hDC );

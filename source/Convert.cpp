@@ -96,12 +96,12 @@ const int dith[][8][8]={	// ディザリングパターン
 };
 
 // MSX階調（ 0～7 ) → Win階調 ( 0～255 ) 変換テーブル
-const int cc[]={
+const int convert7to255[]={
 	0, 36, 73, 109, 146, 182, 219, 255
 };
 
 // MSX階調（ 0～3 ) SCREEN8青 → Win階調 ( 0～255 ) 変換テーブル
-const int cb[]={
+const int convert3to255[]={
 /*	0, 85, 170, 255	*/
 	0, 73, 146, 255
 };
@@ -652,7 +652,7 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					eb = AdjustNum( eb, 0, 3 );
 					n = ( er << 2 ) | ( eg << 5 ) | eb;
 					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( ::cc[ ( n >> 2) & 0x07 ], ::cc[ ( n >> 5)  & 0x07 ], ::cb[ n & 0x03 ] );
+					cc=RGB( ::convert7to255[ ( n >> 2) & 0x07 ], ::convert7to255[ ( n >> 5)  & 0x07 ], ::convert3to255[ n & 0x03 ] );
 
 					// 誤差を周囲のピクセルへ拡散させる
 					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
@@ -701,7 +701,7 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					eb = AdjustNum( eb, 0, 3 );
 					n = ( er << 2 ) | ( eg << 5 ) | eb;
 					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( ::cc[ ( n >> 2) & 0x07 ], ::cc[ ( n >> 5)  & 0x07 ], ::cb[ n & 0x03 ] );
+					cc=RGB( ::convert7to255[ ( n >> 2) & 0x07 ], ::convert7to255[ ( n >> 5)  & 0x07 ], ::convert3to255[ n & 0x03 ] );
 
 					// 結果を出力する
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
@@ -744,7 +744,7 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 						n += (( er & 1 ) << 2 ) | (( eg & 1 ) << 5 ) | ( eb & 1 );
 					}
 					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( ::cc[( n >> 2 ) & 0x07 ], ::cc[ ( n >> 5 ) & 0x07 ], ::cb[ n & 0x03 ] );
+					cc=RGB( ::convert7to255[( n >> 2 ) & 0x07 ], ::convert7to255[ ( n >> 5 ) & 0x07 ], ::convert3to255[ n & 0x03 ] );
 
 					// 誤差を周囲のピクセルへ拡散させる
 					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
@@ -796,7 +796,7 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 						n += (( er & 1 ) << 2 ) | (( eg & 1 ) << 5 ) | ( eb & 1 );
 					}
 					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( ::cc[( n >> 2 ) & 0x07 ], ::cc[ ( n >> 5 ) & 0x07 ], ::cb[ n & 0x03 ] );
+					cc=RGB( ::convert7to255[( n >> 2 ) & 0x07 ], ::convert7to255[ ( n >> 5 ) & 0x07 ], ::convert3to255[ n & 0x03 ] );
 
 					// 結果を出力する
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
@@ -1683,7 +1683,7 @@ static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal
 		g = cnv[ GetGValue( c ) ];
 		b = cnv[ GetBValue( c ) ];
 		n = r * 64 + g * 8 + b;		//	ハッシュ関数
-		hash[ n ].c = RGB( cc[r], cc[g], cc[b] );
+		hash[ n ].c = RGB( convert7to255[r], convert7to255[g], convert7to255[b] );
 		++hash[ n ].n;
 		if( hash[ n ].n == 1 ) ++cnt;
 	}	// for
@@ -1760,7 +1760,7 @@ int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode )
 				}
 			}
 			if( m != -1 ){
-				tail[ m ].c = RGB( ( cc[ r ] + cc[ rr ] ) / 2, ( cc[ g ] + cc[ gg ] ) / 2, ( cc[ b ] + cc[ bb ] ) / 2 );
+				tail[ m ].c = RGB( ( convert7to255[ r ] + convert7to255[ rr ] ) / 2, ( convert7to255[ g ] + convert7to255[ gg ] ) / 2, ( convert7to255[ b ] + convert7to255[ bb ] ) / 2 );
 				tail[ m ].p[ 0 ] = i;
 				tail[ m ].p[ 1 ] = j;
 				if( m == n ) ++n;
@@ -2083,13 +2083,13 @@ static void DrawScreen2( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
 			adr=y/2;
 			adr=( adr >> 3 )*256 + ( x / 16 )*8 + ( adr & 7 );
 			// 下位４ビット（バックグランド）
-			r[0] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].red   ];
-			g[0] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].green ];
-			b[0] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].blue  ];
+			r[0] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].red   ];
+			g[0] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].green ];
+			b[0] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].blue  ];
 			// 上位４ビット（フォアグランド）
-			r[1] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].red   ];
-			g[1] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].green ];
-			b[1] = cc[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].blue  ];
+			r[1] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].red   ];
+			g[1] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].green ];
+			b[1] = convert7to255[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].blue  ];
 
 			//	８ドットペアの描画
 			c = bmp[ adr ];
@@ -2127,16 +2127,16 @@ static void DrawScreen3( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
 			adr = y/8;
 			adr = ( adr >> 3 )*256 + (x/16)*8 + (adr&7);
 			// 上位４ビット（左側）
-			r=cc[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
 			for( i=0; i<8; ++i ) {
 				SetPixel( hDC, x+i  , y+20, RGB( r,g,b ) );
 			}
 			// 下位４ビット（右側）
-			r=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
 			for( i=0; i<8; ++i ) {
 				SetPixel( hDC, x+i+8, y+20, RGB( r,g,b ) );
 			}
@@ -2170,15 +2170,15 @@ static void DrawScreen5( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
 			if( Mode->Inter ) adr=y; else adr=y/2;
 			adr=adr*128+x/4;
 			// 上位４ビット（左側）
-			r=cc[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
 			SetPixel( hDC,x+0,y+t,RGB( r,g,b ) );
 			SetPixel( hDC,x+1,y+t,RGB( r,g,b ) );
 			// 下位４ビット（右側）
-			r=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
 			SetPixel( hDC,x+2,y+t,RGB( r,g,b ) );
 			SetPixel( hDC,x+3,y+t,RGB( r,g,b ) );
 		}
@@ -2210,24 +2210,24 @@ static void DrawScreen6( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 			if( Mode->Inter ) adr=y; else adr=y/2;
 			adr=adr*128+x/4;
 			// 上位２ビット（左側）
-			r=cc[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].red   ];
-			g=cc[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].green ];
-			b=cc[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].blue  ];
+			r=convert7to255[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].red   ];
+			g=convert7to255[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].green ];
+			b=convert7to255[ Mode->Col[ (bmp[ adr ] >> 6) & 0x03 ].blue  ];
 			SetPixel( hDC, x+0, y+t, RGB( r, g, b ) );
 			// 上位２ビット（中左側）
-			r=cc[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].red   ];
-			g=cc[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].green ];
-			b=cc[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].blue  ];
+			r=convert7to255[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].red   ];
+			g=convert7to255[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].green ];
+			b=convert7to255[ Mode->Col[ (bmp[ adr ] >> 4) & 0x03 ].blue  ];
 			SetPixel( hDC, x+1, y+t, RGB( r, g, b ) );
 			// 下位２ビット（中右側）
-			r=cc[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].red   ];
-			g=cc[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].green ];
-			b=cc[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].blue  ];
+			r=convert7to255[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].red   ];
+			g=convert7to255[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].green ];
+			b=convert7to255[ Mode->Col[ (bmp[ adr ] >> 2) & 0x03 ].blue  ];
 			SetPixel( hDC, x+2, y+t, RGB( r, g, b ) );
 			// 下位２ビット（右側）
-			r=cc[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].red   ];
-			g=cc[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].green ];
-			b=cc[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].blue  ];
+			r=convert7to255[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].red   ];
+			g=convert7to255[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].green ];
+			b=convert7to255[ Mode->Col[ (bmp[ adr ]     ) & 0x03 ].blue  ];
 			SetPixel( hDC, x+3, y+t, RGB( r, g, b ) );
 		}
 	}
@@ -2258,14 +2258,14 @@ static void DrawScreen7( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 			if( Mode->Inter ) adr=y; else adr=y/2;
 			adr=adr*256+x/2;
 			// 上位４ビット（左側）
-			r=cc[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] >> 4 ].blue  ];
 			SetPixel( hDC, x+0, y+t, RGB( r, g, b ) );
 			// 下位４ビット（右側）
-			r=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
-			g=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b=cc[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
+			r=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].red   ];
+			g=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
+			b=convert7to255[ Mode->Col[ bmp[ adr ] & 0x0F ].blue  ];
 			SetPixel( hDC, x+1, y+t, RGB( r, g, b ) );
 		}
 	}
@@ -2295,9 +2295,9 @@ static void DrawScreen8( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 		for( x = 0; x < 512; x += 2 ){
 			if( Mode->Inter ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
-			r=cc[(bmp[ adr ] & 0x1C) >> 2 ];
-			g=cc[(bmp[ adr ] & 0xE0) >> 5 ];
-			b=cb[ bmp[ adr ] & 0x03       ];
+			r=convert7to255[(bmp[ adr ] & 0x1C) >> 2 ];
+			g=convert7to255[(bmp[ adr ] & 0xE0) >> 5 ];
+			b=convert3to255[ bmp[ adr ] & 0x03       ];
 			SetPixel( hDC, x + 0, y+t, RGB( r, g, b ) );
 			SetPixel( hDC, x + 1, y+t, RGB( r, g, b ) );
 		}
