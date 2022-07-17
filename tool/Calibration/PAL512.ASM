@@ -8,6 +8,13 @@ vdp_p0	:= 0x98
 vdp_p1	:= 0x99
 vdp_p2	:= 0x9A
 vdp_p3	:= 0x9B
+msx_ver	:= 0x002d
+ldirvm	:= 0x005c
+bigfil	:= 0x016B
+chgcpu	:= 0x0180
+spr_gen	:= 0x7800
+spr_col	:= 0x7400
+spr_atr	:= 0x7600
 
 		db		0xFE
 		dw		start_address
@@ -16,13 +23,32 @@ vdp_p3	:= 0x9B
 
 		org		0xC000
 start_address::
-		di
-		;	R#0 = 0b00010110
-		ld		a, 0b00010110
-		out		[vdp_p1], a
-		ld		a, 0 | 0x80
-		out		[vdp_p1], a
+		;	スプライトを2つ透明で表示
+		ld		hl, sprite_pattern
+		ld		de, spr_gen
+		ld		bc, 8
+		call	ldirvm
 
+		ld		hl, spr_col
+		ld		bc, 512
+		ld		a, 1
+		call	bigfil
+
+		ld		hl, sprite_attribute
+		ld		de, spr_atr
+		ld		bc, 12
+		call	ldirvm
+
+		;	turboR なら Z80モードに切り替える
+		ld		a, [msx_ver]
+		cp		a, 3
+		jr		c, skip
+
+		ld		a, 0x80			; Z80 with LED
+		call	chgcpu
+
+skip:
+		di
 		;	R#16 = 0
 		xor		a, a
 		out		[vdp_p1], a
@@ -30,46 +56,30 @@ start_address::
 		out		[vdp_p1], a
 
 		ld		c, vdp_p2
+
 main_loop::
-		;	R#15 = 0 : ステータスレジスタ番号
-		xor		a, a
-		out		[vdp_p1], a
-		ld		a, 15 | 0x80
-		out		[vdp_p1], a
-
-		;	V-SYNC待ち
-wait_v_sync:
 		in		a, [vdp_p1]
-		and		a, 0x80
-		jp		z, wait_v_sync
-
 		ld		hl, palette0
-		ld		de, (6 << 8) | 32
+		ld		e, 33
 
-		;	R#15 = 1 : ステータスレジスタ番号
-		ld		a, 1
-		out		[vdp_p1], a
-		ld		a, 15 | 0x80
-		out		[vdp_p1], a
-h_sync_loop:
-		;	R#19 = 6*n : 走査線割り込み番号
-		ld		a, d
-		out		[vdp_p1], a
-		add		a, 6
-		ld		d, a
-		ld		a, 19 | 0x80
-		out		[vdp_p1], a
-		;	Palette#X をパレットレジスタに書き込む
-		ld		b, 32
-		otir
-		;	H-SYNC待ち
-wait_h_sync:
+		;	スプライト衝突フラグ待ち
+wait_sprite_collision:
 		in		a, [vdp_p1]
-		rrca
-		jp		nc, wait_h_sync
+		and		a, 0b00100000
+		jp		z, wait_sprite_collision
+
+palette_loop:
+		;	Palette#X をパレットレジスタに書き込む
+		repeat i,32
+			outi
+		endr
+		;	WAIT
+		ld		b, 55
+wait_loop:
+		djnz	wait_loop
 		;	終了チェック
 		dec		e
-		jp		nz, h_sync_loop
+		jp		nz, palette_loop
 		jp		main_loop
 
 pal		macro	g, r
@@ -77,6 +87,32 @@ pal		macro	g, r
 				db	(r << 4) | b, g
 			endr
 		endm
+
+sprite_pattern::
+		db		0xFF
+		db		0
+		db		0
+		db		0
+		db		0
+		db		0
+		db		0
+		db		0
+
+sprite_attribute::
+		db		0
+		db		0
+		db		0
+		db		0
+
+		db		0
+		db		0
+		db		0
+		db		0
+
+		db		216
+		db		0
+		db		0
+		db		0
 
 palette0:
 		pal		0, 0
@@ -174,5 +210,6 @@ palette30:
 palette31:
 		pal		6, 7
 		pal		7, 7
-
+palette32:
+		space	32, 0
 end_address::
