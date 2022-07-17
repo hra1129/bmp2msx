@@ -1,0 +1,4 @@
+rem FOR_WINDOWS
+
+..\zma PAL512.ASM PAL512.BIN
+pause
