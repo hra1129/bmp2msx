@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by ResScriptE.rc
+// Microsoft Visual C++ で生成されたインクルード ファイル。
+// ResScriptE.rc で使用
 //
 #define IDS_COLORCODE                   1
 #define IDC_SAVEAS                      3
@@ -25,6 +25,7 @@
 #define IDD_PLUGIN                      118
 #define IDI_HOLD                        119
 #define IDI_NOUSE                       120
+#define IDD_CALIBRATION                 121
 #define IDC_GOSA                        1001
 #define IDC_SC5                         1002
 #define IDC_SC7                         1003
@@ -86,10 +87,18 @@
 #define IDC_FOLDER                      1053
 #define IDC_COMBO1                      1056
 #define IDC_SIZEMODE                    1056
+#define IDC_CMB_SCREEN_MODE             1056
 #define IDC_BUTTON1                     1057
 #define IDC_FILLC                       1057
 #define IDC_RESAMPLE                    1058
 #define IDC_FILLCOLOR                   1059
+#define IDC_BTN_LOAD_DEFAULT            1060
+#define IDC_CMB_ELEMENT                 1061
+#define IDC_ADJUSTER                    1062
+#define IDC_VALUE                       1063
+#define IDC_COLORBAR                    1064
+#define IDC_BTN_LOAD_DEFAULT2           1065
+#define IDC_BTN_UNDO                    1065
 #define IDM_OPEN                        40001
 #define IDM_EXIT                        40002
 #define IDM_SETTING                     40003
@@ -119,14 +128,15 @@
 #define IDM_BMPSAVE                     40028
 #define IDM_PLUGIN                      40029
 #define IDM_HELP                        40030
+#define IDM_COLOR_CALIBRATION           40031
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        121
-#define _APS_NEXT_COMMAND_VALUE         40031
-#define _APS_NEXT_CONTROL_VALUE         1060
+#define _APS_NEXT_RESOURCE_VALUE        123
+#define _APS_NEXT_COMMAND_VALUE         40033
+#define _APS_NEXT_CONTROL_VALUE         1065
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

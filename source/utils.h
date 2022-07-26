@@ -20,9 +20,12 @@ bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
 bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
 void GetDefCfg( SETTING *Mode );
 void SetDefPalette( PAL *pal );
+void GetDefCustom( void );
 bool GetCfgFile( SETTING *Mode,const char *sCfgFile );
 void SaveCfgFile( SETTING *Mode,const char *sCfgFile );
 bool GetPathFile( const char *sPathFile, char *sPath, int len );
 void SavePathFile( const char *sPathFile, char *sPath, int len );
+bool GetCustomFile( const char *sCustomFile );
+void SaveCustomFile( const char *sCustomFile );
 
 #endif	// _UTILS_H_

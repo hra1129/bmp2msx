@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -7,59 +7,17 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-//#include "afxres.h"
-#include "windows.h"
-#include "winres.h"
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 日本語 resources
+// 日本語 (日本) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
-#endif //_WIN32
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-#endif    // 日本語 resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// 英語 (ｱﾒﾘｶ) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -68,17 +26,47 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON                ICON    DISCARDABLE     "icon1.ico"
-IDI_ICONSCRIPT          ICON    DISCARDABLE     "ico00001.ico"
-IDI_HOLD                ICON    DISCARDABLE     "ico00002.ico"
-IDI_NOUSE               ICON    DISCARDABLE     "ico00003.ico"
+IDI_ICON                ICON                    "icon1.ico"
+
+IDI_ICONSCRIPT          ICON                    "ico00001.ico"
+
+IDI_HOLD                ICON                    "ico00002.ico"
+
+IDI_NOUSE               ICON                    "ico00003.ico"
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
 //
 
-IDR_MENU MENU DISCARDABLE 
+IDR_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -123,6 +111,7 @@ BEGIN
         MENUITEM "load &Default",               IDM_DEFSET
         MENUITEM SEPARATOR
         MENUITEM "PlugIn setting",              IDM_PLUGIN
+        MENUITEM "Color calibration",           IDM_COLOR_CALIBRATION
     END
     POPUP "&Help"
     BEGIN
@@ -131,7 +120,7 @@ BEGIN
     END
 END
 
-IDR_MENUSUB MENU DISCARDABLE 
+IDR_MENUSUB MENU
 BEGIN
     MENUITEM "e&Xit",                       IDM_EXIT
     POPUP "&Function"
@@ -141,7 +130,7 @@ BEGIN
     END
 END
 
-IDR_MENUSCRIPT MENU DISCARDABLE 
+IDR_MENUSCRIPT MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -161,187 +150,166 @@ END
 // Dialog
 //
 
-IDD_VER DIALOG DISCARDABLE  0, 0, 210, 51
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_VER DIALOG 0, 0, 210, 51
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Version"
-FONT 9, "MS Gothic"
+FONT 12, "MS Gothic"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
     ICON            IDI_ICON,IDC_STATIC,7,7,20,20
     LTEXT           "BMP to MSX converter",IDC_STATIC,36,7,108,9
-    RTEXT           "v1.XXXXX (C)2000 HRA!",IDC_VERSION,28,19,115,8
+    RTEXT           "v1.XXXX (C)2000 HRA!",IDC_VERSION,33,19,110,8
 END
 
-IDD_SETTING DIALOGEX 0, 0, 323, 323
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_SETTING DIALOGEX 0, 0, 438, 403
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Setting"
-FONT 9, "MS Gothic", 0, 0, 0x1
+FONT 12, "MS Gothic", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,258,7,60,14
-    PUSHBUTTON      "Cancel",IDCANCEL,258,24,60,14
-    PUSHBUTTON      "&Save as...",IDC_SAVEAS,193,7,60,14
-    PUSHBUTTON      "&Load...",IDC_LOAD,193,24,60,14
-    PUSHBUTTON      "To default",IDC_DEFAULT,258,41,60,14
-    CONTROL         "always default",IDC_CHKDEF,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,236,42,81,12
-    COMBOBOX        IDC_CMBCNV,247,57,72,84,CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "Setting to use",IDC_LBLSSET,185,58,61,9,SS_CENTERIMAGE
-    COMBOBOX        IDC_CMBSCREEN,89,17,90,116,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    COMBOBOX        IDC_PREVIEW,89,33,90,62,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "192Line mode",IDC_192,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,11,49,62,11
-    CONTROL         "Auto file name",IDC_AUTONAME,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,89,49,71,11
-    CONTROL         "Interace",IDC_INTER,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,11,59,49,11
-    COMBOBOX        IDC_CMBERR,89,87,83,103,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    COMBOBOX        IDC_CMBERR2,89,102,83,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "Error litter",IDC_GOSA,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,14,117,58,11
-    CONTROL         "Slider1",IDC_GOSAVAL,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,66,128,98,12
-    CONTROL         "Slider1",IDC_GOSAERR,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,66,140,98,12
-    COMBOBOX        IDC_SEIDO,250,87,61,63,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "50%:50% net tile",IDC_TILE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,183,104,93,8
-    COMBOBOX        IDC_CMBALGO,204,128,107,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "Recalc J and K",IDC_JKRC,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,204,141,68,11
-    GROUPBOX        "                  ",IDC_STATIC,5,157,313,27
-    CONTROL         "Size Adjust",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,13,156,70,9
-    COMBOBOX        IDC_RESAMPLE,44,167,48,174,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    LTEXT           "Size",IDC_STATIC,98,169,18,8
-    COMBOBOX        IDC_SIZEMODE,117,167,127,109,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Fill",IDC_FILLC,249,167,36,11
-    CONTROL         "",IDC_FILLCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,288,
-                    167,25,11
-    CONTROL         "",IDC_COLTBL,"Static",SS_BLACKFRAME | SS_NOTIFY | 
-                    SS_SUNKEN,12,197,186,37
-    CONTROL         "Slider1",IDC_RED,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,202,196,81,12
-    CTEXT           "R=0",IDC_NRED,286,198,22,10
-    CONTROL         "Slider1",IDC_GREEN,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,202,210,81,12
-    CTEXT           "G=0",IDC_NGREEN,286,211,22,10
-    CONTROL         "Slider1",IDC_BLUE,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,202,224,81,12
-    CTEXT           "B=0",IDC_NBLUE,286,226,22,10
-    LTEXT           "COLOR=0",IDC_COL,12,240,41,11
-    COMBOBOX        IDC_PALEN,55,239,73,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    PUSHBUTTON      "Set all pal",IDC_ENREVS,131,239,60,12
-    PUSHBUTTON      "MSX1",IDC_MSX1COLOR,193,239,43,12
-    PUSHBUTTON      "Load &Palette",IDC_LOADPLT,238,239,76,12
-    LTEXT           "Sort",IDC_STATIC,12,255,16,9
-    COMBOBOX        IDC_SORT,55,254,97,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    PUSHBUTTON      "Save Palette",IDC_SAVEPLT,238,254,76,12
-    LTEXT           "Palette",IDC_STATIC,12,271,37,9
-    COMBOBOX        IDC_CMBPLT,55,269,140,57,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    LTEXT           "Color #N -> #0",IDC_STATIC,9,291,60,9
-    COMBOBOX        IDC_FZERO,80,289,115,52,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    PUSHBUTTON      "color N is",IDC_FZCOLOR,8,304,69,12
-    CONTROL         "",IDC_FZC,"Static",SS_BLACKFRAME | SS_NOTIFY | 
-                    SS_SUNKEN,81,305,25,11
-    EDITTEXT        IDC_FZ_X,108,304,32,12,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           ",",IDC_STATIC,143,306,8,8,0,WS_EX_TRANSPARENT
-    EDITTEXT        IDC_FZ_Y,151,304,32,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Pal MAX select",IDC_SELCOL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,220,269,72,11
-    CONTROL         "All custom palette",IDC_PAL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,220,281,84,11
-    CONTROL         "don't use 'color 0'",IDC_CHKZERO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,220,293,89,11
-    RTEXT           "Multiply",IDC_STATIC,9,130,54,9
-    LTEXT           "0.5",IDC_GOSAVALS,166,130,20,8
-    RTEXT           "Error ignore",IDC_STATIC,8,140,55,9
-    LTEXT           "20",IDC_GOSAERRS,166,140,17,8
-    LTEXT           "SC10-12 algolithm",IDC_STATIC,183,119,80,8
-    LTEXT           "Resample",IDC_STATIC,8,169,34,9
-    GROUPBOX        "Output mode",IDC_STATIC,5,5,177,68
-    GROUPBOX        "Convert setting",IDC_STATIC,5,76,313,79
-    GROUPBOX        "Palette setting",IDC_STATIC,5,187,313,133
-    LTEXT           "Dither pattarn",IDC_STATIC,14,90,73,10
-    LTEXT           "MSX screen mode",IDC_STATIC,10,20,79,10
-    LTEXT           "Output",IDC_STATIC,11,35,78,9
-    LTEXT           "Source color bits",IDC_STATIC,183,90,65,8
-    LTEXT           "Dither algolithm",IDC_STATIC,14,104,73,10
+    COMBOBOX        IDC_CMBSCREEN,77,17,160,117,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_PREVIEW,77,33,160,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "192Line mode",IDC_192,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,51,58,11
+    CONTROL         "Interace",IDC_INTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,62,58,11
+    CONTROL         "Auto file name",IDC_AUTONAME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,51,71,11
+    COMBOBOX        IDC_CMBCNV,157,65,80,84,CBS_DROPDOWNLIST | WS_TABSTOP
+    COMBOBOX        IDC_CMBERR,89,97,83,109,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Color reproduction accuracy",IDC_STATIC,183,100,65,8
+    COMBOBOX        IDC_SEIDO,250,97,61,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CMBERR2,89,112,83,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "50%:50% net tile",IDC_TILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,182,114,60,8
+    CONTROL         "Error litter",IDC_GOSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,127,58,11
+    CONTROL         "Slider1",IDC_GOSAVAL,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,140,98,12
+    CONTROL         "Slider1",IDC_GOSAERR,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,152,98,12
+    LTEXT           "YJK Algorithm",IDC_STATIC,183,126,80,8
+    COMBOBOX        IDC_CMBALGO,189,135,107,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Recalc J and K",IDC_JKRC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,151,68,11
+    CONTROL         "Size Adjust",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,198,67,8
+    COMBOBOX        IDC_RESAMPLE,69,218,56,174,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SIZEMODE,174,218,107,109,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Fill",IDC_FILLC,293,218,31,12
+    CONTROL         "",IDC_COLTBL,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,7,264,181,44
+    CONTROL         "Slider1",IDC_RED,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,195,265,81,12
+    CONTROL         "Slider1",IDC_GREEN,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,195,279,81,12
+    CONTROL         "Slider1",IDC_BLUE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,195,293,81,12
+    COMBOBOX        IDC_PALEN,58,310,79,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT,58,325,79,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CMBPLT,58,340,140,57,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_FZERO,57,357,133,52,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "color N is",IDC_FZCOLOR,4,377,56,12
+    EDITTEXT        IDC_FZ_X,98,376,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_FZ_Y,141,376,32,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Pal MAX select",IDC_SELCOL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,361,72,11
+    CONTROL         "All custom palette",IDC_PAL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,374,52,11
+    CONTROL         "don't use 'color 0'",IDC_CHKZERO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,386,168,11
+    PUSHBUTTON      "Load &Palette",IDC_LOADPLT,312,265,76,19
+    PUSHBUTTON      "Save Palette",IDC_SAVEPLT,312,284,76,19
+    PUSHBUTTON      "Set all pal",IDC_ENREVS,313,314,75,19
+    PUSHBUTTON      "MSX1",IDC_MSX1COLOR,313,333,75,19
+    PUSHBUTTON      "&Save as...",IDC_SAVEAS,256,8,77,14
+    PUSHBUTTON      "&Load...",IDC_LOAD,256,25,77,14
+    DEFPUSHBUTTON   "OK",IDOK,342,8,80,14
+    PUSHBUTTON      "Cancel",IDCANCEL,342,25,80,14
+    PUSHBUTTON      "To default",IDC_DEFAULT,342,40,80,14
+    CONTROL         "always default",IDC_CHKDEF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,336,61,91,12
+    LTEXT           "Setting to use",IDC_LBLSSET,121,64,39,13,SS_CENTERIMAGE
+    LTEXT           "Resample",IDC_STATIC,9,221,56,9
+    LTEXT           "Size",IDC_STATIC,151,220,31,8
+    CONTROL         "",IDC_FILLCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,325,218,32,12
+    CTEXT           "R=0",IDC_NRED,279,266,22,10
+    CTEXT           "G=0",IDC_NGREEN,279,280,22,10
+    CTEXT           "B=0",IDC_NBLUE,279,294,22,10
+    LTEXT           "COLOR=0",IDC_COL,4,312,32,11
+    LTEXT           "Sort",IDC_STATIC,4,328,18,10
+    LTEXT           "Palette setting",IDC_STATIC,4,342,50,9
+    LTEXT           "Color #N -> #0",IDC_STATIC,3,358,21,9
+    CONTROL         "",IDC_FZC,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,64,377,25,11
+    CTEXT           ",",IDC_STATIC,130,381,8,8,0,WS_EX_TRANSPARENT
+    RTEXT           "Multiply",IDC_STATIC,18,142,34,9
+    LTEXT           "0.5",IDC_GOSAVALS,157,142,20,8
+    RTEXT           "Error ignore",IDC_STATIC,19,152,32,9
+    LTEXT           "20",IDC_GOSAERRS,157,152,17,8
+    GROUPBOX        "Output mode",IDC_STATIC,5,5,243,76
+    GROUPBOX        "Convert setting",IDC_STATIC,0,86,427,90
+    GROUPBOX        "Palette setting",IDC_STATIC,0,255,429,142
+    LTEXT           "Dither pattarn",IDC_STATIC,14,100,73,10
+    LTEXT           "MSX screen mode",IDC_STATIC,10,20,43,10
+    LTEXT           "Output",IDC_STATIC,11,35,43,9
+    LTEXT           "Dither algolithm",IDC_STATIC,14,114,73,10
+    GROUPBOX        "Resample",IDC_STATIC,0,186,429,59
 END
 
-IDD_PROGRESS DIALOG DISCARDABLE  0, 0, 223, 43
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Please,Wait a moment"
-FONT 9, "MS Gothic"
+IDD_PROGRESS DIALOG 0, 0, 223, 43
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Please wait a moment"
+FONT 12, "MS Gothic"
 BEGIN
-    CONTROL         "",IDC_FILENAME,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | 
-                    SS_CENTERIMAGE | SS_SUNKEN | WS_GROUP,7,7,209,10
-    CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH,
-                    7,22,209,14
+    CONTROL         "",IDC_FILENAME,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | SS_CENTERIMAGE | SS_SUNKEN | WS_GROUP,7,7,209,10
+    CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH,7,22,209,14
 END
 
-IDD_DOTVIEW DIALOG DISCARDABLE  0, 0, 210, 166
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_DOTVIEW DIALOG 0, 0, 211, 145
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Spoit mode"
-FONT 9, "MS Gothic"
+FONT 12, "MS Gothic"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
     LTEXT           "Color code",IDC_STATIC,102,27,42,9
-    LTEXT           "  Red  ",IDC_STATIC,102,40,42,9
+    LTEXT           "  Red",IDC_STATIC,102,40,42,9
     LTEXT           "  Green",IDC_STATIC,102,52,42,9
-    LTEXT           "  Blue ",IDC_STATIC,102,63,42,9
-    LTEXT           "Matrix ",IDC_STATIC,102,76,41,10
+    LTEXT           "  Blue",IDC_STATIC,102,63,42,9
+    LTEXT           "Coordinate",IDC_STATIC,102,76,41,10
     RTEXT           "00000000H",IDC_COLORCODE,146,27,57,10,SS_SUNKEN
     RTEXT           "0",IDC_RED,146,39,57,10,SS_SUNKEN
     RTEXT           "0",IDC_GREEN,146,52,57,10,SS_SUNKEN
     RTEXT           "0",IDC_BLUE,146,64,57,10,SS_SUNKEN
     CTEXT           "(0,0)",IDC_ZAHYO,146,76,57,10,SS_SUNKEN
-    CONTROL         "",IDC_COLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,7,88,
-                    79
-    LTEXT           "  Red  ",IDC_STATIC,102,125,42,9
-    LTEXT           "  Green",IDC_STATIC,102,137,42,9
-    LTEXT           "  Blue ",IDC_STATIC,102,148,42,9
-    RTEXT           "0",IDC_MSXRED,146,124,57,10,SS_SUNKEN
-    RTEXT           "0",IDC_MSXGREEN,146,137,57,10,SS_SUNKEN
-    RTEXT           "0",IDC_MSXBLUE,146,149,57,10,SS_SUNKEN
-    LTEXT           "MSX side reference value",IDC_STATIC,102,103,98,10
-    CONTROL         "",IDC_MSXCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,97,
-                    88,62
+    CONTROL         "",IDC_COLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,7,88,78
+    CONTROL         "",IDC_MSXCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,94,88,47
+    LTEXT           "  Red",IDC_STATIC,102,107,42,9
+    LTEXT           "  Green",IDC_STATIC,102,119,42,9
+    LTEXT           "  Blue",IDC_STATIC,102,130,42,9
+    RTEXT           "0",IDC_MSXRED,146,106,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_MSXGREEN,146,119,57,10,SS_SUNKEN
+    RTEXT           "0",IDC_MSXBLUE,146,131,57,10,SS_SUNKEN
+    LTEXT           "MSX reference palette",IDC_STATIC,100,95,96,9
 END
 
 IDD_SCRIPT DIALOGEX 0, 0, 246, 217
-STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Script window"
 MENU IDR_MENUSCRIPT
-FONT 9, "MS Gothic", 0, 0, 0x1
+FONT 12, "MS Gothic", 0, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_SCRIPT,19,19,190,148,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | 
-                    WS_VSCROLL | WS_HSCROLL,WS_EX_ACCEPTFILES
+    EDITTEXT        IDC_SCRIPT,19,19,190,148,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL,WS_EX_ACCEPTFILES
 END
 
-IDD_PLUGIN DIALOG DISCARDABLE  0, 0, 283, 45
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_PLUGIN DIALOG 0, 0, 283, 45
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Plug In"
-FONT 9, "MS P????"
+FONT 12, "MS Gothic"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,229,6,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,229,23,50,14
     LTEXT           "PlugIn folder",IDC_STATIC,6,17,70,11
     EDITTEXT        IDC_PATH,78,14,116,13,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_FOLDER,195,14,20,12
+END
+
+IDD_CALIBRATION DIALOGEX 0, 0, 663, 461
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Color Calibration"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,554,440,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,606,440,50,14
+    COMBOBOX        IDC_CMB_SCREEN_MODE,91,7,132,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "SCREEN MODE",IDC_STATIC,7,10,73,11
+    CONTROL         "",IDC_COLORBAR,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,7,24,649,411
+    PUSHBUTTON      "Reset",IDC_BTN_LOAD_DEFAULT,14,439,60,15
+    COMBOBOX        IDC_CMB_ELEMENT,137,442,96,82,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_ADJUSTER,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,238,439,212,15
+    CTEXT           "0",IDC_VALUE,455,440,77,14,SS_SUNKEN
+    PUSHBUTTON      "Undo",IDC_BTN_UNDO,75,439,60,15
 END
 
 
@@ -351,7 +319,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_VER, DIALOG
     BEGIN
@@ -363,9 +331,8 @@ BEGIN
 
     IDD_SETTING, DIALOG
     BEGIN
-        VERTGUIDE, 89
-        VERTGUIDE, 318
-        BOTTOMMARGIN, 305
+        RIGHTMARGIN, 436
+        BOTTOMMARGIN, 397
     END
 
     IDD_PROGRESS, DIALOG
@@ -379,9 +346,9 @@ BEGIN
     IDD_DOTVIEW, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 203
+        RIGHTMARGIN, 204
         TOPMARGIN, 7
-        BOTTOMMARGIN, 159
+        BOTTOMMARGIN, 138
     END
 
     IDD_SCRIPT, DIALOG
@@ -399,6 +366,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 38
     END
+
+    IDD_CALIBRATION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 656
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 454
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -408,19 +383,19 @@ END
 // Bitmap
 //
 
-IDB_LOGO                BITMAP  DISCARDABLE     "bmp2msx.bmp"
+IDB_LOGO                BITMAP                  "bmp2msx.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
 //
 
-IDR_KEY ACCELERATORS DISCARDABLE 
+IDR_KEY ACCELERATORS
 BEGIN
     "A",            IDM_ALLCLEAR,           VIRTKEY, CONTROL, NOINVERT
     "C",            IDM_COPY,               VIRTKEY, CONTROL, NOINVERT
     "E",            IDM_SETTING,            VIRTKEY, CONTROL, NOINVERT
-    "F",            IDM_ZOOMUP,             VIRTKEY, CONTROL, NOINVERT
     "N",            IDM_NEWDO,              VIRTKEY, CONTROL, NOINVERT
     "O",            IDM_ORIGNAL,            VIRTKEY, CONTROL, NOINVERT
     "R",            IDM_REDO,               VIRTKEY, CONTROL, NOINVERT
@@ -444,9 +419,27 @@ END
 // Cursor
 //
 
-IDC_SPOIT               CURSOR  DISCARDABLE     "cursor1.cur"
-IDC_CHGPAL              CURSOR  DISCARDABLE     "cur00001.cur"
-#endif    // 英語 (ｱﾒﾘｶ) resources
+IDC_SPOIT               CURSOR                  "cursor1.cur"
+
+IDC_CHGPAL              CURSOR                  "cur00001.cur"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CALIBRATION AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTING AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // 日本語 (日本) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

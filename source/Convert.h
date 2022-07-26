@@ -187,6 +187,9 @@ enum {
 	RM_MSX,				//	ＭＳＸ実機表示で縦横比が崩れないように調整
 };
 
+//	RGB値からテーブルインデックスに変換
+int convert_rgb_to_palette( const int *p_convert_table, int n, int v );
+
 //	縮小処理
 bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
 			    COLORREF *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
@@ -212,6 +215,7 @@ int cnvColorTblCompare( const void *tbl1,const void *tbl2 );
 //	色取得
 bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int cnt,int pp,
 				    bool FourceZero,COLORREF FZColor );
+bool cnvGetPaletteS8( COLORREF *pal );
 
 //	タイルパターン取得(SC5/SC7専用)
 int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode );
@@ -226,10 +230,34 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal );
 bool cnvSaveBmpFile( const char *szInFileName, LPBYTE bmp, int width, int height, SETTING *Mode );
 
 
-// MSX階調（ 0～7 ) → Win階調 ( 0～255 ) 変換テーブル
-extern const int convert7to255[8];
+// MSX階調 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert7to255_r[ 8 ];
+extern const int init_convert7to255_g[ 8 ];
+extern const int init_convert7to255_b[ 8 ];
 
-// MSX階調（ 0～3 ) SCREEN8青 → Win階調 ( 0～255 ) 変換テーブル
-extern const int convert3to255[4];
+// MSX階調 SCREEN8 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert7to255_s8r[ 8 ];
+extern const int init_convert7to255_s8g[ 8 ];
+extern const int init_convert3to255_s8b[ 4 ];
+
+// MSX階調 SCREEN12 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert31to255_s12r[ 32 ];
+extern const int init_convert31to255_s12g[ 32 ];
+extern const int init_convert31to255_s12b[ 32 ];
+
+// MSX階調 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert7to255_r[ 8 ];
+extern int convert7to255_g[ 8 ];
+extern int convert7to255_b[ 8 ];
+
+// MSX階調 SCREEN8 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert7to255_s8r[ 8 ];
+extern int convert7to255_s8g[ 8 ];
+extern int convert3to255_s8b[ 4 ];
+
+// MSX階調 SCREEN12 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert31to255_s12r[ 32 ];
+extern int convert31to255_s12g[ 32 ];
+extern int convert31to255_s12b[ 32 ];
 
 #endif	// ndef _CONVERTER_H_

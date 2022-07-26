@@ -139,6 +139,7 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
     </ClCompile>
+    <ClCompile Include="CalibrationProc.cpp" />
     <ClCompile Include="Convert.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -216,8 +217,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="afxres.h" />
     <ClInclude Include="bsave.h" />
     <ClInclude Include="calc.h" />
+    <ClInclude Include="CalibrationProc.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Convert.h" />
     <ClInclude Include="ProgProc.h" />

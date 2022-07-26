@@ -73,14 +73,14 @@ EVENT( onSpInitDlg )
 {
 	char szBuf[ 256 ];
 	// •\Ž¦‚ðXV‚·‚é
-	SetDlgItemInt( hWnd,IDC_RED			,sd->red		,FALSE );
-	SetDlgItemInt( hWnd,IDC_GREEN		,sd->green		,FALSE );
+	SetDlgItemInt( hWnd,IDC_RED		,sd->red		,FALSE );
+	SetDlgItemInt( hWnd,IDC_GREEN	,sd->green		,FALSE );
 	SetDlgItemInt( hWnd,IDC_BLUE		,sd->blue		,FALSE );
 	r = (sd->red	+ 18 ) * 7 / 255;
 	g = (sd->green	+ 18 ) * 7 / 255;
 	b = (sd->blue	+ 18 ) * 7 / 255;
 	SetDlgItemInt( hWnd,IDC_MSXRED		,r ,FALSE );
-	SetDlgItemInt( hWnd,IDC_MSXGREEN	,g ,FALSE );
+	SetDlgItemInt( hWnd,IDC_MSXGREEN		,g ,FALSE );
 	SetDlgItemInt( hWnd,IDC_MSXBLUE		,b ,FALSE );
 	wsprintf( szBuf,"%08XH",sd->colorcode );
 	SetDlgItemText( hWnd,IDC_COLORCODE	,szBuf );
@@ -163,7 +163,7 @@ EVENT( onSpPaint )
 	hCol = GetDlgItem( hWnd,IDC_MSXCOLOR );
 	hDC = GetDC( hCol );
 	GetClientRect( hCol,&rc );
-	hBr = CreateSolidBrush( RGB( convert7to255[r], convert7to255[g], convert7to255[b] ) );
+	hBr = CreateSolidBrush( RGB( convert7to255_r[r], convert7to255_g[g], convert7to255_b[b] ) );
 	FillRect( hDC,&rc,hBr );
 	DeleteBrush( hBr );
 	ReleaseDC( hCol,hDC );

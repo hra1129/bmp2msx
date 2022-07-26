@@ -399,11 +399,8 @@ static void UpdateColor( int c );
 static void SetEditColor( HWND hWnd,int c,bool s );
 static void ChangeColor( int p1, int p2 );
 
-static inline void SetSliderRange( HWND hWnd,short int max,short int min );
-static inline void SetSliderValue( HWND hWnd,short int val );
 static void LoadPLFile( const char *szFileName );
 static void SetCtlEnable( HWND hWnd );
-static void ComboBox_Init( HWND hWnd,int id,const char **sArray,int n,int index );
 static void UpdateAll( HWND hWnd );
 static void _enddlg( HWND hWnd,int exitcode );
 
@@ -653,7 +650,7 @@ EVENT( onSetCommand )
 	ONEVENT( IDC_CMBPLT		, onSetPltMode	);		// パレットモード
 	ONEVENT( IDC_CMBALGO	, onSetAlgo		);		// 自然画生成アルゴリズム
 	ONEVENT( IDC_CMBERR		, onSetErr		);		// ディザパターン
-	ONEVENT( IDC_PREVIEW	, onSetPreView	);		// 出力先
+	ONEVENT( IDC_PREVIEW		, onSetPreView	);		// 出力先
 	ONEVENT( IDC_SEIDO		, onSetSeido	);		// 精度
 	ONEVENT( IDC_CMBERR2	, onSetErrAdd	);		// ディザ加算方法
 	ONEVENT( IDC_PALEN		, onSetPalEnable);		// パレット使用許可・未許可
@@ -1843,9 +1840,9 @@ static void UpdateColor( int c )
 	if( bDisable ) {
 		hBr = CreateSolidBrush( GetSysColor( COLOR_APPWORKSPACE ) );
 	} else {
-		hBr = CreateSolidBrush( RGB( convert7to255[ EdtMode.Col[ c ].red   ],
-									 convert7to255[ EdtMode.Col[ c ].green ],
-									 convert7to255[ EdtMode.Col[ c ].blue  ] ) );
+		hBr = CreateSolidBrush( RGB( convert7to255_r[ EdtMode.Col[ c ].red   ],
+									 convert7to255_g[ EdtMode.Col[ c ].green ],
+									 convert7to255_b[ EdtMode.Col[ c ].blue  ] ) );
 	}
 	FillRect( hMemDC, &r, hBr );
 	DeleteBrush( hBr );
@@ -1935,37 +1932,6 @@ static void SetEditColor( HWND hWnd, int c, bool s )
 	SetDlgItemText( hWnd, IDC_NBLUE	, szBuf );
 	UpdateColor( NowCol );
 	ComboBox_SetCurSel( GetDlgItem( hWnd, IDC_PALEN	), EdtMode.PalEn[ NowCol ] );
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//	スライダ（トラックバー）の最大値と最小値を設定する
-//	2.	引数
-//		max	...	(I)	最大値
-//		min	...	(I)	最小値
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static inline void SetSliderRange( HWND hWnd, short int max, short int min )
-{
-	SendMessage( hWnd, TBM_SETRANGE, TRUE, MAKELONG( max, min ) );
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		スライダ（トラックバー）の位置を変更する
-//	2.	引数
-//		val	...	(I)	位置
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static inline void SetSliderValue( HWND hWnd, short int val )
-{
-	SendMessage( hWnd, TBM_SETPOS, TRUE, (LONG)val );
 }
 
 // -------------------------------------------------------------
@@ -2086,28 +2052,6 @@ static void SetCtlEnable( HWND hWnd )
 		EnableWindow( GetDlgItem( hWnd, IDC_RESAMPLE ), FALSE );
 		EnableWindow( GetDlgItem( hWnd, IDC_SIZEMODE ), FALSE );
 	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		コンボボックスの初期化
-//	2.	引数
-//		hWnd	...	(I)	ウィンドウハンドル
-//		id		...	(I)	コンボボックスのＩＤ
-//		sArray	...	(I)	文字列配列
-//		n		...	(I)	文字列配列の要素数
-//		index	...	(I)	コンボボックスの初期化インデックス
-// -------------------------------------------------------------
-static void ComboBox_Init( HWND hWnd, int id, const char **sArray, int n, int index )
-{
-	HWND hCmb;
-	int i;
-	hCmb = GetDlgItem( hWnd,id );
-	ComboBox_ResetContent( hCmb );
-	for( i=0; i<n;++i ){
-		ComboBox_AddString( hCmb,sArray[i] );
-	}
-	ComboBox_SetCurSel( hCmb,index );
 }
 
 // -------------------------------------------------------------

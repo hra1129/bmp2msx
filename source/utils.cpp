@@ -29,6 +29,36 @@ static const PAL DefCol[]={
 	{7,7,7},
 };
 
+// MSX階調 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert7to255_r[ 8 ];
+extern const int init_convert7to255_g[ 8 ];
+extern const int init_convert7to255_b[ 8 ];
+
+// MSX階調 SCREEN8 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert7to255_s8r[ 8 ];
+extern const int init_convert7to255_s8g[ 8 ];
+extern const int init_convert3to255_s8b[ 4 ];
+
+// MSX階調 SCREEN12 → Win階調 ( 0～255 ) 変換テーブル
+extern const int init_convert31to255_s12r[ 32 ];
+extern const int init_convert31to255_s12g[ 32 ];
+extern const int init_convert31to255_s12b[ 32 ];
+
+// MSX階調 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert7to255_r[ 8 ];
+extern int convert7to255_g[ 8 ];
+extern int convert7to255_b[ 8 ];
+
+// MSX階調 SCREEN8 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert7to255_s8r[ 8 ];
+extern int convert7to255_s8g[ 8 ];
+extern int convert3to255_s8b[ 4 ];
+
+// MSX階調 SCREEN12 → Win階調 ( 0～255 ) 変換テーブル
+extern int convert31to255_s12r[ 32 ];
+extern int convert31to255_s12g[ 32 ];
+extern int convert31to255_s12b[ 32 ];
+
 // =====================================================
 // ファイル名関連
 
@@ -550,3 +580,92 @@ void SavePathFile( const char *sPathFile, char *sPath, int len ) {
 	fu_write( hFile, sPath, len );
 	fu_close( hFile );
 }
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		設定をデフォルトにする
+//	2.	引数
+//		なし
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+void GetDefCustom( void ) {
+
+	memcpy( convert7to255_r, init_convert7to255_r, sizeof( init_convert7to255_r ) );
+	memcpy( convert7to255_g, init_convert7to255_g, sizeof( init_convert7to255_g ) );
+	memcpy( convert7to255_b, init_convert7to255_b, sizeof( init_convert7to255_b ) );
+
+	memcpy( convert7to255_s8r, init_convert7to255_s8r, sizeof( init_convert7to255_s8r ) );
+	memcpy( convert7to255_s8g, init_convert7to255_s8g, sizeof( init_convert7to255_s8g ) );
+	memcpy( convert3to255_s8b, init_convert3to255_s8b, sizeof( init_convert3to255_s8b ) );
+
+	memcpy( convert31to255_s12r, init_convert31to255_s12r, sizeof( init_convert31to255_s12r ) );
+	memcpy( convert31to255_s12g, init_convert31to255_s12g, sizeof( init_convert31to255_s12g ) );
+	memcpy( convert31to255_s12b, init_convert31to255_s12b, sizeof( init_convert31to255_s12b ) );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		設定を読み込む
+//	2.	引数
+//		なし
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+bool GetCustomFile( const char *sCustomFile ) {
+	FU_FILE *hFile;
+
+	// 設定ファイルを開く
+	GetDefCustom();			// ファイルが無ければデフォルト設定にする
+	hFile = fu_open( sCustomFile, "rb" );
+	if( hFile == FU_INVALID_HANDLE ){
+		return false;
+	}
+	// 設定を読み込む
+	fu_read( hFile, convert7to255_r, sizeof( convert7to255_r ) );
+	fu_read( hFile, convert7to255_g, sizeof( convert7to255_g ) );
+	fu_read( hFile, convert7to255_b, sizeof( convert7to255_b ) );
+	fu_read( hFile, convert7to255_s8r, sizeof( convert7to255_s8r ) );
+	fu_read( hFile, convert7to255_s8g, sizeof( convert7to255_s8g ) );
+	fu_read( hFile, convert3to255_s8b, sizeof( convert3to255_s8b ) );
+	fu_read( hFile, convert31to255_s12r, sizeof( convert31to255_s12r ) );
+	fu_read( hFile, convert31to255_s12g, sizeof( convert31to255_s12g ) );
+	fu_read( hFile, convert31to255_s12b, sizeof( convert31to255_s12b ) );
+	fu_close( hFile );
+	return true;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		設定を保存する
+//	2.	引数
+//		なし
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+void SaveCustomFile( const char *sCustomFile ) {
+	FU_FILE *hFile;
+
+	// 設定ファイルを開く
+	hFile = fu_open( sCustomFile, "wb" );
+	if( hFile == FU_INVALID_HANDLE ) return;		// ファイルが作れなければ保存しない
+
+	// 設定を書き込む
+	fu_write( hFile, convert7to255_r, sizeof( convert7to255_r ) );
+	fu_write( hFile, convert7to255_g, sizeof( convert7to255_g ) );
+	fu_write( hFile, convert7to255_b, sizeof( convert7to255_b ) );
+	fu_write( hFile, convert7to255_s8r, sizeof( convert7to255_s8r ) );
+	fu_write( hFile, convert7to255_s8g, sizeof( convert7to255_s8g ) );
+	fu_write( hFile, convert3to255_s8b, sizeof( convert3to255_s8b ) );
+	fu_write( hFile, convert31to255_s12r, sizeof( convert31to255_s12r ) );
+	fu_write( hFile, convert31to255_s12g, sizeof( convert31to255_s12g ) );
+	fu_write( hFile, convert31to255_s12b, sizeof( convert31to255_s12b ) );
+	fu_close( hFile );
+}
+

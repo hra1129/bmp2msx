@@ -16,6 +16,7 @@
 
 // -------------------------------------------------------------
 // 設定
+int nZoom = 1;								//	表示倍率 0: x1, 1: x2, 2: x3, 3: x4
 
 // -------------------------------------------------------------
 // プロトタイプ
@@ -29,7 +30,7 @@ WINPROC( SubProc );							// SubProc.cpp
 // グローバル変数
 
 HACCEL hKey			= NULL;
-static HWND hWnd	= NULL;
+static HWND hWnd		= NULL;
 HMENU hMenuSub		= NULL;
 
 // -------------------------------------------------------------
@@ -70,6 +71,10 @@ bool InitApp( HINSTANCE hIns,int nShow )
 {
 	WNDCLASSEX	wc;
 	RECT		r={0,0,cnWidth,cnHeight};
+
+	int z = nZoom + 1;
+	r.right = cnWidth * z;
+	r.bottom = cnHeight * z;
 
 	wu_set_instance( hIns );
 	

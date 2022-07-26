@@ -548,6 +548,27 @@ void wu_combo_set_items( HWND h_wnd, int n_id, const char* s_array[], int n_coun
 	}
 }
 
+// -------------------------------------------------------------
+//	1.	日本語名
+//		コンボボックスの初期化
+//	2.	引数
+//		hWnd	...	(I)	ウィンドウハンドル
+//		id		...	(I)	コンボボックスのＩＤ
+//		sArray	...	(I)	文字列配列
+//		n		...	(I)	文字列配列の要素数
+//		index	...	(I)	コンボボックスの初期化インデックス
+// -------------------------------------------------------------
+void ComboBox_Init( HWND hWnd, int id, const char **sArray, int n, int index ){
+	HWND hCmb;
+	int i;
+	hCmb = GetDlgItem( hWnd, id );
+	ComboBox_ResetContent( hCmb );
+	for( i = 0; i < n; ++i ){
+		ComboBox_AddString( hCmb, sArray[ i ] );
+	}
+	ComboBox_SetCurSel( hCmb, index );
+}
+
 // -----------------------------------------------------
 //	1.	日本語名
 //		コンボボックスの選択カーソル位置を指定する
@@ -995,3 +1016,33 @@ void wu_ttip_set_item( HWND hTip, int nId, char* s_tips )
 	ti.lpszText = (LPTSTR)s_tips;
 	SendMessage( hTip, TTM_ADDTOOL, 0, (LPARAM)&ti );
 }
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//	スライダ（トラックバー）の最大値と最小値を設定する
+//	2.	引数
+//		max	...	(I)	最大値
+//		min	...	(I)	最小値
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+void SetSliderRange( HWND hWnd, short int max, short int min ){
+	SendMessage( hWnd, TBM_SETRANGE, TRUE, MAKELONG( max, min ) );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		スライダ（トラックバー）の位置を変更する
+//	2.	引数
+//		val	...	(I)	位置
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+void SetSliderValue( HWND hWnd, short int val ){
+	SendMessage( hWnd, TBM_SETPOS, TRUE, (LONG)val );
+}
+

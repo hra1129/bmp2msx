@@ -66,6 +66,9 @@
     <ClCompile Include="WndProc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CalibrationProc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bsave.h">
@@ -108,6 +111,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="winuty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CalibrationProc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="afxres.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

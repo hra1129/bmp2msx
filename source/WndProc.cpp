@@ -26,6 +26,7 @@
 #include "ProgProc.h"
 #include "globals.h"
 #include "PlugProc.h"
+#include "CalibrationProc.h"
 
 // -----------------------------------------------------
 // 設定
@@ -113,42 +114,44 @@ const char *cShowSet	  = "[%s]\n"
 // プロトタイプ
 
 // 一般イベント
-EVENT( onCreate			);
-EVENT( onClose			);
-EVENT( onCommand		);
-EVENT( onDestroy		);
-EVENT( onDropFiles		);
-EVENT( onLButton		);
-EVENT( onRButton		);
-EVENT( onPaint			);
-EVENT( onInitMenu		);
+EVENT( onCreate				);
+EVENT( onClose				);
+EVENT( onCommand			);
+EVENT( onDestroy			);
+EVENT( onDropFiles			);
+EVENT( onLButton			);
+EVENT( onRButton			);
+EVENT( onPaint				);
+EVENT( onInitMenu			);
 // ファイルメニューイベント
-EVENT( onOpen			);
-EVENT( onScript			);
+EVENT( onOpen				);
+EVENT( onScript				);
 // 設定メニューイベント
-EVENT( onDefault		);
-EVENT( onSetting		);
-EVENT( onPlugIn			);
+EVENT( onDefault			);
+EVENT( onSetting			);
+EVENT( onPlugIn				);
+EVENT( onColorCalibration	);
+
 // ヘルプメニューイベント
-EVENT( onHelp			);
-EVENT( onVer			);
+EVENT( onHelp				);
+EVENT( onVer				);
 // 編集メニューイベント
-EVENT( onPaste			);
+EVENT( onPaste				);
 // プレビューメニューイベント
-EVENT( onMenuDelete		);
-EVENT( onMenuAllDelete	);
-EVENT( onMenuSave		);
-EVENT( onMenuSaveAs		);
-EVENT( onMenuBmpSave	);
-EVENT( onMenuRedo		);
-EVENT( onMenuData		);
-EVENT( onMenuZoomUp		);
-EVENT( onMenuZoomDown	);
+EVENT( onMenuDelete			);
+EVENT( onMenuAllDelete		);
+EVENT( onMenuSave			);
+EVENT( onMenuSaveAs			);
+EVENT( onMenuBmpSave		);
+EVENT( onMenuRedo			);
+EVENT( onMenuData			);
+EVENT( onMenuZoomUp			);
+EVENT( onMenuZoomDown		);
 // プレビュー - 表示 メニューイベント
-EVENT( onMenuNext		);
-EVENT( onMenuPrev		);
-EVENT( onMenuChange		);
-EVENT( onMenuOriginal	);
+EVENT( onMenuNext			);
+EVENT( onMenuPrev			);
+EVENT( onMenuChange			);
+EVENT( onMenuOriginal		);
 
 void Converter( SETTING *Mode,int nSrc );
 static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y );
@@ -167,7 +170,7 @@ static HBITMAP	hBGBM  = NULL;			// ロゴ画面
 static HWND		hWnd   = NULL;			// ウィンドウハンドル
 SETTING NowMode;						// 現在の設定
 static SETTING	LastMode;				// 最終変換設定
-static int		nZoom	= 0;			// 表示倍率
+extern int	nZoom;						// 表示倍率
 
 extern bool	bRedo;						// 再変換かﾃﾞﾌｫﾙﾄ設定か
 
@@ -198,7 +201,7 @@ WINPROC( WndProc )
 		ONEVENT( WM_LBUTTONDOWN	, onLButton		);
 		ONEVENT( WM_RBUTTONDOWN , onRButton		);
 		ONEVENT( WM_PAINT		, onPaint		);
-		ONEVENT( WM_INITMENU	, onInitMenu	);
+		ONEVENT( WM_INITMENU		, onInitMenu	);
 	}
 	return DEFPROC();
 }
@@ -223,32 +226,33 @@ EVENT( onCommand )
 	switch( LOWORD( wp ) )
 	{
 	// メニュー
-	ONEVENT( IDM_EXIT		,onClose		);	// 終了
-	ONEVENT( IDM_OPEN		,onOpen			);	// ファイルを開く
-	ONEVENT( IDM_SCRIPT		,onScript		);	// スクリプトモード
+	ONEVENT( IDM_EXIT				,onClose			);	// 終了
+	ONEVENT( IDM_OPEN				,onOpen				);	// ファイルを開く
+	ONEVENT( IDM_SCRIPT				,onScript			);	// スクリプトモード
 	// 編集メニュー
-	ONEVENT( IDM_PASTE		,onPaste		);	// ペースト
+	ONEVENT( IDM_PASTE				,onPaste			);	// ペースト
 	// プレビューメニュー
-	ONEVENT( IDM_NEXT		,onMenuNext		);	// 次
-	ONEVENT( IDM_PREV		,onMenuPrev		);	// 前
-	ONEVENT( IDM_CLEAR		,onMenuDelete	);	// 削除
-	ONEVENT( IDM_ALLCLEAR	,onMenuAllDelete);	// 全削除
-	ONEVENT( IDM_SAVE		,onMenuSave		);	// 保存
-	ONEVENT( IDM_SAVEAS		,onMenuSaveAs	);	// 名前を付けて保存
-	ONEVENT( IDM_BMPSAVE	,onMenuBmpSave	);	// ＢＭＰで保存
-	ONEVENT( IDM_REDO		,onMenuRedo		);	// 再変換
-	ONEVENT( IDM_CHANGE		,onMenuChange	);	// 変換元/変換結果切り替え
-	ONEVENT( IDM_DATA		,onMenuData		);	// 設定の表示切り替え
-	ONEVENT( IDM_ORIGNAL	,onMenuOriginal	);	// オリジナル画像イメージ
-	ONEVENT( IDM_ZOOMUP		,onMenuZoomUp	);	// 拡大
-	ONEVENT( IDM_ZOOMDOWN	,onMenuZoomDown	);	// 縮小
+	ONEVENT( IDM_NEXT				,onMenuNext			);	// 次
+	ONEVENT( IDM_PREV				,onMenuPrev			);	// 前
+	ONEVENT( IDM_CLEAR				,onMenuDelete		);	// 削除
+	ONEVENT( IDM_ALLCLEAR			,onMenuAllDelete	);	// 全削除
+	ONEVENT( IDM_SAVE				,onMenuSave			);	// 保存
+	ONEVENT( IDM_SAVEAS				,onMenuSaveAs		);	// 名前を付けて保存
+	ONEVENT( IDM_BMPSAVE			,onMenuBmpSave		);	// ＢＭＰで保存
+	ONEVENT( IDM_REDO				,onMenuRedo			);	// 再変換
+	ONEVENT( IDM_CHANGE				,onMenuChange		);	// 変換元/変換結果切り替え
+	ONEVENT( IDM_DATA				,onMenuData			);	// 設定の表示切り替え
+	ONEVENT( IDM_ORIGNAL			,onMenuOriginal		);	// オリジナル画像イメージ
+	ONEVENT( IDM_ZOOMUP				,onMenuZoomUp		);	// 拡大
+	ONEVENT( IDM_ZOOMDOWN			,onMenuZoomDown		);	// 縮小
 	// 設定メニュー
-	ONEVENT( IDM_DEFSET		,onDefault		);	// 設定の初期化
-	ONEVENT( IDM_SETTING	,onSetting		);	// 設定
-	ONEVENT( IDM_PLUGIN		,onPlugIn		);	// プラグイン設定
+	ONEVENT( IDM_DEFSET				,onDefault			);	// 設定の初期化
+	ONEVENT( IDM_SETTING			,onSetting			);	// 設定
+	ONEVENT( IDM_PLUGIN				,onPlugIn			);	// プラグイン設定
+	ONEVENT( IDM_COLOR_CALIBRATION, onColorCalibration	);
 	// ヘルプメニュー
-	ONEVENT( IDM_HELP		,onHelp			);	// ヘルプの表示
-	ONEVENT( IDM_VER		,onVer			);	// バージョン情報
+	ONEVENT( IDM_HELP				,onHelp				);	// ヘルプの表示
+	ONEVENT( IDM_VER				,onVer				);	// バージョン情報
 	}
 	return DEFPROC();
 }
@@ -269,7 +273,7 @@ EVENT( onCommand )
 EVENT( onCreate )
 {
 	HDC		hDC;
-	char	szFileName[ MAX_PATH ];
+	char	szFileName[ MAX_PATH ] = "";
 	char	szBuf[ MAX_PATH ];
 	int		i,j,n;
 	// プレビューのクリア
@@ -277,7 +281,7 @@ EVENT( onCreate )
 	// ウィンドウハンドル
 	::hWnd = hWnd;
 	// モード設定をクリアする
-	bSave = !( GetCfgFile( &NowMode, CfgFile ) && GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) );
+	bSave = !GetCfgFile( &NowMode, CfgFile ) || !GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) || !GetCustomFile( CustomFile );
 	spi_initialize( g_sPlug );
 	LastMode.Mode = -1;
 	// 仮想画面を作成する
@@ -368,6 +372,7 @@ EVENT( onDestroy )
 	if( bSave ) {
 		SaveCfgFile( &NowMode, CfgFile );
 		SavePathFile( PathFile, g_sPlug, sizeof( g_sPlug ) );
+		SaveCustomFile( CustomFile );
 	}
 	bSave = false;
 	PostQuitMessage(0);
@@ -568,7 +573,7 @@ EVENT( onInitMenu ) {
 // -----------------------------------------------------
 EVENT( onOpen )
 {
-	char	szFileName[ MAX_PATH ];
+	char	szFileName[ MAX_PATH ] = "";
 	char	szBuf[ MAX_PATH ];
 #ifdef _ENGLISH
 	char	szFilter[ 64 + SPI_MAXLEN ]	= "All Files(*.*)\0*.*\0BMP file(*.BMP)\0*.BMP\0";
@@ -927,7 +932,7 @@ EVENT( onMenuBmpSave )
 // -----------------------------------------------------
 EVENT( onMenuZoomUp )
 {
-	RECT	r;
+	RECT	r = { 0 };
 	int		z;
 
 	//	拡大
@@ -958,7 +963,7 @@ EVENT( onMenuZoomUp )
 // -----------------------------------------------------
 EVENT( onMenuZoomDown )
 {
-	RECT	r;
+	RECT	r = { 0 };
 	int		z;
 
 	//	拡大
@@ -1076,7 +1081,9 @@ EVENT( onPaste	)
 		return 0;
 	}
 	mem = (char*)GlobalLock( hMem );
-	CopyMemory( bmp,mem,size );
+	if( mem != NULL ){
+		CopyMemory( bmp, mem, size );
+	}
 	GlobalUnlock( hMem );
 	// ｸﾘｯﾌﾟﾎﾞｰﾄﾞを閉じる
 	CloseClipboard();
@@ -1133,8 +1140,7 @@ EVENT( onPaste	)
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-EVENT( onDefault )
-{
+EVENT( onDefault ) {
 #ifdef _ENGLISH
 	if( MessageBox( hWnd,"Load default setting?","Warning",
 					MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2 )==IDNO ) return 0;
@@ -1159,8 +1165,7 @@ EVENT( onDefault )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-EVENT( onSetting )
-{
+EVENT( onSetting ) {
 	// モード設定を編集エリアへコピーする
 	EdtMode = NowMode;
 	lstrcpy( szCaption,cszSetting );
@@ -1184,11 +1189,30 @@ EVENT( onSetting )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-EVENT( onPlugIn )
-{
+EVENT( onPlugIn ) {
 	if( piShow( hWnd, g_sPlug, sizeof( g_sPlug ) ) == 0 ) {
 		//	プラグインリストを更新する
 		spi_initialize( g_sPlug );
+		bSave = true;
+	}
+	return 0;
+}
+
+// -----------------------------------------------------
+//	1.	日本語名
+//		メニュー：カラーキャリブレーション
+//	2.	引数
+//		hWnd	...	(I)	ウィンドウハンドル
+//		wp		...	(I)	Ｗパラメータ
+//		lp		...	(I)	Ｌパラメータ
+//	3.	返値
+//		0
+//	4.	備考
+//		なし
+// -----------------------------------------------------
+EVENT( onColorCalibration )	{
+
+	if( DialogBox( hIns, MAKEINTRESOURCE( IDD_CALIBRATION ), hWnd, (DLGPROC)CalibrationProc ) == 0 ){
 		bSave = true;
 	}
 	return 0;
@@ -1209,8 +1233,7 @@ EVENT( onPlugIn )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-EVENT( onHelp )
-{
+EVENT( onHelp ) {
 	char szHelpName[ MAX_PATH ], *ptr;
 
 	strcpy( szHelpName, __argv[0] );
@@ -1256,10 +1279,11 @@ EVENT( onVer )
 //		なし
 // -----------------------------------------------------
 void Converter( SETTING *Mode, int nSrc ) {
-	COLORREF	*in, *out, Pal[ 256 ];
+	static COLORREF Pal[ 256 ];
+	static TAILPAT	tail[ TAILMAX ];
+	COLORREF *in, *out;
 	LPBYTE		bmp;
 	SETTING		tMode;
-	TAILPAT		tail[ TAILMAX ];
 	int			tailcnt = 0;
 	int			width, height, owidth, oheight, wwidth, wheight, n, prv=-1;
 	char		*ptr = tBmpview[nSrc].image;
@@ -1373,7 +1397,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 	}
 	//	ﾊﾟﾚｯﾄをｿｰﾄする
 	if( Mode->Mode < MD_SC8 || (Mode->Mode >= MD_SC5_256L && Mode->Mode < MD_SC8_256L) ) {
-		if( !( Mode->Pal && ((Mode->SortMode == SM_INCAUTO) || (Mode->SortMode == SM_INCAUTO)) ) ) {
+		if( !( Mode->Pal && (Mode->SortMode == SM_INCAUTO) ) ) {
 			cnvSortPalette( Mode, Pal );
 		}
 	}
@@ -1495,9 +1519,9 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 			if( Mode->PalEn[ i ] == PALEN_NONE ) continue;
 			++n;
 			if( Mode->PalEn[ i ] == PALEN_USE ){
-				Pal[pp]=RGB( convert7to255[ Mode->Col[i].red	],
-							 convert7to255[ Mode->Col[i].green	],
-							 convert7to255[ Mode->Col[i].blue	] );
+				Pal[pp]=RGB( convert7to255_r[ Mode->Col[i].red   ],
+							 convert7to255_g[ Mode->Col[i].green ],
+							 convert7to255_b[ Mode->Col[i].blue	 ] );
 				++pp;
 			}
 		}
@@ -1519,9 +1543,9 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 			for( i = 0; i < pnum; ++i ){
 				if( Mode->NonZero && i==0 ) continue;
 				if( Mode->PalEn[i]==PALEN_AUTO ){
-					Mode->Col[i].red	= (GetRValue( Pal[j] )+18)*7/255;
-					Mode->Col[i].green	= (GetGValue( Pal[j] )+18)*7/255;
-					Mode->Col[i].blue	= (GetBValue( Pal[j] )+18)*7/255;
+					Mode->Col[i].red	= convert_rgb_to_palette( convert7to255_r, 8, GetRValue( Pal[j] ) );
+					Mode->Col[i].green	= convert_rgb_to_palette( convert7to255_g, 8, GetGValue( Pal[j] ) );
+					Mode->Col[i].blue	= convert_rgb_to_palette( convert7to255_b, 8, GetBValue( Pal[j] ) );
 					++j;
 				}
 			}
@@ -1529,17 +1553,13 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 		n = pnum;
 		// 固定パレット
 		for( i = 0; i < pnum; ++i ){
-			Pal[i] = RGB(	convert7to255[ Mode->Col[i].red   ],
-							convert7to255[ Mode->Col[i].green ],
-							convert7to255[ Mode->Col[i].blue  ] );
+			n = 256;
+			Pal[i] = RGB(	convert7to255_r[ Mode->Col[i].red   ],
+							convert7to255_g[ Mode->Col[i].green ],
+							convert7to255_b[ Mode->Col[i].blue  ] );
 		}
 	}else if( Mode->Mode==MD_SC8 || Mode->Mode==MD_SC8_256L ){	// Screen8
-		n=256;
-		for( i = 0; i < 256; i++ ){
-			Pal[i] = RGB(	convert7to255[ ( i & 0x1C ) >> 2  ],
-							convert7to255[ ( i & 0xE0 ) >> 5  ],
-							convert3to255[   i & 0x03         ] );
-		}
+		cnvGetPaletteS8( Pal );
 	}
 	return true;
 }

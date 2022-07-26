@@ -9,7 +9,7 @@
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-#define	CFG_VERSION		"ver 2022_07_17 (C)2000-2022 HRA!"	//	バージョン番号
+#define	CFG_VERSION		"ver 2022_07_27 (C)2000-2022 HRA!"	//	バージョン番号
 
 #define	COLCUR1			RGB(255,255,240)				//	カラーテーブル現在位置カーソル色１（内側）
 #define	COLCUR2			RGB(15,15,0)					//	カラーテーブル現在位置カーソル色２（外側）
@@ -43,6 +43,7 @@
 
 #define	BgColor			RGB(10,0,127)
 #define	FrColor			RGB(255,255,255)				//	文字の色
+#define CustomFile		"BMP2MSX_CUSTOM.BIN"			//	設定ファイル
 #define CfgFile			"BMP2MSX.B2M"					//	設定ファイル
 #define PathFile		"BMP2MSX.CFG"					//	設定ファイル
 #define	CfgExt			"B2M"							//	設定ファイルのデフォルト拡張子
@@ -116,6 +117,7 @@
 
 #define	BgColor			RGB(10,0,127)
 #define	FrColor			RGB(255,255,255)			//	文字の色
+#define CustomFile		"BMP2MSX_CUSTOM.BIN"		//	設定ファイル
 #define CfgFile			"BMP2MSX.B2M"				//	設定ファイル
 #define PathFile		"BMP2MSX.CFG"				//	設定ファイル
 #define	CfgExt			"B2M"						//	設定ファイルのデフォルト拡張子
