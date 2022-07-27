@@ -1,8 +1,10 @@
 ﻿  CalibrationProc.cpp
   PlugProc.cpp
   PreView.cpp
+  ProgProc.cpp
   ScriptProc.cpp
   Setting.cpp
+  SpitProc.cpp
   SubProc.cpp
   Ver.cpp
   WndProc.cpp

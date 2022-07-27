@@ -9,24 +9,44 @@
 
 extern HINSTANCE hIns;
 
-// デフォルトパレット（ＭＳＸ電源投入時パレット値）
-static const PAL DefCol[]={
-	{0,0,0},
-	{0,0,0},
-	{6,1,1},
-	{7,3,3},
-	{1,1,7},
-	{3,2,7},
-	{1,5,1},
-	{6,2,7},
-	{1,7,1},
-	{3,7,3},
-	{6,6,1},
-	{6,6,4},
-	{4,1,1},
-	{2,6,5},
-	{5,5,5},
-	{7,7,7},
+// MSX1の色に似せたパレット値  { G, R, B }
+static const PAL msx1_palette[]={
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 5, 3, 3 },
+	{ 6, 4, 4 },
+	{ 2, 3, 7 },
+	{ 3, 4, 7 },
+	{ 3, 5, 2 },
+	{ 5, 3, 6 },
+	{ 3, 6, 2 },
+	{ 4, 6, 3 },
+	{ 6, 5, 3 },
+	{ 6, 6, 4 },
+	{ 4, 2, 1 },
+	{ 3, 5, 5 },
+	{ 5, 5, 5 },
+	{ 7, 7, 7 },
+};
+
+// MSX2デフォルトパレット（MSX2電源投入時パレット値）
+static const PAL msx2_palette[] = {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 6, 1, 1 },
+	{ 7, 3, 3 },
+	{ 1, 1, 7 },
+	{ 3, 2, 7 },
+	{ 1, 5, 1 },
+	{ 6, 2, 7 },
+	{ 1, 7, 1 },
+	{ 3, 7, 3 },
+	{ 6, 6, 1 },
+	{ 6, 6, 4 },
+	{ 4, 1, 1 },
+	{ 2, 6, 5 },
+	{ 5, 5, 5 },
+	{ 7, 7, 7 },
 };
 
 // MSX階調 → Win階調 ( 0～255 ) 変換テーブル
@@ -403,9 +423,23 @@ bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void SetDefPalette( PAL *pal )
+void set_msx1_palette( PAL *pal )
 {
-	memcpy( pal, DefCol, sizeof(PAL)*16 );
+	memcpy( pal, msx1_palette, sizeof(PAL)*16 );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		パレットをＭＳＸ１の色にする
+//	2.	引数
+//		pal	...	(O)	パレットのアドレス
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+void set_msx2_palette( PAL *pal ){
+	memcpy( pal, msx2_palette, sizeof( PAL ) * 16 );
 }
 
 // -------------------------------------------------------------
@@ -421,7 +455,7 @@ void SetDefPalette( PAL *pal )
 void GetDefCfg( SETTING *Mode )
 {
 	memset( Mode,0,sizeof( SETTING ) );
-	memcpy( Mode->Col,DefCol,sizeof(PAL)*16 );
+	memcpy( Mode->Col,msx1_palette,sizeof(PAL)*16 );
 	Mode->Mode = MD_SC5;			// SCREEN5
 	Mode->Gosaval = 0.43f;			// 誤差拡散係数 0.430
 	Mode->err = 0;					// 切り捨て誤差 0

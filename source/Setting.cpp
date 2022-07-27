@@ -142,6 +142,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_CMBPLT		,	"I appoint an output method of a palette",
 	IDC_LOADPLT		,	"Reading adds to a palette file",
 	IDC_MSX1COLOR	,	"turn a palette into a color of MSX1",
+	IDC_MSX2COLOR	,	"turn a palette into a color of MSX2 default",
 	IDC_192			,	"I output an image for a 192 line (an inter race, 384 line) when I put a check.",
 	IDC_SORT		,	"I appoint a method to let a color stand in line of a palette.",
 	IDC_SAVEAS		,	"I store setting displaying in a file currently.",
@@ -277,7 +278,8 @@ static const TOOLTIPS ttips[] = {
 	IDC_FZ_Y		,	"強制的に 0番にする色を画像から採取する場合の座標です",
 	IDC_CMBPLT		,	"パレットの出力方法を指定します",
 	IDC_LOADPLT		,	"パレットファイルを読み込みます",
-	IDC_MSX1COLOR	,	"パレットをＭＳＸ１の色にします",
+	IDC_MSX1COLOR	,	"パレットをＭＳＸ１風の色にします",
+	IDC_MSX2COLOR	,	"パレットをＭＳＸ２の初期値の色にします",
 	IDC_192			,	"チェックをいれると192ライン（インターレース時は384ライン）用の画像を出力します",
 	IDC_SORT		,	"パレットの色を整列させる方法を指定します",
 	IDC_SAVEAS		,	"現在表示している設定をファイルに保存します",
@@ -318,24 +320,24 @@ const char *SizeMode[] = {
 
 // 各モードに応じたコントロールの有効・無効情報
 static const int nCtrlCode[]={
-	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR,IDC_192,IDC_SAVEPLT,
+	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR, IDC_MSX2COLOR,IDC_192,IDC_SAVEPLT,
 };
 
 static const BOOL nCtrlEnbl[][ ELMCNT(nCtrlCode) ]={
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,FALSE	,TRUE  },	// SCREEN2/4
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,FALSE	,TRUE  },	// SCREEN3
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN5
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN6
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN7
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN8
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN10/11
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN12
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN5 (256 lines)
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN6 (256 lines)
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE  },	// SCREEN7 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN8 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN10/11 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,TRUE	,FALSE },	// SCREEN12 (256 lines)
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,TRUE	,FALSE	,TRUE  },	// SCREEN2/4
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,TRUE	,FALSE	,TRUE  },	// SCREEN3
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN5
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN6
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN7
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN8
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN10/11
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN12
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN5 (256 lines)
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN6 (256 lines)
+	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN7 (256 lines)
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN8 (256 lines)
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN10/11 (256 lines)
+	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN12 (256 lines)
 };
 
 SETTING EdtMode;
@@ -383,6 +385,7 @@ EVENT( onSetDefault		);
 EVENT( onSetChkDef		);
 EVENT( onSetCmbCnv		);
 EVENT( onSetMSX1		);
+EVENT( onSetMSX2		);
 EVENT( onSet192			);
 EVENT( onSetSavePlt		);
 
@@ -631,6 +634,7 @@ EVENT( onSetCommand )
 	ONEVENT( IDC_FILLC		, onSetFCColor	);		// 背景色指定
 	ONEVENT( IDC_DEFAULT	, onSetDefault	);		// ﾃﾞﾌｫﾙﾄへｺﾋﾟｰ
 	ONEVENT( IDC_MSX1COLOR	, onSetMSX1		);		// MSX1色
+	ONEVENT( IDC_MSX2COLOR	, onSetMSX2		);		// MSX2デフォルト色
 	ONEVENT( IDC_SAVEPLT	, onSetSavePlt	);		// ﾊﾟﾚｯﾄ保存
 	// チェックボックス
 	ONEVENT( IDC_INTER		, onSetInter	);		// インターレース
@@ -1232,7 +1236,25 @@ EVENT( onSetDefault )
 // -------------------------------------------------------------
 EVENT( onSetMSX1 )
 {
-	SetDefPalette( EdtMode.Col );
+	set_msx1_palette( EdtMode.Col );
+	UpdateAll( hWnd );
+	return TRUE;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		ＭＳＸ２デフォルト色
+//	2.	引数
+//		hWnd	...	(I)	ウィンドウハンドル
+//		wp		...	(I)	Ｗパラメータ
+//		lp		...	(I)	Ｌパラメータ
+//	3.	返値
+//		TRUE
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+EVENT( onSetMSX2 ){
+	set_msx2_palette( EdtMode.Col );
 	UpdateAll( hWnd );
 	return TRUE;
 }

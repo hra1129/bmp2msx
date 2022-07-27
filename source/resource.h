@@ -1,12 +1,14 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ で生成されたインクルード ファイル。
-// ResScriptE.rc で使用
+// ResScript.rc で使用
 //
 #define IDS_COLORCODE                   1
 #define IDC_SAVEAS                      3
 #define IDC_LOAD                        4
 #define IDC_DEFAULT                     5
 #define IDC_MSX1COLOR                   6
+#define IDC_MSX1COLOR2                  7
+#define IDC_MSX2COLOR                   7
 #define IDI_ICON                        101
 #define IDR_MENU                        102
 #define IDD_VER                         103
