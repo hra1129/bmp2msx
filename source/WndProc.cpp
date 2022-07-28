@@ -281,7 +281,9 @@ EVENT( onCreate )
 	// ウィンドウハンドル
 	::hWnd = hWnd;
 	// モード設定をクリアする
-	bSave = !GetCfgFile( &NowMode, CfgFile ) || !GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) || !GetCustomFile( CustomFile );
+	bSave = !GetCfgFile( &NowMode, CfgFile );
+	bSave = !GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) || bSave;
+	bSave = !GetCustomFile( CustomFile ) || bSave;
 	spi_initialize( g_sPlug );
 	LastMode.Mode = -1;
 	// 仮想画面を作成する
