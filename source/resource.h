@@ -77,7 +77,10 @@
 #define IDC_COLOR                       1042
 #define IDC_192                         1042
 #define IDC_COLORCODE                   1043
+#define IDC_GOSARATIO                   1043
 #define IDC_ZAHYO                       1044
+#define IDC_GOSAERRS2                   1044
+#define IDC_GOSARATIOS                  1044
 #define IDC_SCRIPT                      1045
 #define IDC_MSXCOLOR                    1045
 #define IDC_VERSION                     1046

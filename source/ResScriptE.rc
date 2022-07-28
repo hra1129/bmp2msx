@@ -180,6 +180,7 @@ BEGIN
     CONTROL         "Error litter",IDC_GOSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,127,58,11
     CONTROL         "Slider1",IDC_GOSAVAL,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,140,98,12
     CONTROL         "Slider1",IDC_GOSAERR,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,152,98,12
+    CONTROL         "Slider1",IDC_GOSARATIO,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,164,98,12
     LTEXT           "YJK Algorithm",IDC_STATIC,183,126,80,8
     COMBOBOX        IDC_CMBALGO,189,135,107,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Recalc J and K",IDC_JKRC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,151,68,11
@@ -229,6 +230,8 @@ BEGIN
     LTEXT           "0.5",IDC_GOSAVALS,157,142,20,8
     RTEXT           "Error ignore",IDC_STATIC,19,152,32,9
     LTEXT           "20",IDC_GOSAERRS,157,152,17,8
+    RTEXT           "X:Y”ä",IDC_STATIC,19,164,32,9
+    LTEXT           "0% : 0%",IDC_GOSARATIOS,157,164,49,8
     GROUPBOX        "Output mode",IDC_STATIC,5,5,243,76
     GROUPBOX        "Convert setting",IDC_STATIC,0,86,427,90
     GROUPBOX        "Palette setting",IDC_STATIC,0,255,429,142

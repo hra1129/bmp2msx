@@ -123,6 +123,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_GOSA		,	"scatter an error and do not stand out and do it",
 	IDC_GOSAVAL		,	"appoint a value to let the error that spread splash it on each other. small and spread becomes weak",
 	IDC_GOSAERR		,	"appoint the threshold value cutting off the error that spread. then spread becomes greatly weak",
+	IDC_GOSARATIO	,	"Specifies the ratio of the right direction (X direction) to the bottom direction (Y direction) of the error to be spread. X:Y",
 	IDC_INTER		,	"use an inter race mode of MSX and double resolution of perpendicular course",
 	IDC_RESIZE		,	"an image is destroyed by the ratio regulating an input image in output size forcibly",
 	IDC_JKRC		,	"I calculate J/K value which is most suitable for Y value which I calculated after Y decision again and revise it",
@@ -260,6 +261,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_GOSA		,	"誤差を拡散して目立たなくします",
 	IDC_GOSAVAL		,	"拡散した誤差に掛け合わせる値を指定します、小さくすると拡散が弱くなります",
 	IDC_GOSAERR		,	"拡散した誤差を切り捨てる敷居値を指定します、大きくすると拡散が弱くなります",
+	IDC_GOSARATIO	,	"拡散する誤差の右方向(X方向)と下方向(Y方向)の比率を指定します。X:Y",
 	IDC_INTER		,	"MSXのインターレースモードを使って垂直方向の解像度を２倍にします",
 	IDC_RESIZE		,	"入力画像のサイズ調節方法を使用するか否か指定します",
 	IDC_JKRC		,	"算出した Y 値に最適な J/K 値を Y 決定後に再計算して補正します",
@@ -320,24 +322,24 @@ const char *SizeMode[] = {
 
 // 各モードに応じたコントロールの有効・無効情報
 static const int nCtrlCode[]={
-	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR, IDC_MSX2COLOR,IDC_192,IDC_SAVEPLT,
+	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_GOSARATIO,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR, IDC_MSX2COLOR,IDC_192,IDC_SAVEPLT,
 };
 
 static const BOOL nCtrlEnbl[][ ELMCNT(nCtrlCode) ]={
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,TRUE	,FALSE	,TRUE  },	// SCREEN2/4
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , FALSE	  ,TRUE			,TRUE	,FALSE	,TRUE  },	// SCREEN3
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN5
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN6
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN7
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN8
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN10/11
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN12
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN5 (256 lines)
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN6 (256 lines)
-	{TRUE	,TRUE		,TRUE		,TRUE	,TRUE	  ,TRUE		  ,TRUE		,TRUE		 ,TRUE	 ,TRUE	   ,TRUE	,FALSE		,FALSE	 ,TRUE	   ,TRUE	  ,TRUE		  ,TRUE	   ,TRUE    , TRUE	  ,TRUE			,TRUE	,TRUE	,TRUE  },	// SCREEN7 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,FALSE		,FALSE	 ,FALSE	   ,FALSE	  ,TRUE		  ,TRUE	   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN8 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN10/11 (256 lines)
-	{TRUE	,TRUE		,TRUE		,FALSE	,FALSE	  ,FALSE	  ,FALSE	,FALSE		 ,FALSE	 ,FALSE	   ,FALSE	,TRUE		,TRUE	 ,FALSE	   ,FALSE	  ,FALSE	  ,FALSE   ,FALSE   , TRUE	  ,FALSE		,FALSE	,TRUE	,FALSE },	// SCREEN12 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE   ,FALSE  ,TRUE  },   // SCREEN2/4
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE   ,FALSE  ,TRUE  },   // SCREEN3
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN5
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN6
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN7
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN8
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN10/11
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN12
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN5 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN6 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN7 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN8 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN10/11 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN12 (256 lines)
 };
 
 SETTING EdtMode;
@@ -1522,6 +1524,11 @@ EVENT( onSetHScroll )
 		wsprintf( szBuf, "%d", pos );
 		SetDlgItemText( hWnd, IDC_GOSAERRS, szBuf );
 		return TRUE;
+	case IDC_GOSARATIO:	// 誤差比率
+		EdtMode.GosaRatio = float( pos ) / 100;
+		wsprintf( szBuf, "%3d%% : %3d%%", pos, 100 - pos );
+		SetDlgItemText( hWnd, IDC_GOSARATIOS, szBuf );
+		return TRUE;
 	case IDC_RED:		// 赤
 		EdtMode.Col[ NowCol ].red   = pos;
 		break;
@@ -1795,18 +1802,22 @@ static void UpdateAll( HWND hWnd )
 	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKDEF	), EdtMode.bDefault	? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_192		), EdtMode.b192		? BST_CHECKED : BST_UNCHECKED );
 	// スライダの範囲を設定
-	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAVAL ), 1, 500 );
-	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAERR ), 0, 255 );
-	SetSliderRange( GetDlgItem( hWnd, IDC_RED     ), 0, 7   );
-	SetSliderRange( GetDlgItem( hWnd, IDC_GREEN   ), 0, 7   );
-	SetSliderRange( GetDlgItem( hWnd, IDC_BLUE    ), 0, 7   );
+	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAVAL   ), 1, 500 );
+	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAERR   ), 0, 255 );
+	SetSliderRange( GetDlgItem( hWnd, IDC_GOSARATIO ), 0, 100 );
+	SetSliderRange( GetDlgItem( hWnd, IDC_RED       ), 0, 7   );
+	SetSliderRange( GetDlgItem( hWnd, IDC_GREEN     ), 0, 7   );
+	SetSliderRange( GetDlgItem( hWnd, IDC_BLUE      ), 0, 7   );
 	// スライダの位置を調節
-	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAVAL ), (short int)(EdtMode.Gosaval * 1000) );
-	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAERR ), (short int)(EdtMode.err) );
+	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAVAL   ), (short int)(EdtMode.Gosaval * 1000) );
+	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAERR   ), (short int)(EdtMode.err) );
+	SetSliderValue( GetDlgItem( hWnd, IDC_GOSARATIO ), (short int)(EdtMode.GosaRatio * 100) );
 	wsprintf( szBuf, "0.%03d", int(EdtMode.Gosaval * 1000) );
 	SetDlgItemText( hWnd, IDC_GOSAVALS, szBuf );
 	wsprintf( szBuf, "%d", EdtMode.err );
 	SetDlgItemText( hWnd, IDC_GOSAERRS, szBuf );
+	wsprintf( szBuf, "%3d%% : %3d%%", int(EdtMode.GosaRatio * 100), 100 - int(EdtMode.GosaRatio * 100) );
+	SetDlgItemText( hWnd, IDC_GOSARATIOS, szBuf );
 	SetEditColor( hWnd, 0, true );
 	InvalidateRect( hWnd, NULL, FALSE );
 	// コンボボックス

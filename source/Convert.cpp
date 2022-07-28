@@ -696,6 +696,8 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 	COLORREF		c,cc,*pin,FZC;
 	signed short	*errbuf[2], *errbuf0, *errbuf1;
 	int k			= CnvMode->Gosa ? int(CnvMode->Gosaval*1024) : 0;
+	int kx			= int( CnvMode->GosaRatio * 256. );
+	int ky			= 256 - kx;
 	int ee			= CnvMode->err;
 	COLORREF mask;
 	bool			ret = false;
@@ -758,13 +760,13 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
 					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
 					// âEÇ…ägéU
-					errbuf0[(x+1)*4+0]+= (signed short)er;
-					errbuf0[(x+1)*4+1]+= (signed short)eg;
-					errbuf0[(x+1)*4+2]+= (signed short)eb;
+					errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
+					errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
+					errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
 					// â∫Ç…ägéU
-					errbuf1[ x*4 +0] = (signed short)er;
-					errbuf1[ x*4 +1] = (signed short)eg;
-					errbuf1[ x*4 +2] = (signed short)eb;
+					errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
+					errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
+					errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
 
 					// åãâ ÇèoóÕÇ∑ÇÈ
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// ã≠êßÉ[Éçâª
@@ -850,13 +852,13 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
 					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
 					// âEÇ…ägéU
-					errbuf0[(x+1)*4+0]+= (signed short)er;
-					errbuf0[(x+1)*4+1]+= (signed short)eg;
-					errbuf0[(x+1)*4+2]+= (signed short)eb;
+					errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
+					errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
+					errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
 					// â∫Ç…ägéU
-					errbuf1[ x*4 +0] = (signed short)er;
-					errbuf1[ x*4 +1] = (signed short)eg;
-					errbuf1[ x*4 +2] = (signed short)eb;
+					errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
+					errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
+					errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
 
 					// åãâ ÇèoóÕÇ∑ÇÈ
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// ã≠êßÉ[Éçâª
@@ -939,6 +941,8 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	signed short	*errbuf[2], *errbuf0, *errbuf1;
 	int palnum;
 	int k			= CnvMode->Gosa ? int(CnvMode->Gosaval*1024) : 0;
+	int kx			= int( CnvMode->GosaRatio * 256. );
+	int ky			= 256 - kx;
 	int ee			= CnvMode->err;
 	COLORREF mask;
 	bool			ret = false;
@@ -1016,13 +1020,13 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
 					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
 					// âEÇ…ägéU
-					errbuf0[(x+1)*4+0]+= (signed short)er;
-					errbuf0[(x+1)*4+1]+= (signed short)eg;
-					errbuf0[(x+1)*4+2]+= (signed short)eb;
+					errbuf0[(x+1)*4+0]+= (signed short)( (er * kx) >> 8 );
+					errbuf0[(x+1)*4+1]+= (signed short)( (eg * kx ) >> 8 );
+					errbuf0[(x+1)*4+2]+= (signed short)( (eb * kx ) >> 8 );
 					// â∫Ç…ägéU
-					errbuf1[ x*4 +0] = (signed short)er;
-					errbuf1[ x*4 +1] = (signed short)eg;
-					errbuf1[ x*4 +2] = (signed short)eb;
+					errbuf1[ x*4 +0] = (signed short)( (er * ky ) >> 8 );
+					errbuf1[ x*4 +1] = (signed short)( (eg * ky ) >> 8 );
+					errbuf1[ x*4 +2] = (signed short)( (eb * ky ) >> 8 );
 
 					// åãâ ÇèoóÕÇ∑ÇÈ
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// ã≠êßÉ[Éçâª
@@ -1151,13 +1155,13 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
 					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
 					// âEÇ…ägéU
-					errbuf0[(x+1)*4+0]+= (signed short)er;
-					errbuf0[(x+1)*4+1]+= (signed short)eg;
-					errbuf0[(x+1)*4+2]+= (signed short)eb;
+					errbuf0[(x+1)*4+0]+= (signed short)( (er * kx ) >> 8 );
+					errbuf0[(x+1)*4+1]+= (signed short)( (eg * kx ) >> 8 );
+					errbuf0[(x+1)*4+2]+= (signed short)( (eb * kx ) >> 8 );
 					// â∫Ç…ägéU
-					errbuf1[ x*4 +0] = (signed short)er;
-					errbuf1[ x*4 +1] = (signed short)eg;
-					errbuf1[ x*4 +2] = (signed short)eb;
+					errbuf1[ x*4 +0] = (signed short)( (er * ky ) >> 8 );
+					errbuf1[ x*4 +1] = (signed short)( (eg * ky ) >> 8 );
+					errbuf1[ x*4 +2] = (signed short)( (eb * ky ) >> 8 );
 
 					// åãâ ÇèoóÕÇ∑ÇÈ
 					if( CnvMode->FourceZero && cc==FZC ) n=0;	// ã≠êßÉ[Éçâª
@@ -1416,6 +1420,8 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 	int				*errbuf[ 2 ], *errbuf0, *errbuf1;
 
 	int		k		= CnvMode->Gosa ? int( CnvMode->Gosaval * 1024 ) : 0;
+	int		kx		= int( CnvMode->GosaRatio * 256. );
+	int		ky		= 256 - kx;
 	int		algo	= CnvMode->AlgoMode;
 	bool	rc		= CnvMode->JKrc;
 	int		ealgo	= CnvMode->ErrAlgo;
@@ -1533,20 +1539,20 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 
 					// î˜ç◊Ç»åÎç∑ÇÕè¡ñ≈Ç≥ÇπÇÈ
 					if( Abs( er ) >= (signed)CnvMode->err ) {
-						errbuf0[ txx + 3 ] += er;
-						errbuf1[ txx + 0 ] = er;
+						errbuf0[ txx + 3 ] += (er * kx) >> 8;
+						errbuf1[ txx + 0 ] = (er * ky) >> 8;
 					} else {
 						errbuf1[ txx + 0 ] = 0;
 					}
 					if( Abs( eg ) >= (signed)CnvMode->err ) {
-						errbuf0[ txx + 4 ] += eg;
-						errbuf1[ txx + 1 ] = eg;
+						errbuf0[ txx + 4 ] += (eg * kx) >> 8;
+						errbuf1[ txx + 1 ] = (eg * ky) >> 8;
 					} else {
 						errbuf1[ txx + 1 ] = 0;
 					}
 					if( Abs( eb ) >= (signed)CnvMode->err ) {
-						errbuf0[ txx + 5 ] += eb;
-						errbuf1[ txx + 2 ] = eb;
+						errbuf0[ txx + 5 ] += (eb * kx) >> 8;
+						errbuf1[ txx + 2 ] = (eb * ky) >> 8;
 					} else {
 						errbuf1[ txx + 2 ] = 0;
 					}

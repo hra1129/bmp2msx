@@ -62,6 +62,7 @@ typedef struct {
 	int			Resample;	// »²½Ş’²®Ø»İÌßÙ
 	int			SizeMode;	// »²½Ş’²®Ó°ÄŞ
 	COLORREF	FCColor;	// ”wŒiF
+	float		GosaRatio;	// Œë·ŠgU X-Y”ä
 } SETTING;
 
 // ‰æ–Êƒ‚[ƒh

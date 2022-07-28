@@ -478,6 +478,7 @@ void GetDefCfg( SETTING *Mode )
 	Mode->Tile = false;				// タイル
 	Mode->bDefault = false;			// 常にデフォルトコピー
 	Mode->CnvMode = CM_LAST;		// 最終変換設定を採用
+	Mode->GosaRatio = 0.5;			// 誤差拡散 X-Y比
 }
 
 // -------------------------------------------------------------
@@ -517,7 +518,8 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	if( Mode->err > 255 ) Mode->err = 255;
 	if( Mode->Gosaval < 0.0f ) Mode->Gosaval = 0.0f;
 	if( Mode->Gosaval > 0.5f ) Mode->Gosaval = 0.5f;
-
+	if( Mode->GosaRatio < 0.0f ) Mode->GosaRatio = 0.0f;
+	if( Mode->GosaRatio > 1.0f ) Mode->GosaRatio = 1.0f;
 	if( Mode->Mode == MD_SC2 || Mode->Mode == MD_SC3 ) {
 		Mode->Inter = false;
 	}
