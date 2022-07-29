@@ -84,14 +84,14 @@ const int dith[][8][8]={	// ディザリングパターン
 		{2 ,5 ,0 ,6 ,2 ,5 ,0 ,6 },
 		{8 ,4 ,9 ,3 ,8 ,4 ,9 ,3 },
 	},{	// ディザ８（ハーフトーン）
-		{8 ,0 ,8 ,8 ,0 ,8 ,0 ,8 },
-		{0 ,8 ,0 ,0 ,8 ,0 ,8 ,0 },
-		{8 ,0 ,8 ,8 ,0 ,8 ,0 ,8 },
-		{0 ,8 ,0 ,0 ,8 ,0 ,8 ,0 },
-		{8 ,0 ,8 ,8 ,0 ,8 ,0 ,8 },
-		{0 ,8 ,0 ,0 ,8 ,0 ,8 ,0 },
-		{8 ,0 ,8 ,8 ,0 ,8 ,0 ,8 },
-		{0 ,8 ,0 ,0 ,8 ,0 ,8 ,0 },
+		{15, 0,15, 0,15, 0,15, 0 },
+		{ 0,15, 0,15, 0,15, 0,15 },
+		{15, 0,15, 0,15, 0,15, 0 },
+		{ 0,15, 0,15, 0,15, 0,15 },
+		{15, 0,15, 0,15, 0,15, 0 },
+		{ 0,15, 0,15, 0,15, 0,15 },
+		{15, 0,15, 0,15, 0,15, 0 },
+		{ 0,15, 0,15, 0,15, 0,15 },
 	}
 };
 
@@ -595,24 +595,24 @@ static inline void PutDither( int *r, int *g, int *b, int mode, int ErrAdd, int 
 	if( mode >= EALGO_DITH1 ){
 		switch( ErrAdd ){
 		case EADD_ROTATE:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ] * 2 - 16;
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][       y & 7  ][ x & 7 ] * 2 - 16;
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ] * 2 - 16;
+			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ];
+			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][       y & 7  ][ x & 7 ];
+			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ];
 			break;
 		case EADD_NONE:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ] * 2 - 16;
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ] * 2 - 16;
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ] * 2 - 16;
+			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
 			break;
 		case EADD_X:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ] * 2 - 16;
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 1 ) & 7 ] * 2 - 16;
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ] * 2 - 16;
+			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ];
+			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 1 ) & 7 ];
+			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ];
 			break;
 		case EADD_Y:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ] * 2 - 16;
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 1 ) & 7 ][ x & 7 ] * 2 - 16;
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ] * 2 - 16;
+			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ];
+			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 1 ) & 7 ][ x & 7 ];
+			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ];
 			break;
 		}
 	}else{
@@ -701,12 +701,35 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 	int ee			= CnvMode->err;
 	COLORREF mask;
 	bool			ret = false;
+	int				convert14to255_s8r[15];
+	int				convert14to255_s8g[15];
+	int				convert6to255_s8b[7];
 
-	// 誤差蓄積用ﾊﾞｯﾌｧの作成
+	// 誤差蓄積用バッファの作成
 	memset( errbuf, 0, sizeof( errbuf ) );
 	for( x = 0; x < 2; ++x ) {
 		errbuf[ x ] = (signed short*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, ( width + 5 ) * 4 * sizeof( signed short ) );
 		if( errbuf[ x ]==NULL ) goto l_exit;
+	}
+
+	// 2倍サイズ変換テーブル作成
+	for( x = 0; x < 15; x++ ) {
+		if( (x & 1) == 0 ) {
+			convert14to255_s8r[ x ] = convert7to255_s8r[ x >> 1 ];
+			convert14to255_s8g[ x ] = convert7to255_s8g[ x >> 1 ];
+		}
+		else {
+			convert14to255_s8r[ x ] = ( convert7to255_s8r[ x >> 1 ] + convert7to255_s8r[ ( x >> 1 ) + 1 ] ) >> 1;
+			convert14to255_s8g[ x ] = ( convert7to255_s8g[ x >> 1 ] + convert7to255_s8g[ ( x >> 1 ) + 1 ] ) >> 1;
+		}
+		if( x < 7 ) {
+			if( ( x & 1 ) == 0 ){
+				convert6to255_s8b[ x ] = convert3to255_s8b[ x >> 1 ];
+			}
+			else{
+				convert6to255_s8b[ x ] = ( convert3to255_s8b[ x >> 1 ] + convert3to255_s8b[ ( x >> 1 ) + 1 ] ) >> 1;
+			}
+		}
 	}
 
 	// 精度制限用マスク作成
@@ -741,9 +764,9 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					cb += errbuf0[ x * 4 + 2 ];
 
 					// 最も近い色を見つける
-					er = ( cr + 18 ) * 7 / 255;
-					eg = ( cg + 18 ) * 7 / 255;
-					eb = ( cb + 36 ) * 3 / 255;
+					er = convert_rgb_to_palette( convert7to255_s8r, 8, cr );
+					eg = convert_rgb_to_palette( convert7to255_s8g, 8, cg );
+					eb = convert_rgb_to_palette( convert3to255_s8b, 4, cb );
 					er = AdjustNum( er, 0, 7 );
 					eg = AdjustNum( eg, 0, 7 );
 					eb = AdjustNum( eb, 0, 3 );
@@ -790,19 +813,19 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
 					
 					// 最も近い色を見つける
-					er = ( cr + 18 ) * 7 / 255;
-					eg = ( cg + 18 ) * 7 / 255;
-					eb = ( cb + 36 ) * 3 / 255;
+					er = convert_rgb_to_palette( convert7to255_s8r, 8, cr );
+					eg = convert_rgb_to_palette( convert7to255_s8g, 8, cg );
+					eb = convert_rgb_to_palette( convert3to255_s8b, 4, cb );
 					er = AdjustNum( er, 0, 7 );
 					eg = AdjustNum( eg, 0, 7 );
 					eb = AdjustNum( eb, 0, 3 );
 					n = ( er << 2 ) | ( eg << 5 ) | eb;
 					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( convert7to255_s8r[ ( n >> 2) & 0x07 ], convert7to255_s8g[ ( n >> 5)  & 0x07 ], convert3to255_s8b[ n & 0x03 ] );
+					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					out[ptr]=n;
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+					out[ ptr ] = n;
 					// 次の出力先
 					++ptr;
 				}	// x
@@ -830,39 +853,50 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					cb += errbuf0[ x * 4 + 2 ];
 
 					// 最も近い色を見つける
-					er = ( cr +  9 ) * 14 / 255;
-					eg = ( cg +  9 ) * 14 / 255;
-					eb = ( cb + 18 ) *  6 / 255;
-					er = AdjustNum( er, 0, 14 );
-					eg = AdjustNum( eg, 0, 14 );
-					eb = AdjustNum( eb, 0,  6 );
-					n = (( er >> 1 ) << 2 ) | (( eg >> 1 ) << 5 ) | ( eb >> 1 );
+					er = convert_rgb_to_palette( convert14to255_s8r, 15, cr );
+					eg = convert_rgb_to_palette( convert14to255_s8g, 15, cg );
+					eb = convert_rgb_to_palette( convert6to255_s8b, 7, cb );
 					if( ( x ^ y ) & 1 ){
-						n += (( er & 1 ) << 2 ) | (( eg & 1 ) << 5 ) | ( eb & 1 );
+						er = ( er + 1 ) >> 1;
+						eg = ( eg + 1 ) >> 1;
+						eb = ( eb + 1 ) >> 1;
 					}
-					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( convert7to255_s8r[( n >> 2 ) & 0x07 ], convert7to255_s8g[ ( n >> 5 ) & 0x07 ], convert3to255_s8b[ n & 0x03 ] );
+					else {
+						er >>= 1;
+						eg >>= 1;
+						eb >>= 1;
+					}
+					if( er == 0 && eg == 0 && eb == 0 && CnvMode->NonZero ) {
+						er = 0;
+						eg = 1;
+						eb = 0;
+					}
+					er = AdjustNum( er, 0, 7 );
+					eg = AdjustNum( eg, 0, 7 );
+					eb = AdjustNum( eb, 0, 3 );
+					n = ( er << 2 ) | ( eg << 5 ) | eb;
+					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
 					// 誤差を周囲のピクセルへ拡散させる
 					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
 					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
 					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
 					// 微細な誤差は消滅させる
-					if( Abs(er) < (signed)CnvMode->err ) er=0;
-					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
-					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
+					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
+					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
+					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
 					// 右に拡散
-					errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
-					errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
-					errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
 					// 下に拡散
-					errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
-					errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
-					errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
+					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
+					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
+					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					out[ptr]=n;
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+					out[ ptr ] = n;
 					// 次の出力先
 					++ptr;
 				}	// x
@@ -882,22 +916,33 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
 					
 					// 最も近い色を見つける
-					er = ( cr +  9 ) * 14 / 255;
-					eg = ( cg +  9 ) * 14 / 255;
-					eb = ( cb + 18 ) *  6 / 255;
-					er = AdjustNum( er, 0, 14 );
-					eg = AdjustNum( eg, 0, 14 );
-					eb = AdjustNum( eb, 0,  6 );
-					n = (( er >> 1 ) << 2 ) | (( eg >> 1 ) << 5 ) | ( eb >> 1 );
+					er = convert_rgb_to_palette( convert14to255_s8r, 15, cr );
+					eg = convert_rgb_to_palette( convert14to255_s8g, 15, cg );
+					eb = convert_rgb_to_palette( convert6to255_s8b, 7, cb );
 					if( ( x ^ y ) & 1 ){
-						n += (( er & 1 ) << 2 ) | (( eg & 1 ) << 5 ) | ( eb & 1 );
+						er = ( er + 1 ) >> 1;
+						eg = ( eg + 1 ) >> 1;
+						eb = ( eb + 1 ) >> 1;
 					}
-					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( convert7to255_s8r[( n >> 2 ) & 0x07 ], convert7to255_s8g[ ( n >> 5 ) & 0x07 ], convert3to255_s8b[ n & 0x03 ] );
+					else{
+						er >>= 1;
+						eg >>= 1;
+						eb >>= 1;
+					}
+					if( er == 0 && eg == 0 && eb == 0 && CnvMode->NonZero ){
+						er = 0;
+						eg = 1;
+						eb = 0;
+					}
+					er = AdjustNum( er, 0, 7 );
+					eg = AdjustNum( eg, 0, 7 );
+					eb = AdjustNum( eb, 0, 3 );
+					n = ( er << 2 ) | ( eg << 5 ) | eb;
+					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					out[ptr]=n;
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+					out[ ptr ] = n;
 					// 次の出力先
 					++ptr;
 				}	// x
@@ -1016,20 +1061,20 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
 					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
 					// 微細な誤差は消滅させる
-					if( Abs(er) < (signed)CnvMode->err ) er=0;
-					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
-					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
+					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
+					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
+					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
 					// 右に拡散
-					errbuf0[(x+1)*4+0]+= (signed short)( (er * kx) >> 8 );
-					errbuf0[(x+1)*4+1]+= (signed short)( (eg * kx ) >> 8 );
-					errbuf0[(x+1)*4+2]+= (signed short)( (eb * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
 					// 下に拡散
-					errbuf1[ x*4 +0] = (signed short)( (er * ky ) >> 8 );
-					errbuf1[ x*4 +1] = (signed short)( (eg * ky ) >> 8 );
-					errbuf1[ x*4 +2] = (signed short)( (eb * ky ) >> 8 );
+					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
+					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
+					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
 					if( palnum == 4 ) {
 						// 4色
 						if( x & 3 ){
@@ -1085,25 +1130,28 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					}	// z
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					if( palnum == 4 ) {
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+					if( palnum == 4 ){
 						// 4色
 						if( x & 3 ){
-							d=out[ ptr >> 2 ];
-							d= d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
-						}else{
-							d= n << 6;
+							d = out[ ptr >> 2 ];
+							d = d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
+						}
+						else{
+							d = n << 6;
 						}
 						out[ ptr >> 2 ] = d;
-					} else {
-						// 16色
+					}
+					else{
+					 // 16色
 						if( x & 1 ){
-							d=out[ptr>>1];
-							d=( d & 0xF0 ) | n;
-						}else{
-							d= n<<4;
+							d = out[ ptr >> 1 ];
+							d = ( d & 0xF0 ) | n;
 						}
-						out[ptr>>1]=d;
+						else{
+							d = n << 4;
+						}
+						out[ ptr >> 1 ] = d;
 					}
 					// 次の出力先
 					++ptr;
@@ -1147,24 +1195,24 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					}	// z
 
 					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
+					er = AdjustNum( ( cr - GetRValue( cc ) ) * k / 1024, -32768, 32767 );
+					eg = AdjustNum( ( cg - GetGValue( cc ) ) * k / 1024, -32768, 32767 );
+					eb = AdjustNum( ( cb - GetBValue( cc ) ) * k / 1024, -32768, 32767 );
 					// 微細な誤差は消滅させる
-					if( Abs(er) < (signed)CnvMode->err ) er=0;
-					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
-					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
+					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
+					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
+					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
 					// 右に拡散
-					errbuf0[(x+1)*4+0]+= (signed short)( (er * kx ) >> 8 );
-					errbuf0[(x+1)*4+1]+= (signed short)( (eg * kx ) >> 8 );
-					errbuf0[(x+1)*4+2]+= (signed short)( (eb * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
+					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
 					// 下に拡散
-					errbuf1[ x*4 +0] = (signed short)( (er * ky ) >> 8 );
-					errbuf1[ x*4 +1] = (signed short)( (eg * ky ) >> 8 );
-					errbuf1[ x*4 +2] = (signed short)( (eb * ky ) >> 8 );
+					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
+					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
+					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
 
 					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
+					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
 					if( palnum == 4 ) {
 						// 4色
 						if( x & 3 ){
@@ -1192,8 +1240,6 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 			//	誤差拡散無し
 			for( y = 0; y < height; ++y ){
 				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
 
 				for( x = 0; x < width; ++x ){
 					cc = c = *pin;

@@ -42,7 +42,7 @@ static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode );
 // -------------------------------------------------------------
 int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int height, SETTING *Mode ) {
 	char			szFileName[ MAX_PATH ];
-	int				swidth, sheight, interc, outadr;
+	int				save_width, save_height, interc, outadr, pitch;
 	byte*			ptr;
 	FU_FILE			*hf;
 	int				paltbl	= PalTblAdr[ Mode->Mode ];
@@ -62,15 +62,35 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 					};
 #endif
 
+	switch( Mode->Mode ){
+	case MD_SC5:
+	case MD_SC7:
+		save_width = width >> 1;
+		break;
+	case MD_SC5_256L:
+	case MD_SC7_256L:
+		save_width = width >> 1;
+		break;
+	case MD_SC6:
+		save_width = width >> 2;
+		break;
+	case MD_SC6_256L:
+		save_width = width >> 1;
+		break;
+	default:
+		save_width = width;
+		break;
+	}
+	pitch = save_width;
+
 	// インターレースと通常セーブの区別
 	if( inter ){
 		interc  = 2;			// ファイル数
-		swidth  = width*2;
-		sheight = height/2;
+		save_height = height / 2;
+		pitch = pitch << 1;
 	}else{
 		interc	= 1;
-		swidth  = width;
-		sheight = height;
+		save_height = height;
 	}
 
 	//	保存する
@@ -96,9 +116,9 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 
 		//	ヘッダ
 		if( Mode->PltMode == PLT_BSAVE ) {
-			ecode = _SaveHeader( hf, Mode->Mode, width, sheight, paltbl );
+			ecode = _SaveHeader( hf, Mode->Mode, width, save_height, paltbl );
 		} else {
-			ecode = _SaveHeader( hf, Mode->Mode, width, sheight, 0 );
+			ecode = _SaveHeader( hf, Mode->Mode, width, save_height, 0 );
 		}
 		if( ecode != BSV_NOERR ) break;
 
@@ -111,12 +131,12 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 			ecode = _SaveBodyS3( hf, ptr, &outadr );
 			break;
 		default:		//	SCREEN 5 以降
-			ecode = _SaveBodyAL( hf, ptr, width, sheight, swidth, &outadr );
+			ecode = _SaveBodyAL( hf, ptr, save_width, save_height, pitch, &outadr );
 		}
 		if( ecode != BSV_NOERR ) break;
 		
 		// パレットテーブルが有れば保存する
-		if( paltbl!=0 && Mode->PltMode==PLT_BSAVE && Mode->Mode < MD_SC5_256L ) {
+		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->Mode < MD_SC5_256L ){
 			ecode = _SavePaletteTable( hf, paltbl, Mode->Col, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
@@ -394,7 +414,7 @@ static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int
 	int	i;
 
 	*outadr = 0;
-	for( i=0; i<height; i++ ) {
+	for( i = 0; i < height; i++ ){
 		if( !fu_write( hf, ptr + i * pitch, width ) ) return BSV_ERR_WRITE;
 		*outadr += width;
 	}
@@ -417,7 +437,7 @@ static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int
 //		なし
 // -------------------------------------------------------------
 static int _SaveHeader( FU_FILE *hf, int mode, int width, int height, int paltbl ) {
-	BSAVEHEADER		bsh;
+	BSAVEHEADER		bsh =  { 0 };
 
 	//	ヘッダの構築
 	bsh.type	= 0xFE;

@@ -1823,11 +1823,11 @@ static void UpdateAll( HWND hWnd )
 	// コンボボックス
 	ComboBox_Init( hWnd, IDC_CMBSCREEN	,ScrModeName,	ELMCNT( ScrModeName ),	EdtMode.Mode );
 	ComboBox_Init( hWnd, IDC_CMBPLT		,PltMode,		PLT_COUNT,				EdtMode.PltMode );
-	ComboBox_Init( hWnd, IDC_CMBALGO	,AlgoName,		ELMCNT( AlgoName ),		EdtMode.AlgoMode );
+	ComboBox_Init( hWnd, IDC_CMBALGO		,AlgoName,		ELMCNT( AlgoName ),		EdtMode.AlgoMode );
 	ComboBox_Init( hWnd, IDC_CMBERR		,ErrAlgoName,	ELMCNT( ErrAlgoName ),	EdtMode.ErrAlgo );
-	ComboBox_Init( hWnd, IDC_PREVIEW	,PreViewName,	ELMCNT( PreViewName ),	EdtMode.PreView - 1 );
+	ComboBox_Init( hWnd, IDC_PREVIEW		,PreViewName,	ELMCNT( PreViewName ),	EdtMode.PreView - 1 );
 	ComboBox_Init( hWnd, IDC_SEIDO		,ColorSeido,	ELMCNT( ColorSeido ),	EdtMode.Seido );
-	ComboBox_Init( hWnd, IDC_CMBERR2	,ErrAlgo2Name,	ELMCNT( ErrAlgo2Name ),	EdtMode.ErrAdd );
+	ComboBox_Init( hWnd, IDC_CMBERR2		,ErrAlgo2Name,	ELMCNT( ErrAlgo2Name ),	EdtMode.ErrAdd );
 	ComboBox_Init( hWnd, IDC_PALEN		,PalEnName,		ELMCNT( PalEnName ),	EdtMode.PalEn[ NowCol ] );
 	ComboBox_Init( hWnd, IDC_FZERO		,FZColorName,	ELMCNT( FZColorName ),	EdtMode.FourceZero );
 	ComboBox_Init( hWnd, IDC_SORT		,SortMode,		ELMCNT( SortMode ),		EdtMode.SortMode );
