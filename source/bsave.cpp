@@ -88,21 +88,22 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		interc  = 2;			// ファイル数
 		save_height = height / 2;
 		pitch = pitch << 1;
+		ptr = bmp + save_width;
 	}else{
 		interc	= 1;
 		save_height = height;
+		ptr = bmp;
 	}
 
 	//	保存する
-	ptr = bmp;
 	while( interc ){
 
 		//	ファイル名
 		hf = FU_INVALID_HANDLE;
 		if( Mode->AutoName ){	//	自動決定の場合
-			_GetOutFilename( szFileName, szInFileName, Mode->Mode, interc-1+( inter?1:0 ), (Mode->PltMode==PLT_BSAVE ) );
+			_GetOutFilename( szFileName, szInFileName, Mode->Mode, interc - 1 + ( inter ? 1 : 0 ), ( Mode->PltMode == PLT_BSAVE ) );
 		}else{					//	手動決定の場合
-			if( !GetName( hWnd, szFileName, MAX_PATH, szTitle[ interc-1+( inter?1:0 ) ], cszDefExp, NULL ) ){
+			if( !GetName( hWnd, szFileName, MAX_PATH, szTitle[ interc - 1 + ( inter ? 1 : 0 ) ], cszDefExp, NULL ) ){
 				break;
 			}
 		}
@@ -116,9 +117,9 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 
 		//	ヘッダ
 		if( Mode->PltMode == PLT_BSAVE ) {
-			ecode = _SaveHeader( hf, Mode->Mode, width, save_height, paltbl );
+			ecode = _SaveHeader( hf, Mode->Mode, save_width, save_height, paltbl );
 		} else {
-			ecode = _SaveHeader( hf, Mode->Mode, width, save_height, 0 );
+			ecode = _SaveHeader( hf, Mode->Mode, save_width, save_height, 0 );
 		}
 		if( ecode != BSV_NOERR ) break;
 
@@ -167,7 +168,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 			}
 		}
 		// 次のファイル
-		ptr=bmp+width;
+		ptr = bmp;
 		interc--;
 	}
 	if( hf != FU_INVALID_HANDLE ) fu_close( hf );
