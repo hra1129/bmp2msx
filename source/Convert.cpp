@@ -687,8 +687,7 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 // -------------------------------------------------------------
 static bool cnvRecolor8( COLORREF *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-					TAILPAT *tail,int tailcnt )
-{
+					TAILPAT *tail,int tailcnt ) {
 	int				x,y,ptr;
 	int				cr,cg,cb;		// 元画素のＲＧＢ
 	int				er,eg,eb;		// 誤差（正数へ丸める）
@@ -742,214 +741,85 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 	ptr = 0;
 	pin = in;
 
-	if( !CnvMode->Tile ){
-		// 非タイルモード
-		if( k ) {
-			//	誤差拡散有り
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
+	for( y = 0; y < height; ++y ){
+		if( !prog( y * 100 / height ) ) goto l_exit;
+		errbuf0 = errbuf[ y & 1 ];
+		errbuf1 = errbuf[ 1 - ( y & 1 ) ];
 
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 誤差を計算に入れる
-					cr += errbuf0[ x * 4 + 0 ];
-					cg += errbuf0[ x * 4 + 1 ];
-					cb += errbuf0[ x * 4 + 2 ];
+		for( x = 0; x < width; ++x ){
+			cc = c = *pin;
+			pin++;
+			
+			// ディザ処理
+			PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
+			
+			if( k ) {
+				// 誤差を計算に入れる
+				cr += errbuf0[ x * 4 + 0 ];
+				cg += errbuf0[ x * 4 + 1 ];
+				cb += errbuf0[ x * 4 + 2 ];
+			}
 
-					// 最も近い色を見つける
-					er = convert_rgb_to_palette( convert7to255_s8r, 8, cr );
-					eg = convert_rgb_to_palette( convert7to255_s8g, 8, cg );
-					eb = convert_rgb_to_palette( convert3to255_s8b, 4, cb );
+			// 最も近い色を見つける
+			if( CnvMode->Tile ) {
+				//	タイルモード
+				er = convert_rgb_to_palette( convert14to255_s8r, 15, cr );
+				eg = convert_rgb_to_palette( convert14to255_s8g, 15, cg );
+				eb = convert_rgb_to_palette( convert6to255_s8b ,  7, cb );
+				if( ( x ^ y ) & 1 ){
+					er = ( er + 1 ) >> 1;
+					eg = ( eg + 1 ) >> 1;
+					eb = ( eb + 1 ) >> 1;
 					er = AdjustNum( er, 0, 7 );
 					eg = AdjustNum( eg, 0, 7 );
 					eb = AdjustNum( eb, 0, 3 );
-					n = ( er << 2 ) | ( eg << 5 ) | eb;
-					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc=RGB( convert7to255_s8r[ ( n >> 2) & 0x07 ], convert7to255_s8g[ ( n >> 5)  & 0x07 ], convert3to255_s8b[ n & 0x03 ] );
+				}
+				else {
+					er >>= 1;
+					eg >>= 1;
+					eb >>= 1;
+				}
+			}
+			else {
+				//	非タイルモード
+				er = convert_rgb_to_palette( convert7to255_s8r, 8, cr );
+				eg = convert_rgb_to_palette( convert7to255_s8g, 8, cg );
+				eb = convert_rgb_to_palette( convert3to255_s8b, 4, cb );
+			}
+			if( er == 0 && eg == 0 && eb == 0 && CnvMode->NonZero ) {
+				er = 0;
+				eg = 1;
+				eb = 0;
+			}
+			n = ( er << 2 ) | ( eg << 5 ) | eb;
+			cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
-					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
-					// 微細な誤差は消滅させる
-					if( Abs(er) < (signed)CnvMode->err ) er=0;
-					if( Abs(eg) < (signed)CnvMode->err ) eg=0;
-					if( Abs(eb) < (signed)CnvMode->err ) eb=0;
-					// 右に拡散
-					errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
-					errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
-					errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
-					// 下に拡散
-					errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
-					errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
-					errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
+			if( k ) {
+				// 誤差を周囲のピクセルへ拡散させる
+				er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
+				eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
+				eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
+				// 微細な誤差は消滅させる
+				if( Abs( er ) < (signed)CnvMode->err ) er = 0;
+				if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
+				if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
+				// 右に拡散
+				errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
+				errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
+				errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
+				// 下に拡散
+				errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
+				errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
+				errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
+			}
 
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					out[ptr]=n;
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		} else {
-			//	誤差拡散無し
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
-
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 最も近い色を見つける
-					er = convert_rgb_to_palette( convert7to255_s8r, 8, cr );
-					eg = convert_rgb_to_palette( convert7to255_s8g, 8, cg );
-					eb = convert_rgb_to_palette( convert3to255_s8b, 4, cb );
-					er = AdjustNum( er, 0, 7 );
-					eg = AdjustNum( eg, 0, 7 );
-					eb = AdjustNum( eb, 0, 3 );
-					n = ( er << 2 ) | ( eg << 5 ) | eb;
-					if( n == 0 && CnvMode->NonZero ) n = 0x04;
-					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					out[ ptr ] = n;
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		}
-	}else{
-		// タイルモード
-		if( k ) {
-			//	誤差拡散有り
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
-
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 誤差を計算に入れる
-					cr += errbuf0[ x * 4 + 0 ];
-					cg += errbuf0[ x * 4 + 1 ];
-					cb += errbuf0[ x * 4 + 2 ];
-
-					// 最も近い色を見つける
-					er = convert_rgb_to_palette( convert14to255_s8r, 15, cr );
-					eg = convert_rgb_to_palette( convert14to255_s8g, 15, cg );
-					eb = convert_rgb_to_palette( convert6to255_s8b, 7, cb );
-					if( ( x ^ y ) & 1 ){
-						er = ( er + 1 ) >> 1;
-						eg = ( eg + 1 ) >> 1;
-						eb = ( eb + 1 ) >> 1;
-					}
-					else {
-						er >>= 1;
-						eg >>= 1;
-						eb >>= 1;
-					}
-					if( er == 0 && eg == 0 && eb == 0 && CnvMode->NonZero ) {
-						er = 0;
-						eg = 1;
-						eb = 0;
-					}
-					er = AdjustNum( er, 0, 7 );
-					eg = AdjustNum( eg, 0, 7 );
-					eb = AdjustNum( eb, 0, 3 );
-					n = ( er << 2 ) | ( eg << 5 ) | eb;
-					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
-
-					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
-					// 微細な誤差は消滅させる
-					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
-					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
-					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
-					// 右に拡散
-					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
-					// 下に拡散
-					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
-					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
-					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					out[ ptr ] = n;
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		} else {
-			//	誤差拡散無し
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
-
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 最も近い色を見つける
-					er = convert_rgb_to_palette( convert14to255_s8r, 15, cr );
-					eg = convert_rgb_to_palette( convert14to255_s8g, 15, cg );
-					eb = convert_rgb_to_palette( convert6to255_s8b, 7, cb );
-					if( ( x ^ y ) & 1 ){
-						er = ( er + 1 ) >> 1;
-						eg = ( eg + 1 ) >> 1;
-						eb = ( eb + 1 ) >> 1;
-					}
-					else{
-						er >>= 1;
-						eg >>= 1;
-						eb >>= 1;
-					}
-					if( er == 0 && eg == 0 && eb == 0 && CnvMode->NonZero ){
-						er = 0;
-						eg = 1;
-						eb = 0;
-					}
-					er = AdjustNum( er, 0, 7 );
-					eg = AdjustNum( eg, 0, 7 );
-					eb = AdjustNum( eb, 0, 3 );
-					n = ( er << 2 ) | ( eg << 5 ) | eb;
-					cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					out[ ptr ] = n;
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		}	//	誤差拡散
-	}	//	タイル or 非タイル
-
+			// 結果を出力する
+			if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+			out[ ptr ] = n;
+			// 次の出力先
+			++ptr;
+		}	// x
+	}	// y
 	ret = true;
 l_exit:
 	if( errbuf[0] != NULL ) LocalFree( errbuf[0] );
@@ -976,8 +846,7 @@ l_exit:
 // -------------------------------------------------------------
 static bool cnvRecolor5( COLORREF *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-					TAILPAT *tail,int tailcnt )
-{
+					TAILPAT *tail,int tailcnt ) {
 	int				x,y,z,d,ptr;
 	int				cr,cg,cb;		// 元画素のＲＧＢ
 	int				er,eg,eb;		// 誤差（正数へ丸める）
@@ -990,7 +859,8 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	int ky			= 256 - kx;
 	int ee			= CnvMode->err;
 	COLORREF mask;
-	bool			ret = false;
+	bool ret		= false;
+	int color_num;
 
 	// 誤差蓄積用ﾊﾞｯﾌｧの作成
 	memset( errbuf, 0, sizeof( errbuf ) );
@@ -1013,283 +883,112 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	}
 	FZC = CnvMode->FourceZero ? CnvMode->FZColor & mask : -1;
 
+	if( CnvMode->Tile ) {
+		color_num = tailcnt;
+	}
+	else {
+		color_num = palnum;
+	}
+
 	// 全ピクセルを舐める
 	ptr = 0;
 	pin = in;
 	n = 0;
 
-	if( !CnvMode->Tile ){
-		// 非タイルモード
-		if( k ) {
-			//	誤差拡散有り
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
+	for( y = 0; y < height; ++y ){
+		if( !prog( y * 100 / height ) ) goto l_exit;
+		errbuf0 = errbuf[ y & 1 ];
+		errbuf1 = errbuf[ 1 - ( y & 1 ) ];
 
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 誤差を計算に入れる
-					cr += errbuf0[ x * 4 + 0 ];
-					cg += errbuf0[ x * 4 + 1 ];
-					cb += errbuf0[ x * 4 + 2 ];
+		for( x = 0; x < width; ++x ){
+			cc = c = *pin;
+			pin++;
+			
+			// ディザ処理
+			PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
+			
+			if( k ) {
+				// 誤差を計算に入れる
+				cr += errbuf0[ x * 4 + 0 ];
+				cg += errbuf0[ x * 4 + 1 ];
+				cb += errbuf0[ x * 4 + 2 ];
+			}
 
-					// 最も近い色を見つける
-					nr = 0x7FFFFFFFL;
+			// 最も近い色を見つける
+			nr = 0x7FFFFFFFL;
 
-					if( CnvMode->NonZero ) z = 1; else z = 0;
-					for( ; z < palnum; ++z ){
-						if( CnvMode->PalEn[ z ] == PALEN_NONE ) continue;
-						// 近いか？
-						c = pal[ z ];
-						r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
-						if( r < nr ){
-							nr = r;
-							n  = z;
-							cc = c;
-							if( r == 0 ) break;	// 完全一致なら抜ける
-						}
-					}	// z
-
-					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-					eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-					eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
-					// 微細な誤差は消滅させる
-					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
-					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
-					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
-					// 右に拡散
-					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
-					// 下に拡散
-					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
-					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
-					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					if( palnum == 4 ) {
-						// 4色
-						if( x & 3 ){
-							d=out[ ptr >> 2 ];
-							d= d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
-						}else{
-							d= n << 6;
-						}
-						out[ ptr >> 2 ] = d;
-					} else {
-						// 16色
-						if( x & 1 ){
-							d=out[ptr>>1];
-							d=( d & 0xF0 ) | n;
-						}else{
-							d= n<<4;
-						}
-						out[ptr>>1]=d;
+			if( CnvMode->NonZero ) z = 1; else z = 0;
+			for( ; z < color_num; ++z ){
+				if( CnvMode->PalEn[ z ] == PALEN_NONE ) continue;
+				// 近いか？
+				if( CnvMode->Tile ) {
+					// タイルモード
+					c = tail[ z ].c;
+				}
+				else {
+					// 非タイルモード
+					c = pal[ z ];
+				}
+				r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
+				if( r < nr ){
+					nr = r;
+					if( CnvMode->Tile ) {
+						// タイルモード
+						n  = tail[z].p[ ( x ^ y ) & 1 ];
 					}
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		} else {
-			//	誤差拡散無し
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
-
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 最も近い色を見つける
-					nr = 0x7FFFFFFFL;
-
-					if( CnvMode->NonZero ) z = 1; else z = 0;
-					for( ; z < palnum; ++z ){
-						if( CnvMode->PalEn[ z ] == PALEN_NONE ) continue;
-						// 近いか？
-						c = pal[ z ];
-						r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
-						if( r < nr ){
-							nr = r;
-							n  = z;
-							cc = c;
-							if( r == 0 ) break;	// 完全一致なら抜ける
-						}
-					}	// z
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					if( palnum == 4 ){
-						// 4色
-						if( x & 3 ){
-							d = out[ ptr >> 2 ];
-							d = d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
-						}
-						else{
-							d = n << 6;
-						}
-						out[ ptr >> 2 ] = d;
+					else {
+						// 非タイルモード
+						n  = z;
 					}
-					else{
-					 // 16色
-						if( x & 1 ){
-							d = out[ ptr >> 1 ];
-							d = ( d & 0xF0 ) | n;
-						}
-						else{
-							d = n << 4;
-						}
-						out[ ptr >> 1 ] = d;
-					}
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		}	//	誤差拡散
-	} else {
-		// タイルモード
-		if( k ) {
-			//	誤差拡散有り
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-				errbuf0 = errbuf[ y & 1 ];
-				errbuf1 = errbuf[ 1 - ( y & 1 ) ];
+					cc = c;
+					if( r == 0 ) break;	// 完全一致なら抜ける
+				}
+			}	// z
 
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 誤差を計算に入れる
-					cr += errbuf0[ x * 4 + 0 ];
-					cg += errbuf0[ x * 4 + 1 ];
-					cb += errbuf0[ x * 4 + 2 ];
+			if( k ) {
+				// 誤差を周囲のピクセルへ拡散させる
+				er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
+				eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
+				eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
+				// 微細な誤差は消滅させる
+				if( Abs( er ) < (signed)CnvMode->err ) er = 0;
+				if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
+				if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
+				// 右に拡散
+				errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
+				errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
+				errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
+				// 下に拡散
+				errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
+				errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
+				errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
+			}
 
-					// 最も近い色を見つける
-					nr = 0x7FFFFFFFL;
-
-					for( z = 0; z < tailcnt; ++z ){	// タイルパターン
-						// 近いか？
-						c = tail[ z ].c;
-						r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
-						if( r < nr ){
-							nr = r;
-							n  = tail[z].p[ ( x ^ y ) & 1 ];
-							cc = c;
-							if( r == 0 ) break;	// 完全一致なら抜ける
-						}
-					}	// z
-
-					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( cr - GetRValue( cc ) ) * k / 1024, -32768, 32767 );
-					eg = AdjustNum( ( cg - GetGValue( cc ) ) * k / 1024, -32768, 32767 );
-					eb = AdjustNum( ( cb - GetBValue( cc ) ) * k / 1024, -32768, 32767 );
-					// 微細な誤差は消滅させる
-					if( Abs( er ) < (signed)CnvMode->err ) er = 0;
-					if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
-					if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
-					// 右に拡散
-					errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
-					errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
-					// 下に拡散
-					errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
-					errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
-					errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
-					if( palnum == 4 ) {
-						// 4色
-						if( x & 3 ){
-							d=out[ ptr >> 2 ];
-							d= d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
-						}else{
-							d= n << 6;
-						}
-						out[ ptr >> 2 ] = d;
-					} else {
-						// 16色
-						if( x & 1 ){
-							d=out[ptr>>1];
-							d=( d & 0xF0 ) | n;
-						}else{
-							d= n<<4;
-						}
-						out[ptr>>1]=d;
-					}
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		} else {
-			//	誤差拡散無し
-			for( y = 0; y < height; ++y ){
-				if( !prog( y * 100 / height ) ) goto l_exit;
-
-				for( x = 0; x < width; ++x ){
-					cc = c = *pin;
-					pin++;
-					
-					// ディザ処理
-					PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-					
-					// 最も近い色を見つける
-					nr = 0x7FFFFFFFL;
-
-					for( z = 0; z < tailcnt; ++z ){	// タイルパターン
-						// 近いか？
-						c = tail[ z ].c;
-						r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
-						if( r < nr ){
-							nr = r;
-							n  = tail[z].p[ ( x ^ y ) & 1 ];
-							cc = c;
-							if( r == 0 ) break;	// 完全一致なら抜ける
-						}
-					}	// z
-
-					// 結果を出力する
-					if( CnvMode->FourceZero && cc==FZC ) n=0;	// 強制ゼロ化
-					if( palnum == 4 ) {
-						// 4色
-						if( x & 3 ){
-							d=out[ ptr >> 2 ];
-							d= d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
-						}else{
-							d= n << 6;
-						}
-						out[ ptr >> 2 ] = d;
-					} else {
-						// 16色
-						if( x & 1 ){
-							d=out[ptr>>1];
-							d=( d & 0xF0 ) | n;
-						}else{
-							d= n<<4;
-						}
-						out[ptr>>1]=d;
-					}
-					// 次の出力先
-					++ptr;
-				}	// x
-			}	// y
-		}	//	誤差拡散
-	}	//	タイル or 非タイル
+			// 結果を出力する
+			if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+			if( palnum == 4 ) {
+				// 4色
+				if( x & 3 ){
+					d=out[ ptr >> 2 ];
+					d= d | ( n & 0x03 ) << ( ( 3 - ( x & 3 ) ) * 2 );
+				}else{
+					d= n << 6;
+				}
+				out[ ptr >> 2 ] = d;
+			} else {
+				// 16色
+				if( x & 1 ){
+					d=out[ptr>>1];
+					d=( d & 0xF0 ) | n;
+				}else{
+					d= n<<4;
+				}
+				out[ptr>>1]=d;
+			}
+			// 次の出力先
+			++ptr;
+		}	// x
+	}	// y
 	ret = true;
 l_exit:
 	if( errbuf[0] != NULL ) LocalFree( errbuf[0] );
@@ -2503,13 +2202,13 @@ static void DrawScreenC( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 			if( Mode->Inter ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
 			//	輝度成分の取得
-			for( z=0; z<4; ++z ){
+			for( z = 0; z < 4; ++z ){
 				yy[ z ] = ( bmp[ adr + z ] & 0xF8 ) >> 3;
 			}
 			//	色成分の取得
-			k = ( bmp[ adr + 0 ] & 0x07 ) | (( bmp[ adr + 1 ] & 0x07 ) << 3 );
+			k = ( bmp[ adr + 0 ] & 0x07 ) | ( ( bmp[ adr + 1 ] & 0x07 ) << 3 );
 			if( k > 31 ) k = k - 64;	//	5bit の２の歩数
-			j = ( bmp[ adr + 2 ] & 0x07 ) | (( bmp[ adr + 3 ] & 0x07 ) << 3 );
+			j = ( bmp[ adr + 2 ] & 0x07 ) | ( ( bmp[ adr + 3 ] & 0x07 ) << 3 );
 			if( j > 31 ) j = j - 64;	//	5bit の２の歩数
 			// 描画
 			for( z = 0; z < 4; ++z ){
@@ -2519,8 +2218,8 @@ static void DrawScreenC( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 				if( r == 246 && g == 246 && b == 255 ) {
 					r = r;
 				}
-				SetPixel( hDC, x + z * 2 + 0, y+t, RGB( r, g, b) );
-				SetPixel( hDC, x + z * 2 + 1, y+t, RGB( r, g, b) );
+				SetPixel( hDC, x + z * 2 + 0, y + t, RGB( r, g, b ) );
+				SetPixel( hDC, x + z * 2 + 1, y + t, RGB( r, g, b ) );
 			}
 		}
 	}

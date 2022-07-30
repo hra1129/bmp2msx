@@ -402,11 +402,11 @@ EVENT( onDropFiles )
 	SETTING	tmp;
 
 	// ファイル数を取得
-	j=DragQueryFile( hDrop, 0xFFFFFFFFL, szBuf, MAX_PATH );
+	j = DragQueryFile( hDrop, 0xFFFFFFFFL, szBuf, MAX_PATH );
 	//	経過を表示
 	prShow( "" );
 	// 全ファイルを処理する
-	for( i=0;i<j;i++ ){
+	for( i = 0; i < j; i++ ){
 		// ドロップされたファイル名を取得する
 		DragQueryFile( hDrop, i, szBuf, MAX_PATH );
 		// 経過にファイル名を表示
