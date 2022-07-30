@@ -862,20 +862,6 @@ EVENT( onMenuSaveAs ) {
 		h=192;
 	}
 	if( tMode.Inter ) h = h * 2;
-	switch( tPreview[pvIndex].tMode.Mode ) {
-	case MD_SC2:
-	case MD_SC3:
-	case MD_SC5:
-	case MD_SC5_256L:
-	case MD_SC7:
-	case MD_SC7_256L:
-		w = w / 2;
-		break;
-	case MD_SC6:
-	case MD_SC6_256L:
-		w = w / 4;
-		break;
-	}
 	tMode.AutoName = false;
 	ecode = bsvSaveBmp( hWnd,tBmpview[tPreview[pvIndex].nSrc].sFileName,
 			 tPreview[pvIndex].bmp,w,h,&tMode );
