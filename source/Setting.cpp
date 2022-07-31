@@ -1299,7 +1299,7 @@ EVENT( onSetNonZero )
 // -------------------------------------------------------------
 EVENT( onSetGosa )
 {
-	EdtMode.Gosa = !EdtMode.Gosa;
+	EdtMode.diffusion_error_enable = !EdtMode.diffusion_error_enable;
 	return TRUE;
 }
 
@@ -1515,7 +1515,7 @@ EVENT( onSetHScroll )
 	switch( GetDlgCtrlID( hCol ) )
 	{
 	case IDC_GOSAVAL:	// 誤差拡散係数
-		EdtMode.Gosaval = float( pos ) / 1000;
+		EdtMode.diffusion_error_coef = float( pos ) / 1000;
 		wsprintf( szBuf, "0.%03d", pos );
 		SetDlgItemText( hWnd, IDC_GOSAVALS, szBuf );
 		return TRUE;
@@ -1525,7 +1525,7 @@ EVENT( onSetHScroll )
 		SetDlgItemText( hWnd, IDC_GOSAERRS, szBuf );
 		return TRUE;
 	case IDC_GOSARATIO:	// 誤差比率
-		EdtMode.GosaRatio = float( pos ) / 100;
+		EdtMode.diffusion_error_x_weight = float( pos ) / 100;
 		wsprintf( szBuf, "%3d%% : %3d%%", pos, 100 - pos );
 		SetDlgItemText( hWnd, IDC_GOSARATIOS, szBuf );
 		return TRUE;
@@ -1790,7 +1790,7 @@ static void UpdateAll( HWND hWnd )
 	// カラーテーブルを描画する
 	for( i = 0; i < 16; i++ ) UpdateColor( i );
 	// 出力モード
-	Button_SetCheck( GetDlgItem( hWnd, IDC_GOSA		), EdtMode.Gosa		? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_GOSA		), EdtMode.diffusion_error_enable		? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_INTER	), EdtMode.Inter	? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL		), EdtMode.Pal		? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_SELCOL	), EdtMode.SelCol	? BST_CHECKED : BST_UNCHECKED );
@@ -1809,14 +1809,14 @@ static void UpdateAll( HWND hWnd )
 	SetSliderRange( GetDlgItem( hWnd, IDC_GREEN     ), 0, 7   );
 	SetSliderRange( GetDlgItem( hWnd, IDC_BLUE      ), 0, 7   );
 	// スライダの位置を調節
-	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAVAL   ), (short int)(EdtMode.Gosaval * 1000) );
+	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAVAL   ), (short int)(EdtMode.diffusion_error_coef * 1000) );
 	SetSliderValue( GetDlgItem( hWnd, IDC_GOSAERR   ), (short int)(EdtMode.err) );
-	SetSliderValue( GetDlgItem( hWnd, IDC_GOSARATIO ), (short int)(EdtMode.GosaRatio * 100) );
-	wsprintf( szBuf, "0.%03d", int(EdtMode.Gosaval * 1000) );
+	SetSliderValue( GetDlgItem( hWnd, IDC_GOSARATIO ), (short int)(EdtMode.diffusion_error_x_weight * 100) );
+	wsprintf( szBuf, "0.%03d", int(EdtMode.diffusion_error_coef * 1000) );
 	SetDlgItemText( hWnd, IDC_GOSAVALS, szBuf );
 	wsprintf( szBuf, "%d", EdtMode.err );
 	SetDlgItemText( hWnd, IDC_GOSAERRS, szBuf );
-	wsprintf( szBuf, "%3d%% : %3d%%", int(EdtMode.GosaRatio * 100), 100 - int(EdtMode.GosaRatio * 100) );
+	wsprintf( szBuf, "%3d%% : %3d%%", int(EdtMode.diffusion_error_x_weight * 100), 100 - int(EdtMode.diffusion_error_x_weight * 100) );
 	SetDlgItemText( hWnd, IDC_GOSARATIOS, szBuf );
 	SetEditColor( hWnd, 0, true );
 	InvalidateRect( hWnd, NULL, FALSE );

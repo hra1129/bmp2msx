@@ -4,6 +4,7 @@
 //										(C)2000/5/6 HRA!
 // -------------------------------------------------------------
 
+#include <malloc.h>
 #include "Convert.h"
 #include "math.h"
 #include "fileuty.h"
@@ -170,21 +171,17 @@ int convert31to255_s12r[ 32 ];
 int convert31to255_s12g[ 32 ];
 int convert31to255_s12b[ 32 ];
 
-//	SCREEN2 のカラーテーブルアドレス
-#define	SC2COLOR	0x2000
-
 //	SCREEN2/3 変換用作業域
 static unsigned char vram[ 0x4000 ];
 
 // -------------------------------------------------------------
 // プロトタイプ
 // -------------------------------------------------------------
-static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y );
-static inline void SetPix( COLORREF *out,int width,int height,int x,int y,COLORREF c );
-static inline int Abs( int a );
-static inline int AdjustNum( int n,int min,int max );
-static inline void PutDither( int *r,int *g,int *b,int mode,int ErrAdd,int x,int y,COLORREF c );
-static inline int Interval( int r1,int g1,int b1,int r2,int g2,int b2 );
+static inline COLORREF _get_pixel( COLORREF *in, int width, int height, int x, int y );
+static inline void _set_pixel( COLORREF *out, int width, int height, int x, int y, COLORREF c );
+static inline int _abs( int a );
+static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int ErrAdd, int x, int y, COLORREF c );
+static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
 
 static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal,int pp,
 							  bool FourceZero,COLORREF FZColor );
@@ -199,14 +196,6 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 
 static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal );
 static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog );
-
-static void DrawScreen2( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreen3( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreen5( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreen6( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreen7( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreen8( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
-static void DrawScreenC( const unsigned char *bmp, HDC hDC, const SETTING *Mode );
 
 // -----------------------------------------------------
 //	1.	日本語名
@@ -382,8 +371,8 @@ bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
 		for( x = 0; x < wwidth; ++x ){
 			// 入力画像の座標に変換
 			xx  = x * inwidth / wwidth;
-			c   = GetPix( in, inwidth, inheight, xx, yy );
-			SetPix( out, outwidth, outheight, x, y, RGB(GetRValue( c ), GetGValue( c ), GetBValue( c )) & mask );
+			c   = _get_pixel( in, inwidth, inheight, xx, yy );
+			_set_pixel( out, outwidth, outheight, x, y, RGB(GetRValue( c ), GetGValue( c ), GetBValue( c )) & mask );
 		}	// x
 	}	// y
 	return true;
@@ -462,19 +451,19 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 					xx  = x * inwidth / wwidth;
 					ax  = (float(x) * inwidth / wwidth ) - float(xx);	//	位置 xx+1 への一致度
 					ay  = (float(y) * inheight/ wheight) - float(yy);	//	位置 xx+1 への一致度
-					c   = GetPix( in, inwidth, inheight, xx, yy );
+					c   = _get_pixel( in, inwidth, inheight, xx, yy );
 					prx = GetRValue( c ) * (1-ax) * (1-ay);
 					pgx = GetGValue( c ) * (1-ax) * (1-ay);
 					pbx = GetBValue( c ) * (1-ax) * (1-ay);
-					c	= GetPix( in, inwidth, inheight, xx+1, yy );
+					c	= _get_pixel( in, inwidth, inheight, xx+1, yy );
 					prx += GetRValue( c ) * ax * (1-ay);
 					pgx += GetGValue( c ) * ax * (1-ay);
 					pbx += GetBValue( c ) * ax * (1-ay);
-					c   = GetPix( in, inwidth, inheight, xx, yy+1 );
+					c   = _get_pixel( in, inwidth, inheight, xx, yy+1 );
 					prx += GetRValue( c ) * (1-ax) * ay;
 					pgx += GetGValue( c ) * (1-ax) * ay;
 					pbx += GetBValue( c ) * (1-ax) * ay;
-					c	= GetPix( in, inwidth, inheight, xx+1, yy+1 );
+					c	= _get_pixel( in, inwidth, inheight, xx+1, yy+1 );
 					prx += GetRValue( c ) * ax * ay;
 					pgx += GetGValue( c ) * ax * ay;
 					pbx += GetBValue( c ) * ax * ay;
@@ -482,11 +471,11 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 				} else {
 					//	水平縮小の場合
 					if( ixw == 0 ){
-						c	= GetPix( in, inwidth, inheight, ixm1, yy );
+						c	= _get_pixel( in, inwidth, inheight, ixm1, yy );
 						prx = GetRValue( c ) * (1-ay);
 						pgx = GetGValue( c ) * (1-ay);
 						pbx = GetBValue( c ) * (1-ay);
-						c	= GetPix( in, inwidth, inheight, ixm1, yy+1 );
+						c	= _get_pixel( in, inwidth, inheight, ixm1, yy+1 );
 						prx += GetRValue( c ) * ay;
 						pgx += GetGValue( c ) * ay;
 						pbx += GetBValue( c ) * ay;
@@ -498,11 +487,11 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 							am = float( ix - ixm1 ) / ixw;
 							if( am < 0 ) am = -am;
 							am = 1.0f - am;
-							c = GetPix( in, inwidth, inheight, ix, yy );
+							c = _get_pixel( in, inwidth, inheight, ix, yy );
 							prx += GetRValue( c ) * am * (1-ay);
 							pgx += GetGValue( c ) * am * (1-ay);
 							pbx += GetBValue( c ) * am * (1-ay);
-							c = GetPix( in, inwidth, inheight, ix, yy+1 );
+							c = _get_pixel( in, inwidth, inheight, ix, yy+1 );
 							prx += GetRValue( c ) * am * ay;
 							pgx += GetGValue( c ) * am * ay;
 							pbx += GetBValue( c ) * am * ay;
@@ -510,7 +499,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 						}	// ix
 					}
 				}
-				SetPix( out, outwidth, outheight, x, y,
+				_set_pixel( out, outwidth, outheight, x, y,
 						RGB( int( prx/ax ), int( pgx/ax ), int( pbx/ax ) ) & mask );
 			} else {
 				//	垂直縮小の場合
@@ -519,11 +508,11 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 						//	水平拡大の場合
 						xx  = x * inwidth / wwidth;
 						ax  = (float(x) * inwidth / wwidth) - float(xx);	//	位置 xx+1 への一致度
-						c   = GetPix( in, inwidth, inheight, xx, iy );
+						c   = _get_pixel( in, inwidth, inheight, xx, iy );
 						prx = GetRValue( c ) * (1-ax);
 						pgx = GetGValue( c ) * (1-ax);
 						pbx = GetBValue( c ) * (1-ax);
-						c = GetPix( in, inwidth, inheight, xx+1, iy );
+						c = _get_pixel( in, inwidth, inheight, xx+1, iy );
 						prx += GetRValue( c ) * ax;
 						pgx += GetGValue( c ) * ax;
 						pbx += GetBValue( c ) * ax;
@@ -531,7 +520,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 					} else {
 						//	水平縮小の場合
 						if( ixw == 0 ){
-							c = GetPix( in, inwidth, inheight, ixm1, iy );
+							c = _get_pixel( in, inwidth, inheight, ixm1, iy );
 							prx = GetRValue( c );
 							pgx = GetGValue( c );
 							pbx = GetBValue( c );
@@ -543,7 +532,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 								am = float( ix - ixm1 ) / ixw;
 								if( am < 0 ) am = -am;
 								am = 1.0f - am;
-								c = GetPix( in, inwidth, inheight, ix, iy );
+								c = _get_pixel( in, inwidth, inheight, ix, iy );
 								prx += GetRValue( c ) * am;
 								pgx += GetGValue( c ) * am;
 								pbx += GetBValue( c ) * am;
@@ -565,7 +554,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 					ay  += am;
 				}	// iy
 				ay *= ax;
-				SetPix( out, outwidth, outheight, x, y,
+				_set_pixel( out, outwidth, outheight, x, y,
 						RGB( int( pry/ay ), int( pgy/ay ), int( pby/ay ) ) & mask );
 			}
 		}	// x
@@ -590,7 +579,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline void PutDither( int *r, int *g, int *b, int mode, int ErrAdd, int x, int y, COLORREF c )
+static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int ErrAdd, int x, int y, COLORREF c )
 {
 	if( mode >= EALGO_DITH1 ){
 		switch( ErrAdd ){
@@ -686,29 +675,39 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 //		同じことを数カ所に書いているのは高速化のため。
 // -------------------------------------------------------------
 static bool cnvRecolor8( COLORREF *in,int width,int height,
-					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
+					unsigned char *out,SETTING *CnvMode,PROGRESS p_progress_cbr,COLORREF *pal,
 					TAILPAT *tail,int tailcnt ) {
-	int				x,y,ptr;
-	int				cr,cg,cb;		// 元画素のＲＧＢ
-	int				er,eg,eb;		// 誤差（正数へ丸める）
+	int				x, y, ptr, buffer_size;
+	int				cr, cg, cb;		// 元画素のＲＧＢ
+	int				er, eg, eb;		// 誤差（正数へ丸める）
 	int				n;
-	COLORREF		c,cc,*pin,FZC;
-	signed short	*errbuf[2], *errbuf0, *errbuf1;
-	int k			= CnvMode->Gosa ? int(CnvMode->Gosaval*1024) : 0;
-	int kx			= int( CnvMode->GosaRatio * 256. );
-	int ky			= 256 - kx;
-	int ee			= CnvMode->err;
-	COLORREF mask;
-	bool			ret = false;
-	int				convert14to255_s8r[15];
-	int				convert14to255_s8g[15];
-	int				convert6to255_s8b[7];
+	COLORREF c,cc,*pin;
+	COLORREF fource_zero_color = -1;
+	signed short *p_diffusion_error[2] = { nullptr, nullptr };
+	signed short *p_x_diffusion_error, *p_y_diffusion_error;
+	int diffusion_error_coef = 0;
+	int x_diffusion_error_coef = 0;
+	int y_diffusion_error_coef = 0;
+	int ee = CnvMode->err;
+	COLORREF bit_depth_mask;
+	bool ret = false;
+	int convert14to255_s8r[ 15 ] = { 0 };
+	int convert14to255_s8g[ 15 ] = { 0 };
+	int convert6to255_s8b[ 7 ] = { 0 };
+
+	// 誤差拡散係数
+	if( CnvMode->diffusion_error_enable ) {
+		diffusion_error_coef = int( CnvMode->diffusion_error_coef * 1024 );
+		x_diffusion_error_coef = int( CnvMode->diffusion_error_x_weight * 256. );
+		y_diffusion_error_coef = 256 - x_diffusion_error_coef;
+	}
 
 	// 誤差蓄積用バッファの作成
-	memset( errbuf, 0, sizeof( errbuf ) );
-	for( x = 0; x < 2; ++x ) {
-		errbuf[ x ] = (signed short*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, ( width + 5 ) * 4 * sizeof( signed short ) );
-		if( errbuf[ x ]==NULL ) goto l_exit;
+	buffer_size = ( width + 5 ) * 4 * sizeof( signed short );
+	for( x = 0; x < 2; x++ ) {
+		p_diffusion_error[ x ] = (signed short*) malloc( buffer_size );
+		if( p_diffusion_error[ x ]==NULL ) goto l_exit;
+		memset( p_diffusion_error[ x ], 0, buffer_size );
 	}
 
 	// 2倍サイズ変換テーブル作成
@@ -732,32 +731,35 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 	}
 
 	// 精度制限用マスク作成
-	mask = ~(( 1 << CnvMode->Seido ) - 1 );
-	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	bit_depth_mask = ( ~(( 1 << CnvMode->Seido ) - 1 ) ) & 0xFF;	//	8bit mask
+	bit_depth_mask = ( bit_depth_mask << 16 ) | ( bit_depth_mask << 8 ) | bit_depth_mask;
 
-	FZC = CnvMode->FourceZero ? CnvMode->FZColor & mask : -1;
+	// 強制 0化 の色
+	if( CnvMode->FourceZero ) {
+		fource_zero_color = CnvMode->FZColor & bit_depth_mask;
+	}
 
 	// 全ピクセルを舐める
 	ptr = 0;
 	pin = in;
 
 	for( y = 0; y < height; ++y ){
-		if( !prog( y * 100 / height ) ) goto l_exit;
-		errbuf0 = errbuf[ y & 1 ];
-		errbuf1 = errbuf[ 1 - ( y & 1 ) ];
+		if( !p_progress_cbr( y * 100 / height ) ) goto l_exit;
+		p_x_diffusion_error = p_diffusion_error[ y & 1 ];
+		p_y_diffusion_error = p_diffusion_error[ 1 - ( y & 1 ) ];
 
 		for( x = 0; x < width; ++x ){
 			cc = c = *pin;
 			pin++;
 			
 			// ディザ処理
-			PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
+			_put_dither_pattern( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
 			
-			if( k ) {
+			if( diffusion_error_coef ) {
 				// 誤差を計算に入れる
-				cr += errbuf0[ x * 4 + 0 ];
-				cg += errbuf0[ x * 4 + 1 ];
-				cb += errbuf0[ x * 4 + 2 ];
+				cr += p_x_diffusion_error[ x * 4 + 0 ];
+				cg += p_x_diffusion_error[ x * 4 + 1 ];
+				cb += p_x_diffusion_error[ x * 4 + 2 ];
 			}
 
 			// 最も近い色を見つける
@@ -770,9 +772,9 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 					er = ( er + 1 ) >> 1;
 					eg = ( eg + 1 ) >> 1;
 					eb = ( eb + 1 ) >> 1;
-					er = AdjustNum( er, 0, 7 );
-					eg = AdjustNum( eg, 0, 7 );
-					eb = AdjustNum( eb, 0, 3 );
+					er = range_limiter( er, 0, 7 );
+					eg = range_limiter( eg, 0, 7 );
+					eb = range_limiter( eb, 0, 3 );
 				}
 				else {
 					er >>= 1;
@@ -794,27 +796,27 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 			n = ( er << 2 ) | ( eg << 5 ) | eb;
 			cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
-			if( k ) {
+			if( diffusion_error_coef ) {
 				// 誤差を周囲のピクセルへ拡散させる
-				er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-				eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-				eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
+				er = range_limiter( ( cr - GetRValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eg = range_limiter( ( cg - GetGValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GetBValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				// 微細な誤差は消滅させる
-				if( Abs( er ) < (signed)CnvMode->err ) er = 0;
-				if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
-				if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
+				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
+				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
+				if( _abs( eb ) < (signed)CnvMode->err ) eb = 0;
 				// 右に拡散
-				errbuf0[(x+1)*4+0]+= (signed short)( ( er * kx ) >> 8 );
-				errbuf0[(x+1)*4+1]+= (signed short)( ( eg * kx ) >> 8 );
-				errbuf0[(x+1)*4+2]+= (signed short)( ( eb * kx ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * x_diffusion_error_coef ) >> 8 );
 				// 下に拡散
-				errbuf1[ x*4 +0] = (signed short)( ( er * ky ) >> 8 );
-				errbuf1[ x*4 +1] = (signed short)( ( eg * ky ) >> 8 );
-				errbuf1[ x*4 +2] = (signed short)( ( eb * ky ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 0 ] = (signed short)( ( er * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 1 ] = (signed short)( ( eg * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 2 ] = (signed short)( ( eb * y_diffusion_error_coef ) >> 8 );
 			}
 
 			// 結果を出力する
-			if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+			if( CnvMode->FourceZero && cc == fource_zero_color ) n = 0;	// 強制ゼロ化
 			out[ ptr ] = n;
 			// 次の出力先
 			++ptr;
@@ -822,8 +824,8 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 	}	// y
 	ret = true;
 l_exit:
-	if( errbuf[0] != NULL ) LocalFree( errbuf[0] );
-	if( errbuf[1] != NULL ) LocalFree( errbuf[1] );
+	if( p_diffusion_error[0] != nullptr ) free( p_diffusion_error[0] );
+	if( p_diffusion_error[1] != nullptr ) free( p_diffusion_error[1] );
 	return ret;
 }
 
@@ -851,27 +853,36 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	int				cr,cg,cb;		// 元画素のＲＧＢ
 	int				er,eg,eb;		// 誤差（正数へ丸める）
 	int				r,n,nr;
-	COLORREF		c,cc,*pin,FZC;
-	signed short	*errbuf[2], *errbuf0, *errbuf1;
+	COLORREF c, cc, *pin;
+	COLORREF fource_zero_color = -1;
+	signed short *p_diffusion_error[2] = { nullptr, nullptr };
+	signed short *p_x_diffusion_error, *p_y_diffusion_error;
 	int palnum;
-	int k			= CnvMode->Gosa ? int(CnvMode->Gosaval*1024) : 0;
-	int kx			= int( CnvMode->GosaRatio * 256. );
-	int ky			= 256 - kx;
-	int ee			= CnvMode->err;
-	COLORREF mask;
-	bool ret		= false;
+	int diffusion_error_coef = 0;
+	int x_diffusion_error_coef = 0;
+	int y_diffusion_error_coef = 0;
+	int ee = CnvMode->err;
+	COLORREF bit_depth_mask;
+	bool ret = false;
 	int color_num;
 
+	// 誤差拡散係数
+	if( CnvMode->diffusion_error_enable ){
+		diffusion_error_coef = int( CnvMode->diffusion_error_coef * 1024 );
+		x_diffusion_error_coef = int( CnvMode->diffusion_error_x_weight * 256. );
+		y_diffusion_error_coef = 256 - x_diffusion_error_coef;
+	}
+
 	// 誤差蓄積用ﾊﾞｯﾌｧの作成
-	memset( errbuf, 0, sizeof( errbuf ) );
+	memset( p_diffusion_error, 0, sizeof( p_diffusion_error ) );
 	for( x = 0; x < 2; ++x ) {
-		errbuf[ x ] = (signed short*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, ( width + 5 ) * 4 * sizeof( signed short ) );
-		if( errbuf[ x ]==NULL ) goto l_exit;
+		p_diffusion_error[ x ] = (signed short*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, ( width + 5 ) * 4 * sizeof( signed short ) );
+		if( p_diffusion_error[ x ]==NULL ) goto l_exit;
 	}
 
 	// 精度制限用マスク作成
-	mask = ~(( 1 << CnvMode->Seido ) - 1 );
-	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	bit_depth_mask = ~(( 1 << CnvMode->Seido ) - 1 );
+	bit_depth_mask = bit_depth_mask & (( bit_depth_mask << 8 ) | 0xFF ) & (( bit_depth_mask << 16 ) | 0xFFFF );
 
 	// パレット数
 	switch( CnvMode->Mode ){
@@ -881,7 +892,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	default:
 		palnum = 16;	break;
 	}
-	FZC = CnvMode->FourceZero ? CnvMode->FZColor & mask : -1;
+	fource_zero_color = CnvMode->FourceZero ? CnvMode->FZColor & bit_depth_mask : -1;
 
 	if( CnvMode->Tile ) {
 		color_num = tailcnt;
@@ -897,21 +908,21 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 
 	for( y = 0; y < height; ++y ){
 		if( !prog( y * 100 / height ) ) goto l_exit;
-		errbuf0 = errbuf[ y & 1 ];
-		errbuf1 = errbuf[ 1 - ( y & 1 ) ];
+		p_x_diffusion_error = p_diffusion_error[ y & 1 ];
+		p_y_diffusion_error = p_diffusion_error[ 1 - ( y & 1 ) ];
 
 		for( x = 0; x < width; ++x ){
 			cc = c = *pin;
 			pin++;
 			
 			// ディザ処理
-			PutDither( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
+			_put_dither_pattern( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
 			
-			if( k ) {
+			if( diffusion_error_coef ) {
 				// 誤差を計算に入れる
-				cr += errbuf0[ x * 4 + 0 ];
-				cg += errbuf0[ x * 4 + 1 ];
-				cb += errbuf0[ x * 4 + 2 ];
+				cr += p_x_diffusion_error[ x * 4 + 0 ];
+				cg += p_x_diffusion_error[ x * 4 + 1 ];
+				cb += p_x_diffusion_error[ x * 4 + 2 ];
 			}
 
 			// 最も近い色を見つける
@@ -929,7 +940,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					// 非タイルモード
 					c = pal[ z ];
 				}
-				r = Interval( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
+				r = _distance( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
 				if( r < nr ){
 					nr = r;
 					if( CnvMode->Tile ) {
@@ -945,27 +956,27 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 				}
 			}	// z
 
-			if( k ) {
+			if( diffusion_error_coef ) {
 				// 誤差を周囲のピクセルへ拡散させる
-				er = AdjustNum( ( cr - GetRValue( cc )) * k / 1024 ,-32768, 32767 );
-				eg = AdjustNum( ( cg - GetGValue( cc )) * k / 1024 ,-32768, 32767 );
-				eb = AdjustNum( ( cb - GetBValue( cc )) * k / 1024 ,-32768, 32767 );
+				er = range_limiter( ( cr - GetRValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eg = range_limiter( ( cg - GetGValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GetBValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				// 微細な誤差は消滅させる
-				if( Abs( er ) < (signed)CnvMode->err ) er = 0;
-				if( Abs( eg ) < (signed)CnvMode->err ) eg = 0;
-				if( Abs( eb ) < (signed)CnvMode->err ) eb = 0;
+				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
+				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
+				if( _abs( eb ) < (signed)CnvMode->err ) eb = 0;
 				// 右に拡散
-				errbuf0[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * kx ) >> 8 );
-				errbuf0[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * kx ) >> 8 );
-				errbuf0[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * kx ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * x_diffusion_error_coef ) >> 8 );
 				// 下に拡散
-				errbuf1[ x * 4 + 0 ] = (signed short)( ( er * ky ) >> 8 );
-				errbuf1[ x * 4 + 1 ] = (signed short)( ( eg * ky ) >> 8 );
-				errbuf1[ x * 4 + 2 ] = (signed short)( ( eb * ky ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 0 ] = (signed short)( ( er * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 1 ] = (signed short)( ( eg * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 2 ] = (signed short)( ( eb * y_diffusion_error_coef ) >> 8 );
 			}
 
 			// 結果を出力する
-			if( CnvMode->FourceZero && cc == FZC ) n = 0;	// 強制ゼロ化
+			if( CnvMode->FourceZero && cc == fource_zero_color ) n = 0;	// 強制ゼロ化
 			if( palnum == 4 ) {
 				// 4色
 				if( x & 3 ){
@@ -991,8 +1002,8 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	}	// y
 	ret = true;
 l_exit:
-	if( errbuf[0] != NULL ) LocalFree( errbuf[0] );
-	if( errbuf[1] != NULL ) LocalFree( errbuf[1] );
+	if( p_diffusion_error[0] != NULL ) LocalFree( p_diffusion_error[0] );
+	if( p_diffusion_error[1] != NULL ) LocalFree( p_diffusion_error[1] );
 	return ret;
 }
 
@@ -1061,7 +1072,7 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 				for( i = 0; i < cnt; ++i ) {
 					if( i == idx1 ) continue;
 					cc = ccol[i];
-					l = Interval( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 ));
+					l = _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 ));
 					if( l >= len ) {
 						len = l;
 						idx2 = i;
@@ -1080,8 +1091,8 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 					}
 					//	選ばれた２色との色距離を比較
 					p = p << 1;
-					if( Interval( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 )) 
-					  < Interval( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c2 ), GetGValue( c2 ), GetBValue( c2 )) ) {
+					if( _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 )) 
+					  < _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c2 ), GetGValue( c2 ), GetBValue( c2 )) ) {
 						p = p | 1;
 					}
 				}
@@ -1164,8 +1175,8 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 	short			*ptmp,*tmp = NULL;
 	int				*errbuf[ 2 ], *errbuf0, *errbuf1;
 
-	int		k		= CnvMode->Gosa ? int( CnvMode->Gosaval * 1024 ) : 0;
-	int		kx		= int( CnvMode->GosaRatio * 256. );
+	int		k		= CnvMode->diffusion_error_enable ? int( CnvMode->diffusion_error_coef * 1024 ) : 0;
+	int		kx		= int( CnvMode->diffusion_error_x_weight * 256. );
 	int		ky		= 256 - kx;
 	int		algo	= CnvMode->AlgoMode;
 	bool	rc		= CnvMode->JKrc;
@@ -1178,7 +1189,7 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 
 	for( y = 0; y < 32; y++ ){
 		convert31to255_s12y[ y ] = (convert31to255_s12r[ y ] * 4 + convert31to255_s12g[ y ] * 8  + convert31to255_s12b[ y ] * 2 + 7) / 14;
-		convert31to255_s12y[ y ] = AdjustNum( convert31to255_s12y[ y ], 0, 255 );
+		convert31to255_s12y[ y ] = range_limiter( convert31to255_s12y[ y ], 0, 255 );
 	}
 	// 画面モードに合わせたマスクを設定
 	if( sc10 ){
@@ -1207,18 +1218,18 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 			jj = kk = 0;
 			txx = xx;
 			for( z = 0; z < 4; ++z ){
-				c = GetPix( in, width, height, x + z, y );
+				c = _get_pixel( in, width, height, x + z, y );
 				r[ z ] = convert31to255_s12r[ convert_rgb_to_palette( convert31to255_s12r, 32, GetRValue( c ) + errbuf0[ txx + 0 ] ) ];
 				g[ z ] = convert31to255_s12g[ convert_rgb_to_palette( convert31to255_s12g, 32, GetGValue( c ) + errbuf0[ txx + 1 ] ) ];
 				b[ z ] = convert31to255_s12b[ convert_rgb_to_palette( convert31to255_s12b, 32, GetBValue( c ) + errbuf0[ txx + 2 ] ) ];
-				vy   = AdjustNum( b[ z ] / 2 + r[ z ] / 4 + g[ z ] / 8, 0, 255 );
+				vy   = range_limiter( b[ z ] / 2 + r[ z ] / 4 + g[ z ] / 8, 0, 255 );
 				jj += r[ z ] - vy;
 				kk += g[ z ] - vy;
 				txx += 3;
 			}
 			// J,K の値を平均して４画素ペアの J,K 値を確定する
-			jj = AdjustNum( jj / 4, -256, 255 );
-			kk = AdjustNum( kk / 4, -256, 255 );
+			jj = range_limiter( jj / 4, -256, 255 );
+			kk = range_limiter( kk / 4, -256, 255 );
 
 			// Y の算出と範囲外切りつめ
 			txx = xx;
@@ -1231,14 +1242,14 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 				case ALGO_RECALC:	// 輝度再計算による誤差訂正アルゴリズム（画質・輝度再現優先）
 					tyy = 0;
 					min = 0x7FFFFFFF;	//	十分大きな値（∞の意味）
-					rr = AdjustNum( r[z], 0, 255 );
-					gg = AdjustNum( g[z], 0, 255 );
-					bb = AdjustNum( b[z], 0, 255 );
+					rr = range_limiter( r[z], 0, 255 );
+					gg = range_limiter( g[z], 0, 255 );
+					bb = range_limiter( b[z], 0, 255 );
 					for( vy = 0; vy < 255; ++vy ){
-						s = Interval( rr, gg, bb,
-							AdjustNum( vy + jj, 0, 255 ),  
-							AdjustNum( vy + kk, 0, 255 ), 
-							AdjustNum( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
+						s = _distance( rr, gg, bb,
+							range_limiter( vy + jj, 0, 255 ),  
+							range_limiter( vy + kk, 0, 255 ), 
+							range_limiter( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
 						if( min <= s ) break;	//	誤差が広がりはじめたらうち切る
 						min = s; tyy = vy;
 					}
@@ -1253,14 +1264,14 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 				case ALGO_RECALC2:	// 輝度再計算による誤差訂正アルゴリズム（色合い再現優先）
 					tyy = 0;
 					min = 0x7FFFFFFF;	//	十分大きな値（∞の意味）
-					rr = AdjustNum( r[z], 0, 255 );
-					gg = AdjustNum( g[z], 0, 255 );
-					bb = AdjustNum( b[z], 0, 255 );
+					rr = range_limiter( r[z], 0, 255 );
+					gg = range_limiter( g[z], 0, 255 );
+					bb = range_limiter( b[z], 0, 255 );
 					for( vy = 0; vy < 255; ++vy ){
-						s = Interval( rr, gg, bb,
-							AdjustNum( vy + jj, 0, 255 ),  
-							AdjustNum( vy + kk, 0, 255 ), 
-							AdjustNum( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
+						s = _distance( rr, gg, bb,
+							range_limiter( vy + jj, 0, 255 ),  
+							range_limiter( vy + kk, 0, 255 ), 
+							range_limiter( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
 						if( min <= s ) break;	//	誤差が広がりはじめたらうち切る
 						min = s; tyy = vy * 61 / 64;
 					}
@@ -1271,31 +1282,31 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 					tyy += dith[ ealgo-EALGO_DITH1 ][ y & 7 ][ ( x + z ) & 7 ] / 2;
 				}
 				// 範囲外除外
-				yy[ z ] = AdjustNum( tyy, 0, 255 );
+				yy[ z ] = range_limiter( tyy, 0, 255 );
 				if( k ){	// 誤差拡散
 					// 算出した 仮Y,J,K から R,G,B 値（ MSXで表示される色 ）を計算
-					rr = convert31to255_s12r[ convert_rgb_to_palette( convert31to255_s12r, 32, AdjustNum( jj + yy[ z ], 0, 255 ) ) ];
-					gg = convert31to255_s12g[ convert_rgb_to_palette( convert31to255_s12g, 32, AdjustNum( kk + yy[ z ], 0, 255 ) ) ];
-					bb = convert31to255_s12b[ convert_rgb_to_palette( convert31to255_s12b, 32, AdjustNum( 5 * yy[ z ] / 4 - jj / 2 - kk / 4, 0, 255 ) ) ];
+					rr = convert31to255_s12r[ convert_rgb_to_palette( convert31to255_s12r, 32, range_limiter( jj + yy[ z ], 0, 255 ) ) ];
+					gg = convert31to255_s12g[ convert_rgb_to_palette( convert31to255_s12g, 32, range_limiter( kk + yy[ z ], 0, 255 ) ) ];
+					bb = convert31to255_s12b[ convert_rgb_to_palette( convert31to255_s12b, 32, range_limiter( 5 * yy[ z ] / 4 - jj / 2 - kk / 4, 0, 255 ) ) ];
 					// 誤差を周囲のピクセルへ拡散させる
-					er = AdjustNum( ( r[ z ] - rr ) * k / 1024 , -32768, 32767 );
-					eg = AdjustNum( ( g[ z ] - gg ) * k / 1024 , -32768, 32767 );
-					eb = AdjustNum( ( b[ z ] - bb ) * k / 1024 , -32768, 32767 );
+					er = range_limiter( ( r[ z ] - rr ) * k / 1024 , -32768, 32767 );
+					eg = range_limiter( ( g[ z ] - gg ) * k / 1024 , -32768, 32767 );
+					eb = range_limiter( ( b[ z ] - bb ) * k / 1024 , -32768, 32767 );
 
 					// 微細な誤差は消滅させる
-					if( Abs( er ) >= (signed)CnvMode->err ) {
+					if( _abs( er ) >= (signed)CnvMode->err ) {
 						errbuf0[ txx + 3 ] += (er * kx) >> 8;
 						errbuf1[ txx + 0 ] = (er * ky) >> 8;
 					} else {
 						errbuf1[ txx + 0 ] = 0;
 					}
-					if( Abs( eg ) >= (signed)CnvMode->err ) {
+					if( _abs( eg ) >= (signed)CnvMode->err ) {
 						errbuf0[ txx + 4 ] += (eg * kx) >> 8;
 						errbuf1[ txx + 1 ] = (eg * ky) >> 8;
 					} else {
 						errbuf1[ txx + 1 ] = 0;
 					}
-					if( Abs( eb ) >= (signed)CnvMode->err ) {
+					if( _abs( eb ) >= (signed)CnvMode->err ) {
 						errbuf0[ txx + 5 ] += (eb * kx) >> 8;
 						errbuf1[ txx + 2 ] = (eb * ky) >> 8;
 					} else {
@@ -1316,8 +1327,8 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 				kk = ( kk + 2 ) / 4;	// 四捨五入和平均
 			}
 			// J,K 範囲外切りつめ
-			jj = AdjustNum( jj * 31 / 255, -32, 31 );	// 小数点以下切り捨て
-			kk = AdjustNum( kk * 31 / 255, -32, 31 );	// 小数点以下切り捨て
+			jj = range_limiter( jj * 31 / 255, -32, 31 );	// 小数点以下切り捨て
+			kk = range_limiter( kk * 31 / 255, -32, 31 );	// 小数点以下切り捨て
 			
 			// 出力
 			if( k ){			// Ｙ値誤差拡散
@@ -1330,16 +1341,16 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 				*(out++ )= jj     & 7;
 				*(out++ )=(jj>>3) & 7;
 			}else{
-				*out=( kk     & 7) | ( AdjustNum( yy[0], 0, 255 ) & mask );
+				*out=( kk     & 7) | ( range_limiter( yy[0], 0, 255 ) & mask );
 				if( *out==0 ) *out= zero;
 				++out;
-				*out=((kk>>3) & 7) | ( AdjustNum( yy[1], 0, 255 ) & mask );
+				*out=((kk>>3) & 7) | ( range_limiter( yy[1], 0, 255 ) & mask );
 				if( *out==0 ) *out= zero;
 				++out;
-				*out=( jj     & 7) | ( AdjustNum( yy[2], 0, 255 ) & mask );
+				*out=( jj     & 7) | ( range_limiter( yy[2], 0, 255 ) & mask );
 				if( *out==0 ) *out= zero;
 				++out;
-				*out=((jj>>3) & 7) | ( AdjustNum( yy[3], 0, 255 ) & mask );
+				*out=((jj>>3) & 7) | ( range_limiter( yy[3], 0, 255 ) & mask );
 				if( *out==0 ) *out= zero;
 				++out;
 			}
@@ -1354,14 +1365,14 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 		for( x = 0; x < width; ++x ){
 			// 誤差の算出
 			vy = ((*ptmp) >> 3 ) * 255 / 31;					//	採用したいＹ値
-			z  = AdjustNum( vy, 0, 255 ) & mask;				//	実際に採用するＹ値
+			z  = range_limiter( vy, 0, 255 ) & mask;				//	実際に採用するＹ値
 			jj = ( vy - convert31to255_s12y[ convert_rgb_to_palette( convert31to255_s12y, 32, z ) ] ) * k / 1024;			//	誤差
 			if( jj >= (signed)CnvMode->err ) {
 				// 誤差の拡散
 				if( x != width - 1 ) {
-					*(ptmp + 1) = (short)AdjustNum( (int)*(ptmp +     1) + jj, -32768, 32767 );
+					*(ptmp + 1) = (short)range_limiter( (int)*(ptmp +     1) + jj, -32768, 32767 );
 				}
-				*(ptmp + width) = (short)AdjustNum( (int)*(ptmp + width) + jj, -32768, 32767 );
+				*(ptmp + width) = (short)range_limiter( (int)*(ptmp + width) + jj, -32768, 32767 );
 			}
 			++ptmp;
 			// データの出力
@@ -1441,7 +1452,7 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 			for( j = i + 1; j < n; ++j ){	// 着目色に最も近くて使用数が少ない色を検索する
 				if( j < pp ) continue;
 				c = tbl[ j ].c;
-				v = Interval( r, g, b, GetRValue( c ), GetGValue( c ), GetBValue( c ) );
+				v = _distance( r, g, b, GetRValue( c ), GetGValue( c ), GetBValue( c ) );
 				if( w < v ) continue;
 				y = j;
 				w = v;
@@ -1622,8 +1633,8 @@ int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode )
 					if( ( r + rr ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].red   + pal[ tail[ k ].p[ 1 ] ].red   ) / 2 ||
 						( g + gg ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].green + pal[ tail[ k ].p[ 1 ] ].green ) / 2 ||
 						( b + bb ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].blue  + pal[ tail[ k ].p[ 1 ] ].blue  ) / 2 ) continue;
-					if( Interval( r, g, b, rr, gg, bb ) <
-						Interval( pal[ tail[ k ].p[ 0 ] ].red,pal[ tail[ k ].p[ 0 ] ].green,pal[ tail[ k ].p[ 0 ] ].blue,
+					if( _distance( r, g, b, rr, gg, bb ) <
+						_distance( pal[ tail[ k ].p[ 0 ] ].red,pal[ tail[ k ].p[ 0 ] ].green,pal[ tail[ k ].p[ 0 ] ].blue,
 								  pal[ tail[ k ].p[ 1 ] ].red,pal[ tail[ k ].p[ 1 ] ].green,pal[ tail[ k ].p[ 1 ] ].blue ) ){
 						m = k;
 					}else{
@@ -1798,11 +1809,11 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y )
+static inline COLORREF _get_pixel( COLORREF *in,int width,int height,int x,int y )
 {
 	// 範囲外修正
-	x = AdjustNum( x,0,width-1  );
-	y = AdjustNum( y,0,height-1 );
+	x = range_limiter( x,0,width-1  );
+	y = range_limiter( y,0,height-1 );
 	// 指定の位置の色を返す
 	return( *( in + x + y*width ) );
 }
@@ -1822,11 +1833,11 @@ static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline void SetPix( COLORREF *out,int width,int height,int x,int y,COLORREF c )
+static inline void _set_pixel( COLORREF *out,int width,int height,int x,int y,COLORREF c )
 {
 	// 範囲外修正
-	x = AdjustNum( x,0,width-1  );
-	y = AdjustNum( y,0,height-1 );
+	x = range_limiter( x,0,width-1  );
+	y = range_limiter( y,0,height-1 );
 	// 指定の位置へ色を格納
 	*( out + x + y*width )=c;
 }
@@ -1841,7 +1852,7 @@ static inline void SetPix( COLORREF *out,int width,int height,int x,int y,COLORR
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline int Abs( int a )
+static inline int _abs( int a )
 {
 	return( ( a < 0 ) ? -a : a );
 }
@@ -1861,7 +1872,7 @@ static inline int Abs( int a )
 //	4.	備考
 //		”遠さ”を示す比較用の値であり、スケールに意味はない
 // -------------------------------------------------------------
-static inline int Interval( int r1, int g1, int b1, int r2, int g2, int b2 )
+static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 )
 {
 	int r, g, b;
 	r = r2 - r1;
@@ -1872,358 +1883,6 @@ static inline int Interval( int r1, int g1, int b1, int r2, int g2, int b2 )
 
 // -------------------------------------------------------------
 //	プレビュー生成
-
-// -----------------------------------------------------
-//	1.	日本語名
-//		ライン数の取得
-//	2.	引数
-//		Mode	...	(I)	画像の設定
-//	3.	返値
-//		ライン数
-//	4.	備考
-//		なし
-// -----------------------------------------------------
-int _GetHeight( const SETTING *Mode )
-{
-	if( Mode->b192 ) {
-		return 192;
-	} else {
-		return 212;
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビューの作成
-//	2.	引数
-//		bmp		...	(I)	ＶＲＡＭイメージ
-//		hDC		...	(I)	プレビュー出力デバイス
-//		Mode	...	(I)	画像の設定
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-void DrawScreen( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
-{
-	RECT	rc = { 0, 0, 512, 424 };
-
-	FillRect( hDC, &rc, ( HBRUSH )GetStockObject( BLACK_BRUSH ) );
-
-	switch( Mode->Mode ){
-	case MD_SC2:
-		DrawScreen2( bmp, hDC, Mode);	return;
-	case MD_SC3:
-		DrawScreen3( bmp, hDC, Mode);	return;
-	case MD_SC5:
-	case MD_SC5_256L:
-		DrawScreen5( bmp, hDC, Mode );	return;
-	case MD_SC6:
-	case MD_SC6_256L:
-		DrawScreen6( bmp, hDC, Mode );	return;
-	case MD_SC7:
-	case MD_SC7_256L:
-		DrawScreen7( bmp, hDC, Mode );	return;
-	case MD_SC8:
-	case MD_SC8_256L:
-		DrawScreen8( bmp, hDC, Mode );	return;
-	case MD_SC10:
-	case MD_SC12:
-	case MD_SC10_256L:
-	case MD_SC12_256L:
-		DrawScreenC( bmp, hDC, Mode );	return;
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN2)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen2( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
-{
-	int r[2] = { 0 },g[2] = { 0 },b[2] = { 0 };
-	int x, y, adr, i, c, bit;
-
-	for( y = 0; y < 384; y += 2 ){
-		for( x = 0; x < 512; x += 16 ){
-			adr = y / 2;
-			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
-			// 下位４ビット（バックグランド）
-			r[ 0 ] = convert7to255_r[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].red ];
-			g[ 0 ] = convert7to255_g[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].green ];
-			b[ 0 ] = convert7to255_b[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].blue ];
-			// 上位４ビット（フォアグランド）
-			r[ 1 ] = convert7to255_r[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].red ];
-			g[ 1 ] = convert7to255_g[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].green ];
-			b[ 1 ] = convert7to255_b[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].blue ];
-
-			//	８ドットペアの描画
-			c = bmp[ adr ];
-			for( i = 0; i < 8; ++i ){
-				bit = ( c & 0x80 ) >> 7;
-				SetPixel( hDC, x + i * 2 + 0, y + 20, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 1, y + 20, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 0, y + 21, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 1, y + 21, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				c = c << 1;
-			}
-
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN3)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen3( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
-{
-	int r,g,b;
-	int x,y,adr,i;
-
-	for( y = 0; y < 384; ++y ){
-		for( x = 0; x < 512; x += 16 ){
-			adr = y / 8;
-			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
-			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
-			for( i = 0; i < 8; ++i ){
-				SetPixel( hDC, x + i, y + 20, RGB( r, g, b ) );
-			}
-			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
-			for( i = 0; i < 8; ++i ){
-				SetPixel( hDC, x + i + 8, y + 20, RGB( r, g, b ) );
-			}
-
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN5)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen5( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
-{
-	int r,g,b;
-	int x,y,adr,t,h;
-
-	h = _GetHeight( Mode );
-	t = 212 - h;
-	h = h * 2;
-
-	for( y = 0; y < h; ++y ){
-		for( x = 0; x < 512; x += 4 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
-			adr = adr * 128 + x / 4;
-			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
-			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
-			SetPixel( hDC, x + 2, y + t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 3, y + t, RGB( r, g, b ) );
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN6)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen6( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
-{
-	int r,g,b;
-	int x,y,adr,t,h;
-
-	h = _GetHeight( Mode );
-	t = 212 - h;
-	h = h * 2;
-
-	for( y = 0; y < h; ++y ){
-		for( x = 0; x < 512; x += 4 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
-			adr = adr * 128 + x / 4;
-			// 上位２ビット（左側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
-			// 上位２ビット（中左側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
-			// 下位２ビット（中右側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 2, y + t, RGB( r, g, b ) );
-			// 下位２ビット（右側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 3, y + t, RGB( r, g, b ) );
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN7)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen7( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
-{
-	int r,g,b;
-	int x,y,adr,t,h;
-
-	h = _GetHeight( Mode );
-	t = 212 - h;
-	h = h * 2;
-
-	for( y = 0; y < h; ++y ){
-		for( x = 0; x < 512; x += 2 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
-			adr = adr * 256 + x / 2;
-			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
-			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN8)の作成
-//	2.	引数
-//		bmp	...	(I)	ＶＲＡＭイメージ
-//		hDC	...	(I)	プレビュー出力デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		なし
-// -------------------------------------------------------------
-static void DrawScreen8( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
-{
-	int r,g,b;
-	int x,y,adr,t,h;
-
-	h = _GetHeight( Mode );
-	t = 212 - h;
-	h = h * 2;
-
-	for( y = 0; y < h; ++y ){
-		for( x = 0; x < 512; x += 2 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
-			adr = adr * 256 + x / 2;
-			r = convert7to255_s8r[(bmp[ adr ] & 0x1C) >> 2 ];
-			g = convert7to255_s8g[(bmp[ adr ] & 0xE0) >> 5 ];
-			b = convert3to255_s8b[ bmp[ adr ] & 0x03       ];
-			SetPixel( hDC, x + 0, y+t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 1, y+t, RGB( r, g, b ) );
-		}
-	}
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		ＶＲＡＭイメージからプレビュ(SCREEN10/12)の作成
-//	2.	引数
-//		bmp		...	(I)	ＶＲＡＭイメージ
-//		hDC		...	(I)	プレビュー出力先デバイス
-//	3.	返値
-//		なし
-//	4.	備考
-//		※ＶＲＡＭイメージはＭＳＸ上の構造とは異なる
-// -------------------------------------------------------------
-static void DrawScreenC( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
-{
-	int r,g,b,j,k,yy[4] = { 0 };
-	int x,y,z,adr,t,h;
-
-	h = _GetHeight( Mode );
-	t = 212 - h;
-	h = h * 2;
-
-	for( y = 0; y < h; ++y ){
-		for( x = 0; x < 512; x += 8 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
-			adr = adr * 256 + x / 2;
-			//	輝度成分の取得
-			for( z = 0; z < 4; ++z ){
-				yy[ z ] = ( bmp[ adr + z ] & 0xF8 ) >> 3;
-			}
-			//	色成分の取得
-			k = ( bmp[ adr + 0 ] & 0x07 ) | ( ( bmp[ adr + 1 ] & 0x07 ) << 3 );
-			if( k > 31 ) k = k - 64;	//	5bit の２の歩数
-			j = ( bmp[ adr + 2 ] & 0x07 ) | ( ( bmp[ adr + 3 ] & 0x07 ) << 3 );
-			if( j > 31 ) j = j - 64;	//	5bit の２の歩数
-			// 描画
-			for( z = 0; z < 4; ++z ){
-				r = AdjustNum( yy[ z ] + j							, 0, 31 )* 255 / 31;
-				g = AdjustNum( yy[ z ] + k							, 0, 31 )* 255 / 31;
-				b = AdjustNum( 5 * yy[ z ] / 4 - j / 2 - k / 4		, 0, 31 )* 255 / 31;
-				if( r == 246 && g == 246 && b == 255 ) {
-					r = r;
-				}
-				SetPixel( hDC, x + z * 2 + 0, y + t, RGB( r, g, b ) );
-				SetPixel( hDC, x + z * 2 + 1, y + t, RGB( r, g, b ) );
-			}
-		}
-	}
-}
 
 // -------------------------------------------------------------
 //	1.	日本語名
@@ -2237,7 +1896,7 @@ static void DrawScreenC( const unsigned char *bmp, HDC hDC, const SETTING *Mode 
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline int AdjustNum( int n, int min, int max )
+int range_limiter( int n, int min, int max )
 {
 	if( n < min ) return min;
 	if( n > max ) return max;
@@ -2302,7 +1961,7 @@ bool cnvSaveBmpFile( const char *szInFileName, LPBYTE bmp, int width, int height
 	SelectObject( hDC, hBMP );
 	GdiFlush();
 
-	DrawScreen( bmp, hDC, Mode );
+	draw_screen( bmp, hDC, Mode );
 	GdiFlush();
 
 	//	ファイル出力

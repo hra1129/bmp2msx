@@ -1440,7 +1440,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		tPreview[prv].tMode=*Mode;							// 現在の設定を記憶
 		tPreview[prv].nSrc = nSrc;							// プレビューの元ファイル
 		SelectBitmap( hMemDC,tPreview[prv].hBmp );			// プレビューを作成する
-		DrawScreen( bmp,hMemDC,Mode );
+		draw_screen( bmp,hMemDC,Mode );
 		SelectBitmap( hMemDC,hMemBM );						// 元に戻す
 		pvIndex = prv;										// このプレビューを表示させる
 		bSrc=false;											// 変換結果の画像を表示する
@@ -1639,7 +1639,7 @@ void MakeSettingStr( char *szBuf,const char *szTitle,SETTING *Mode )
 					szTitle,
 					ScrModeName[Mode->Mode],
 					PreViewName[Mode->PreView-1],
-					(Mode->Gosa  ? cUse : cNoUse),(int)( Mode->Gosaval * 1000 ),Mode->err,
+					(Mode->diffusion_error_enable  ? cUse : cNoUse),(int)( Mode->diffusion_error_coef * 1000 ),Mode->err,
 					(Mode->Pal   ? cUse : cNoUse),
 					(Mode->NonZero ? cNonZero : cUseZero),
 					(Mode->JKrc  ? cUse : cNoUse),

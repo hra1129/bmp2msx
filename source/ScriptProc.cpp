@@ -137,29 +137,29 @@ static char szTarget[ MAX_PATH ];		// 変換対象のファイル名
 
 // 命令語
 static SCRWORD scrword[]={
-	{"LOADSETTING"	, SW_LOADSETTING	},
-	{"設定読込"		, SW_LOADSETTING	},
-	{"CONVERT"		, SW_CONVERT		},
-	{"変換処理"		, SW_CONVERT		},
-	{"SETFILENAME"	, SW_SETFILENAME	},
-	{"ファイル名"	, SW_SETFILENAME	},
-	{";"			, SW_COMMENT		},
+	{"LOADSETTING"	, SW_LOADSETTING		},
+	{"設定読込"		, SW_LOADSETTING		},
+	{"CONVERT"		, SW_CONVERT			},
+	{"変換処理"		, SW_CONVERT			},
+	{"SETFILENAME"	, SW_SETFILENAME		},
+	{"ファイル名"	, SW_SETFILENAME		},
+	{";"			, SW_COMMENT			},
 	{"SCREEN"		, SW_SCREEN			},
 	{"画面モード"	, SW_SCREEN			},
-	{"MSG"			, SW_MESSAGE		},
-	{"メッセージ"	, SW_MESSAGE		},
-	{"SETFLAG"		, SW_SETFLAG		},
-	{"フラグ"		, SW_SETFLAG		},
-	{"SETTING"		, SW_SETTING		},
-	{"設定画面表示"	, SW_SETTING		},
-	{"PALETTE"		, SW_PALETTE		},
-	{"パレット"		, SW_PALETTE		},
-	{"PALMODE"		, SW_PALMODE		},
-	{"パレット動作"	, SW_PALMODE		},
+	{"MSG"			, SW_MESSAGE			},
+	{"メッセージ"	, SW_MESSAGE			},
+	{"SETFLAG"		, SW_SETFLAG			},
+	{"フラグ"		, SW_SETFLAG			},
+	{"SETTING"		, SW_SETTING			},
+	{"設定画面表示"	, SW_SETTING			},
+	{"PALETTE"		, SW_PALETTE			},
+	{"パレット"		, SW_PALETTE			},
+	{"PALMODE"		, SW_PALMODE			},
+	{"パレット動作"	, SW_PALMODE			},
 	{"CUTERR"		, SW_CUTERR			},
 	{"切り捨て誤差"	, SW_CUTERR			},
-	{"GOSAVAL"		, SW_GOSAVAL		},
-	{"誤差拡散係数"	, SW_GOSAVAL		},
+	{"GOSAVAL"		, SW_GOSAVAL			},
+	{"誤差拡散係数"	, SW_GOSAVAL			},
 	{"SELCOLMODE"	, SW_SELCOL			},
 	{"選色モード"	, SW_SELCOL			},
 	{"DITHERADD"	, SW_DTHADD			},
@@ -170,22 +170,22 @@ static SCRWORD scrword[]={
 
 // フラグ名
 static SCRWORD flgword[]={
-	{"誤差拡散"			,OFFSET( SETTING,Gosa		)},		// 誤差拡散 する:true / しない:false
-	{"GOSA"				,OFFSET( SETTING,Gosa		)},		// 誤差拡散 する:true / しない:false
-	{"インターレース"	,OFFSET( SETTING,Inter		)},		// インターレース する:true / しない:false
-	{"INTERACE"			,OFFSET( SETTING,Inter		)},		// インターレース する:true / しない:false
-	{"固定パレット"		,OFFSET( SETTING,Pal		)},		// 固定パレット する:true / しない:false
-	{"PALNOCHG"			,OFFSET( SETTING,Pal		)},		// 固定パレット する:true / しない:false
-	{"サイズ調節"		,OFFSET( SETTING,Resize		)},		// サイズ調節
-	{"RESIZE"			,OFFSET( SETTING,Resize		)},		// サイズ調節
-	{"自動ファイル名"	,OFFSET( SETTING,AutoName	)},		// 自動ファイル名決定
-	{"AUTONAME"			,OFFSET( SETTING,AutoName	)},		// 自動ファイル名決定
-	{"色差再計算"		,OFFSET( SETTING,JKrc		)},		// 色差情報の再計算
-	{"COLORRECALC"		,OFFSET( SETTING,JKrc		)},		// 色差情報の再計算
-	{"ゼロ使用不可"		,OFFSET( SETTING,NonZero	)},		// ０番の色を使わない
-	{"ZERONOUSE"		,OFFSET( SETTING,NonZero	)},		// ０番の色を使わない
-	{"タイル"			,OFFSET( SETTING,Tile		)},		// 網がけタイルを使う
-	{"TILE"				,OFFSET( SETTING,Tile		)},		// 網がけタイルを使う
+	{"誤差拡散"			,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
+	{"GOSA"				,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
+	{"インターレース"	,OFFSET( SETTING, Inter						)},		// インターレース する:true / しない:false
+	{"INTERACE"			,OFFSET( SETTING, Inter						)},		// インターレース する:true / しない:false
+	{"固定パレット"		,OFFSET( SETTING, Pal						)},		// 固定パレット する:true / しない:false
+	{"PALNOCHG"			,OFFSET( SETTING, Pal						)},		// 固定パレット する:true / しない:false
+	{"サイズ調節"		,OFFSET( SETTING, Resize					)},		// サイズ調節
+	{"RESIZE"			,OFFSET( SETTING, Resize					)},		// サイズ調節
+	{"自動ファイル名"	,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
+	{"AUTONAME"			,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
+	{"色差再計算"		,OFFSET( SETTING, JKrc						)},		// 色差情報の再計算
+	{"COLORRECALC"		,OFFSET( SETTING, JKrc						)},		// 色差情報の再計算
+	{"ゼロ使用不可"		,OFFSET( SETTING, NonZero					)},		// ０番の色を使わない
+	{"ZERONOUSE"		,OFFSET( SETTING, NonZero					)},		// ０番の色を使わない
+	{"タイル"			,OFFSET( SETTING, Tile						)},		// 網がけタイルを使う
+	{"TILE"				,OFFSET( SETTING, Tile						)},		// 網がけタイルを使う
 };
 
 // フラグ値
@@ -1149,7 +1149,7 @@ bool scrGosaVal( const char *szText,int *ptr )
 		MessageBox( NULL,cszGosaVal,MsgCap,MB_OK | MB_ICONWARNING );
 		return false;
 	}
-	scrset.Gosaval = (float)r/1000.0f;
+	scrset.diffusion_error_coef = (float)r/1000.0f;
 	return true;
 }
 

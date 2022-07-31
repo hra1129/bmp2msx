@@ -1045,4 +1045,3 @@ void SetSliderRange( HWND hWnd, short int max, short int min ){
 void SetSliderValue( HWND hWnd, short int val ){
 	SendMessage( hWnd, TBM_SETPOS, TRUE, (LONG)val );
 }
-

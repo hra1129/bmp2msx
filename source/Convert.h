@@ -33,10 +33,10 @@ typedef struct {
 typedef struct {
 	uint		Mode;		// 変換先モード MD_SC??
 	uint		err;		// この値より小さい誤差は無視する
-	bool		Gosa;		// 誤差拡散 する:true / しない:false
+	bool		diffusion_error_enable;		// 誤差拡散 する:true / しない:false
 	bool		Inter;		// インターレース する:true / しない:false
 	uint		SelCol;		// 色選択モード 0:分散選択 / 1:多分布選択
-	float		Gosaval;	// 誤差拡散係数 ( 0.000～0.500 )
+	float		diffusion_error_coef;	// 誤差拡散係数 ( 0.000～0.500 )
 	bool		Pal;		// 固定パレット する:true / しない:false
 	bool		Resize;		// サイズ調節
 	PAL			Col[16];	// SC5/SC7 におけるＭＳＸ側パレット指定
@@ -62,7 +62,7 @@ typedef struct {
 	int			Resample;	// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
 	int			SizeMode;	// ｻｲｽﾞ調整ﾓｰﾄﾞ
 	COLORREF	FCColor;	// 背景色
-	float		GosaRatio;	// 誤差拡散 X-Y比
+	float		diffusion_error_x_weight;	// 誤差拡散 X-Y比
 } SETTING;
 
 // 画面モード
@@ -188,6 +188,9 @@ enum {
 	RM_MSX,				//	ＭＳＸ実機表示で縦横比が崩れないように調整
 };
 
+//	値の上限下限に従って値をクリップする
+int range_limiter( int n, int min, int max );
+
 //	RGB値からテーブルインデックスに変換
 int convert_rgb_to_palette( const int *p_convert_table, int n, int v );
 
@@ -222,7 +225,7 @@ bool cnvGetPaletteS8( COLORREF *pal );
 int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode );
 
 //	プレビュー作成（逆変換）
-void DrawScreen( const unsigned char *bmp,HDC hDC,const SETTING *Mode );
+void draw_screen( const unsigned char *bmp,HDC hDC,const SETTING *Mode );
 
 //	パレットのソート
 void cnvSortPalette( SETTING* Mode, COLORREF* Pal );
@@ -260,5 +263,8 @@ extern int convert3to255_s8b[ 4 ];
 extern int convert31to255_s12r[ 32 ];
 extern int convert31to255_s12g[ 32 ];
 extern int convert31to255_s12b[ 32 ];
+
+//	SCREEN2 のカラーテーブルアドレス
+#define	SC2COLOR	0x2000
 
 #endif	// ndef _CONVERTER_H_

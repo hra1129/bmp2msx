@@ -205,6 +205,7 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
     </ClCompile>
+    <ClCompile Include="winConvert.cpp" />
     <ClCompile Include="winuty.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -237,6 +238,7 @@
     <ClInclude Include="typeuty.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="Ver.h" />
+    <ClInclude Include="winConvert.h" />
     <ClInclude Include="winEvent.h" />
     <ClInclude Include="winuty.h" />
   </ItemGroup>

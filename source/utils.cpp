@@ -457,9 +457,9 @@ void GetDefCfg( SETTING *Mode )
 	memset( Mode,0,sizeof( SETTING ) );
 	memcpy( Mode->Col,msx1_palette,sizeof(PAL)*16 );
 	Mode->Mode = MD_SC5;			// SCREEN5
-	Mode->Gosaval = 0.43f;			// Œë·ŠgŽUŒW” 0.430
+	Mode->diffusion_error_coef = 0.43f;			// Œë·ŠgŽUŒW” 0.430
 	Mode->err = 0;					// Ø‚èŽÌ‚ÄŒë· 0
-	Mode->Gosa = true;				// Œë·ŠgŽU ON
+	Mode->diffusion_error_enable = true;				// Œë·ŠgŽU ON
 	Mode->Pal = false;				// ŒÅ’èƒpƒŒƒbƒg –¢Žg—p
 	Mode->Inter = false;			// ƒCƒ“ƒ^[ƒŒ[ƒX –¢Žg—p
 	Mode->Resize = false;			// ƒTƒCƒY’²ß –¢Žg—p
@@ -478,7 +478,7 @@ void GetDefCfg( SETTING *Mode )
 	Mode->Tile = false;				// ƒ^ƒCƒ‹
 	Mode->bDefault = false;			// í‚ÉƒfƒtƒHƒ‹ƒgƒRƒs[
 	Mode->CnvMode = CM_LAST;		// ÅI•ÏŠ·Ý’è‚ðÌ—p
-	Mode->GosaRatio = 0.5;			// Œë·ŠgŽU X-Y”ä
+	Mode->diffusion_error_x_weight = 0.5;			// Œë·ŠgŽU X-Y”ä
 }
 
 // -------------------------------------------------------------
@@ -516,10 +516,10 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	Mode->ErrAdd		= Mode->ErrAdd % EADD_MAX;
 	Mode->FourceZero	= Mode->FourceZero % FZ_MAX;
 	if( Mode->err > 255 ) Mode->err = 255;
-	if( Mode->Gosaval < 0.0f ) Mode->Gosaval = 0.0f;
-	if( Mode->Gosaval > 0.5f ) Mode->Gosaval = 0.5f;
-	if( Mode->GosaRatio < 0.0f ) Mode->GosaRatio = 0.0f;
-	if( Mode->GosaRatio > 1.0f ) Mode->GosaRatio = 1.0f;
+	if( Mode->diffusion_error_coef < 0.0f ) Mode->diffusion_error_coef = 0.0f;
+	if( Mode->diffusion_error_coef > 0.5f ) Mode->diffusion_error_coef = 0.5f;
+	if( Mode->diffusion_error_x_weight < 0.0f ) Mode->diffusion_error_x_weight = 0.0f;
+	if( Mode->diffusion_error_x_weight > 1.0f ) Mode->diffusion_error_x_weight = 1.0f;
 	if( Mode->Mode == MD_SC2 || Mode->Mode == MD_SC3 ) {
 		Mode->Inter = false;
 	}
