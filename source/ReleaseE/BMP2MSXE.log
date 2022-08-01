@@ -1,17 +1,24 @@
-﻿  Convert.cpp
+﻿  bsave.cpp
+  calc.cpp
+  Convert.cpp
+  fileuty.cpp
+  main.cpp
+  PlugProc.cpp
   PreView.cpp
+  ProgProc.cpp
   ScriptProc.cpp
   Setting.cpp
   SpitProc.cpp
-  WndProc.cpp
-  bsave.cpp
+  splug.cpp
+  SubProc.cpp
   utils.cpp
+  Ver.cpp
   winuty.cpp
+  WndProc.cpp
   CalibrationProc.cpp
   winConvert.cpp
   コード生成しています。
-  26 of 311 functions ( 8.4%) were compiled, the rest were copied from previous compilation.
-    15 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
+  Previous IPDB not found, fall back to full compilation.
+  All 311 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   コード生成が終了しました。
   BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\bmp2msx\source\ReleaseE\BMP2MSXE.exe

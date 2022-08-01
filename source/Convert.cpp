@@ -1011,7 +1011,7 @@ l_exit:
 //	1.	日本語名
 //		SCREEN5 イメージを SCREEN2/4 イメージへ変換する
 //	2.	引数
-//		out		...	VRAMイメージ
+//		p_image	...	VRAMイメージ
 //		prog	...	経過表示関数
 //	3.	返値
 //		true	...	成功
@@ -1019,7 +1019,7 @@ l_exit:
 //	4.	備考
 //		インターレースモードは使えない
 // -------------------------------------------------------------
-static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
+static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, COLORREF *pal )
 {
 	int	x, y, i, j, adr, dadr;
 	int	cc, c, p;
@@ -1031,13 +1031,13 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 	memset( vram, 0, sizeof( vram ) );
 
 	adr  = 0;
-	for( y = 0; y < 192; ++y ) {
-		for( x = 0; x < 32; ++x ) {
-			//	８ドットペアの中で最も多く使われている２色を選ぶ
+	for( y = 0; y < 192; y++ ) {
+		for( x = 0; x < 32; x++ ) {
+			//	８ドット組の中で使われている色を調べる： cnt = 色数
 			cnt  = 0;
 			idx1 = 0;							//	最も多い色のインデックス
-			for( j = 0; j < 8; ++j ) {			//	8ドットなめる
-				cc = out[ adr + j/2 ];
+			for( j = 0; j < 8; j++ ) {			//	8ドットなめる
+				cc = p_image[ adr + j / 2 ];
 				if( j & 1 ) {
 					cc = cc & 0x0F;
 				} else {
@@ -1045,7 +1045,7 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 				}
 				for( i = 0; i < cnt; ++i ) {	//	同じ色を検索
 					if( cc == ccol[ i ] ) {
-						++ccnt[ i ];			//		見つけた色の数を増加
+						ccnt[ i ]++;			//		見つけた色の数を増加
 						if( ccnt[ i ] > ccnt[ idx1 ] ) {	//	最も多い
 							idx1 = i;
 						}
@@ -1055,7 +1055,7 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 				if( i == cnt ) {				//	新しい色
 					ccol[ cnt ] = cc;			//		見つけた色
 					ccnt[ cnt ] = 1;			//		見つけた色の数
-					++cnt;
+					cnt++;
 				}
 			}
 
@@ -1082,8 +1082,8 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 				c = ( ccol[ idx1 ] << 4 ) | ccol[ idx2 ];
 				p = 0;
 				c2= pal[ ccol[ idx2 ] ];
-				for( j = 0; j < 8; ++j ) {
-					cc = out[ adr + j/2 ];
+				for( j = 0; j < 8; j++ ) {
+					cc = p_image[ adr + j / 2 ];
 					if( j & 1 ) {
 						cc = cc & 0x0F;
 					} else {
@@ -1108,7 +1108,7 @@ static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal )
 		}
 	}
 
-	memcpy( out, vram, sizeof( vram ) );
+	memcpy( p_image, vram, sizeof( vram ) );
 	return true;
 }
 
