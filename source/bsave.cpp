@@ -14,6 +14,16 @@
 static const char* smode="235678AC5678AC";			// ファイル名の最後につける記号
 
 // -------------------------------------------------------------
+// 保存用クラス
+// -------------------------------------------------------------
+class C_BSAVE {
+private:
+	uint32_t	mode;
+	bool	interlace;
+	uint32_t	palette_mode;
+};
+
+// -------------------------------------------------------------
 // プロトタイプ宣言
 // -------------------------------------------------------------
 static int _SaveHeader( FU_FILE *hf, int mode, int width, int height, int paltbl );
@@ -21,7 +31,7 @@ static int _SaveBodyS2( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SaveBodyS3( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int pitch, int *outadr );
 static int _SaveColorS2( FU_FILE *hf, const byte* ptr, int *outadr );
-static int _SavePaletteTable( FU_FILE *hf, int paltbl, PAL *pal, int *outadr );
+static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outadr );
 static void _GetOutFilename( char* szOutFile, const char* szInFile, int nScrMode, int nInter, bool pal );
 static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode );
 
@@ -45,8 +55,8 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 	int				save_width, save_height, interc, outadr, pitch;
 	byte*			ptr;
 	FU_FILE			*hf;
-	int				paltbl	= PalTblAdr[ Mode->Mode ];
-	bool			inter	= Mode->Inter;
+	int				paltbl	= PalTblAdr[ Mode->mode ];
+	bool			inter	= Mode->interlace;
 	int				ecode	= 0;
 #ifdef _ENGLISH
 	const char		*szTitle[]={
@@ -62,7 +72,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 					};
 #endif
 
-	switch( Mode->Mode ){
+	switch( Mode->mode ){
 	case MD_SC5:
 	case MD_SC7:
 		save_width = width >> 1;
@@ -101,7 +111,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		//	ファイル名
 		hf = FU_INVALID_HANDLE;
 		if( Mode->AutoName ){	//	自動決定の場合
-			_GetOutFilename( szFileName, szInFileName, Mode->Mode, interc - 1 + ( inter ? 1 : 0 ), ( Mode->PltMode == PLT_BSAVE ) );
+			_GetOutFilename( szFileName, szInFileName, Mode->mode, interc - 1 + ( inter ? 1 : 0 ), ( Mode->PltMode == PLT_BSAVE ) );
 		}else{					//	手動決定の場合
 			if( !GetName( hWnd, szFileName, MAX_PATH, szTitle[ interc - 1 + ( inter ? 1 : 0 ) ], cszDefExp, NULL ) ){
 				break;
@@ -117,14 +127,14 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 
 		//	ヘッダ
 		if( Mode->PltMode == PLT_BSAVE ) {
-			ecode = _SaveHeader( hf, Mode->Mode, save_width, save_height, paltbl );
+			ecode = _SaveHeader( hf, Mode->mode, save_width, save_height, paltbl );
 		} else {
-			ecode = _SaveHeader( hf, Mode->Mode, save_width, save_height, 0 );
+			ecode = _SaveHeader( hf, Mode->mode, save_width, save_height, 0 );
 		}
 		if( ecode != BSV_NOERR ) break;
 
 		// ピクセルの保存
-		switch( Mode->Mode ) {
+		switch( Mode->mode ) {
 		case MD_SC2:	//	SCREEN 2
 			ecode = _SaveBodyS2( hf, ptr, &outadr );
 			break;
@@ -137,13 +147,13 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		if( ecode != BSV_NOERR ) break;
 		
 		// パレットテーブルが有れば保存する
-		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->Mode < MD_SC5_256L ){
+		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->mode < MD_SC5_256L ){
 			ecode = _SavePaletteTable( hf, paltbl, Mode->Col, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
 
 		//	カラーテーブル( SCREEN 2/4 )
-		if( Mode->Mode == MD_SC2 ) {
+		if( Mode->mode == MD_SC2 ) {
 			ecode = _SaveColorS2( hf, ptr, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
@@ -309,7 +319,7 @@ static int _SaveColorS2( FU_FILE *hf, const byte* ptr, int *outadr ) {
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static int _SavePaletteTable( FU_FILE *hf, int paltbl, PAL *pal, int *outadr ) {
+static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outadr ) {
 	int		i;
 	byte	dmy[] = { 0, 0 };
 
@@ -533,7 +543,7 @@ static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 
 	// データを出力する
 	fu_write( hf, cszCSVHead, lstrlen(cszCSVHead) );
-	palnum = ( Mode->Mode == MD_SC6 || Mode->Mode == MD_SC6_256L ) ? 4 : 16;
+	palnum = ( Mode->mode == MD_SC6 || Mode->mode == MD_SC6_256L ) ? 4 : 16;
 	for( i = 0; i < palnum; ++i ){
 		Buf[ 0 ] = (Mode->Col[i].red<<4) | Mode->Col[i].blue;
 		Buf[ 1 ] =  Mode->Col[i].green;

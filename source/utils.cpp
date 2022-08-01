@@ -10,7 +10,7 @@
 extern HINSTANCE hIns;
 
 // MSX1の色に似せたパレット値  { G, R, B }
-static const PAL msx1_palette[]={
+static const C_PALETTE msx1_palette[]={
 	{ 0, 0, 0 },
 	{ 0, 0, 0 },
 	{ 5, 3, 3 },
@@ -30,7 +30,7 @@ static const PAL msx1_palette[]={
 };
 
 // MSX2デフォルトパレット（MSX2電源投入時パレット値）
-static const PAL msx2_palette[] = {
+static const C_PALETTE msx2_palette[] = {
 	{ 0, 0, 0 },
 	{ 0, 0, 0 },
 	{ 6, 1, 1 },
@@ -423,9 +423,9 @@ bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void set_msx1_palette( PAL *pal )
+void set_msx1_palette( C_PALETTE *pal )
 {
-	memcpy( pal, msx1_palette, sizeof(PAL)*16 );
+	memcpy( pal, msx1_palette, sizeof(C_PALETTE)*16 );
 }
 
 // -------------------------------------------------------------
@@ -438,8 +438,8 @@ void set_msx1_palette( PAL *pal )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void set_msx2_palette( PAL *pal ){
-	memcpy( pal, msx2_palette, sizeof( PAL ) * 16 );
+void set_msx2_palette( C_PALETTE *pal ){
+	memcpy( pal, msx2_palette, sizeof( C_PALETTE ) * 16 );
 }
 
 // -------------------------------------------------------------
@@ -455,14 +455,14 @@ void set_msx2_palette( PAL *pal ){
 void GetDefCfg( SETTING *Mode )
 {
 	memset( Mode,0,sizeof( SETTING ) );
-	memcpy( Mode->Col,msx1_palette,sizeof(PAL)*16 );
-	Mode->Mode = MD_SC5;			// SCREEN5
+	memcpy( Mode->Col,msx1_palette,sizeof(C_PALETTE)*16 );
+	Mode->mode = MD_SC5;			// SCREEN5
 	Mode->diffusion_error_coef = 0.43f;			// 誤差拡散係数 0.430
 	Mode->err = 0;					// 切り捨て誤差 0
 	Mode->diffusion_error_enable = true;				// 誤差拡散 ON
-	Mode->Pal = false;				// 固定パレット 未使用
-	Mode->Inter = false;			// インターレース 未使用
-	Mode->Resize = false;			// サイズ調節 未使用
+	Mode->fixed_palette = false;				// 固定パレット 未使用
+	Mode->interlace = false;			// インターレース 未使用
+	Mode->resize_enable = false;			// サイズ調節 未使用
 	Mode->SelCol = 0;				// 色選択モード
 	Mode->PltMode = PLT_BSAVE;		// ﾊﾟﾚｯﾄ出力ﾓｰﾄﾞ BSAVE に結合
 	Mode->AutoName = true;			// 自動ファイル名決定
@@ -510,7 +510,7 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	Mode->ErrAlgo		= Mode->ErrAlgo % EALGO_MAX;
 	Mode->AlgoMode		= Mode->AlgoMode % ALGO_MAX;
 	Mode->SelCol		= Mode->SelCol % SELCOL_MAX;
-	Mode->Mode			= Mode->Mode % MD_MAX;
+	Mode->mode			= Mode->mode % MD_MAX;
 	Mode->PltMode		= Mode->PltMode % PLT_MAX;
 	Mode->Seido			= Mode->Seido % SEIDO_MAX;
 	Mode->ErrAdd		= Mode->ErrAdd % EADD_MAX;
@@ -520,8 +520,8 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	if( Mode->diffusion_error_coef > 0.5f ) Mode->diffusion_error_coef = 0.5f;
 	if( Mode->diffusion_error_x_weight < 0.0f ) Mode->diffusion_error_x_weight = 0.0f;
 	if( Mode->diffusion_error_x_weight > 1.0f ) Mode->diffusion_error_x_weight = 1.0f;
-	if( Mode->Mode == MD_SC2 || Mode->Mode == MD_SC3 ) {
-		Mode->Inter = false;
+	if( Mode->mode == MD_SC2 || Mode->mode == MD_SC3 ) {
+		Mode->interlace = false;
 	}
 
 	return true;

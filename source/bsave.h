@@ -43,8 +43,8 @@ enum {
 	BSV_ERR_WRITE,
 };
 
-int bsvSaveBmp( HWND hWnd,const char *szInFileName,LPBYTE bmp,int width,int height,SETTING *Mode );
+int bsvSaveBmp( HWND hWnd, const char *szInFileName, LPBYTE bmp, int width, int height, SETTING *Mode );
 void bsvSavePLFile( HWND hWnd, const char *szFileName, SETTING *Mode );
-void bsvLoadPLBsaveFile( SETTING *mode, const char* szFileName );
+void bsvLoadPLBsaveFile( SETTING *mode, const char *szFileName );
 
 #endif	// _BSAVE_H_

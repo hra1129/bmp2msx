@@ -172,12 +172,12 @@ static SCRWORD scrword[]={
 static SCRWORD flgword[]={
 	{"誤差拡散"			,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
 	{"GOSA"				,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
-	{"インターレース"	,OFFSET( SETTING, Inter						)},		// インターレース する:true / しない:false
-	{"INTERACE"			,OFFSET( SETTING, Inter						)},		// インターレース する:true / しない:false
-	{"固定パレット"		,OFFSET( SETTING, Pal						)},		// 固定パレット する:true / しない:false
-	{"PALNOCHG"			,OFFSET( SETTING, Pal						)},		// 固定パレット する:true / しない:false
-	{"サイズ調節"		,OFFSET( SETTING, Resize					)},		// サイズ調節
-	{"RESIZE"			,OFFSET( SETTING, Resize					)},		// サイズ調節
+	{"インターレース"	,OFFSET( SETTING, interlace					)},		// インターレース する:true / しない:false
+	{"INTERACE"			,OFFSET( SETTING, interlace					)},		// インターレース する:true / しない:false
+	{"固定パレット"		,OFFSET( SETTING, fixed_palette				)},		// 固定パレット する:true / しない:false
+	{"PALNOCHG"			,OFFSET( SETTING, fixed_palette				)},		// 固定パレット する:true / しない:false
+	{"サイズ調節"		,OFFSET( SETTING, resize_enable					)},		// サイズ調節
+	{"RESIZE"			,OFFSET( SETTING, resize_enable					)},		// サイズ調節
 	{"自動ファイル名"	,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
 	{"AUTONAME"			,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
 	{"色差再計算"		,OFFSET( SETTING, JKrc						)},		// 色差情報の再計算
@@ -905,7 +905,7 @@ bool scrScreen( const char *szText,int *ptr )
 		MessageBox( NULL,cszScrMode,MsgCap,MB_OK | MB_ICONWARNING );
 		return false;
 	}
-	scrset.Mode = m;
+	scrset.mode = m;
 	return true;
 }
 

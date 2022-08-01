@@ -7,66 +7,25 @@
 #define	_CONVERTER_H_
 
 #include <windows.h>
+#include <cstdint>
 
 typedef bool ( *PROGRESS )( int );		// 経過表示用コールバック関数型
-typedef unsigned int uint;
-typedef unsigned char uchar;
 
-typedef struct {
-	int		w;			// 幅
-	int		h;			// 高さ
-} SSIZE;
-
-typedef struct {
+struct C_PALETTE {
 	int		green;		// 緑
 	int		red;		// 赤
 	int		blue;		// 青
-} PAL;
+};
 
-typedef struct {
+struct C_TILE_PATTERN {
 	COLORREF	c;		// 色
 	int			p[2];	// タイルに使われるパレットの番号
-} TAILPAT;
+};
 
 #define TAILMAX	1575	// タイル生成最大数
 
-typedef struct {
-	uint		Mode;		// 変換先モード MD_SC??
-	uint		err;		// この値より小さい誤差は無視する
-	bool		diffusion_error_enable;		// 誤差拡散 する:true / しない:false
-	bool		Inter;		// インターレース する:true / しない:false
-	uint		SelCol;		// 色選択モード 0:分散選択 / 1:多分布選択
-	float		diffusion_error_coef;	// 誤差拡散係数 ( 0.000～0.500 )
-	bool		Pal;		// 固定パレット する:true / しない:false
-	bool		Resize;		// サイズ調節
-	PAL			Col[16];	// SC5/SC7 におけるＭＳＸ側パレット指定
-	uint		PltMode;	// パレット出力モード
-	bool		AutoName;	// 自動ファイル名決定
-	uint		AlgoMode;	// 自然画生成アルゴリズム番号
-	bool		JKrc;		// 色差情報の再計算
-	uint		ErrAlgo;	// ディザパターン
-	uint		PreView;	// 1 ファイルのみ出力,2 プレビューのみ出力,3 ファイルとプレビュー出力
-	uchar		PalEn[16];	// 2 パレット使用許可(固定) / 1 パレット使用未許可 / 0 パレット使用許可(自動)
-	uint		Seido;		// 色再現精度
-	uint		ErrAdd;		// ディザ加算方法
-	bool		NonZero;	// ０番の色を使わない
-	uint		FourceZero;	// 強制ゼロ化
-	COLORREF	FZColor;	// 強制ゼロ化する色
-	uint		FZX;		// 強制ゼロ化Ｘ座標
-	uint		FZY;		// 強制ゼロ化Ｙ座標
-	bool		Tile;		// 網がけタイルを使う
-	int			SortMode;	// ﾊﾟﾚｯﾄのｿｰﾄ方法
-	bool		bDefault;	// 常に再変換をﾃﾞﾌｫ化
-	int			CnvMode;	// 変換設定
-	bool		b192;		// 192ラインモード
-	int			Resample;	// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
-	int			SizeMode;	// ｻｲｽﾞ調整ﾓｰﾄﾞ
-	COLORREF	FCColor;	// 背景色
-	float		diffusion_error_x_weight;	// 誤差拡散 X-Y比
-} SETTING;
-
 // 画面モード
-enum {
+enum{
 	MD_SC2,				// SCREEN 2
 	MD_SC3,				// SCREEN 3
 	MD_SC5,				// SCREEN 5
@@ -85,15 +44,15 @@ enum {
 };
 
 // パレット決定アルゴリズム
-enum {
-	SELCOL_BUNSAN=0,	// 分散選択
+enum{
+	SELCOL_BUNSAN = 0,	// 分散選択
 	SELCOL_TABUNPU,		// 多分布選択
 	SELCOL_MAX,
 };
 
 // パレット出力モード
-enum {
-	PLT_NONE=0,			// 出力しない
+enum{
+	PLT_NONE = 0,			// 出力しない
 	PLT_BSAVE,			// 画像に内蔵
 	PLT_PL,				// *.PL? 形式
 	PLT_CSV,			// CSV形式
@@ -102,7 +61,7 @@ enum {
 };
 
 // 自然画生成アルゴリズム
-enum {
+enum{
 	ALGO_NONE,			// 無し
 	ALGO_RECALC,		// 逆算による誤差訂正（輝度再現優先）
 	ALGO_POWERFUL,		// パワフル活用法のレイトレーシング法に使われていた式
@@ -112,7 +71,7 @@ enum {
 };
 
 // ディザ
-enum {
+enum{
 	EALGO_NONE,			// 無し
 	EALGO_DITH1,		// ディザ１
 	EALGO_DITH2,		// ディザ２
@@ -126,7 +85,7 @@ enum {
 };
 
 // ディザ加算方法
-enum {
+enum{
 	EADD_ROTATE,		// 回転
 	EADD_NONE,			// 同位相
 	EADD_X,				// Ｘずらし
@@ -135,7 +94,7 @@ enum {
 };
 
 // 色再現精度
-enum {
+enum{
 	SEIDO_24,			// 24bit(0bit捨て)
 	SEIDO_21,			// 21bit(1bit捨て)
 	SEIDO_18,			// 18bit(2bit捨て)
@@ -145,7 +104,7 @@ enum {
 };
 
 // パレット使用許可
-enum {
+enum{
 	PALEN_AUTO,			// パレット使用許可（自動）
 	PALEN_NONE,			// パレット使用無許可
 	PALEN_USE,			// パレット使用許可（固定）
@@ -153,7 +112,7 @@ enum {
 };
 
 // 強制ゼロ化
-enum {
+enum{
 	FZ_NONE,			// 使わない
 	FZ_COLOR,			// 指定色
 	FZ_MATRIX,			// 指定座標の色
@@ -161,7 +120,7 @@ enum {
 };
 
 //	ソート
-enum {
+enum{
 	SM_IGNORE,			//	ソートしない
 	SM_INCAUTO,			//	自動決定のみ昇順
 	SM_DECAUTO,			//	自動決定のみ降順
@@ -170,22 +129,57 @@ enum {
 };
 
 //	変換設定
-enum {
+enum{
 	CM_DEFAULT,			//	デフォルト設定
 	CM_LAST,			//	最終変換の設定
 	CM_IMAGE,			//	表示画像の変換設定
 };
 
 //	サイズ調節
-enum {
+enum{
 	RS_NORMAL,			//	単純調節
 	RS_ANTIALIAS,		//	アンチエイリアス付き調節
 };
 
 //	アスペクト比
-enum {
+enum{
 	RM_FORCE,			//	強制的に出力サイズ
 	RM_MSX,				//	ＭＳＸ実機表示で縦横比が崩れないように調整
+};
+
+struct SETTING {
+	uint32_t		mode;						// 変換先モード MD_SC??
+	uint32_t		err;						// この値より小さい誤差は無視する
+	bool			diffusion_error_enable;		// 誤差拡散 する:true / しない:false
+	bool			interlace;					// インターレース する:true / しない:false
+	uint32_t		SelCol;						// 色選択モード 0:分散選択 / 1:多分布選択
+	float			diffusion_error_coef;		// 誤差拡散係数 ( 0.000～0.500 )
+	bool			fixed_palette;				// 固定パレット する:true / しない:false
+	bool			resize_enable;				// サイズ調節
+	C_PALETTE		Col[16];					// SC5/SC7 におけるＭＳＸ側パレット指定
+	uint32_t		PltMode;					// パレット出力モード
+	bool			AutoName;					// 自動ファイル名決定
+	uint32_t		AlgoMode;					// 自然画生成アルゴリズム番号
+	bool			JKrc;						// 色差情報の再計算
+	uint32_t		ErrAlgo;					// ディザパターン
+	uint32_t		PreView;					// 1 ファイルのみ出力,2 プレビューのみ出力,3 ファイルとプレビュー出力
+	uint8_t			PalEn[16];					// 2 パレット使用許可(固定) / 1 パレット使用未許可 / 0 パレット使用許可(自動)
+	uint32_t		Seido;						// 色再現精度
+	uint32_t		ErrAdd;						// ディザ加算方法
+	bool			NonZero;					// ０番の色を使わない
+	uint32_t		FourceZero;					// 強制ゼロ化
+	COLORREF		FZColor;					// 強制ゼロ化する色
+	uint32_t		FZX;						// 強制ゼロ化Ｘ座標
+	uint32_t		FZY;						// 強制ゼロ化Ｙ座標
+	bool			Tile;						// 網がけタイルを使う
+	int				SortMode;					// ﾊﾟﾚｯﾄのｿｰﾄ方法
+	bool			bDefault;					// 常に再変換をﾃﾞﾌｫ化
+	int				CnvMode;					// 変換設定
+	bool			b192;						// 192ラインモード
+	int				Resample;					// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
+	int				SizeMode;					// ｻｲｽﾞ調整ﾓｰﾄﾞ
+	COLORREF		FCColor;					// 背景色
+	float			diffusion_error_x_weight;	// 誤差拡散 X-Y比
 };
 
 //	値の上限下限に従って値をクリップする
@@ -208,7 +202,7 @@ bool cnvCopyInter(	COLORREF *in ,int inwidth ,int inheight ,
 
 //	減色処理
 bool cnvRecolor( COLORREF *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog,
-				 COLORREF *pal,TAILPAT *tail,int tailcnt );
+				 COLORREF *pal,C_TILE_PATTERN *tail,int tailcnt );
 
 //	減色処理（自然画コンバータ）
 bool cnvNtcolor( COLORREF *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog );
@@ -222,7 +216,7 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 bool cnvGetPaletteS8( COLORREF *pal );
 
 //	タイルパターン取得(SC5/SC7専用)
-int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode );
+int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int mode );
 
 //	プレビュー作成（逆変換）
 void draw_screen( const unsigned char *bmp,HDC hDC,const SETTING *Mode );

@@ -132,7 +132,7 @@ static void _draw_screen5( const unsigned char *bmp,HDC hDC,const SETTING *Mode 
 
 	for( y = 0; y < h; ++y ){
 		for( x = 0; x < 512; x += 4 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
+			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 128 + x / 4;
 			// 上位４ビット（左側）
 			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
@@ -172,7 +172,7 @@ static void _draw_screen6( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 
 	for( y = 0; y < h; ++y ){
 		for( x = 0; x < 512; x += 4 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
+			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 128 + x / 4;
 			// 上位２ビット（左側）
 			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].red ];
@@ -220,7 +220,7 @@ static void _draw_screen7( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 
 	for( y = 0; y < h; ++y ){
 		for( x = 0; x < 512; x += 2 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
+			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
 			// 上位４ビット（左側）
 			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
@@ -258,7 +258,7 @@ static void _draw_screen8( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 
 	for( y = 0; y < h; ++y ){
 		for( x = 0; x < 512; x += 2 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
+			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
 			r = convert7to255_s8r[(bmp[ adr ] & 0x1C) >> 2 ];
 			g = convert7to255_s8g[(bmp[ adr ] & 0xE0) >> 5 ];
@@ -291,7 +291,7 @@ static void _draw_screen12( const unsigned char *bmp, HDC hDC, const SETTING *Mo
 
 	for( y = 0; y < h; ++y ){
 		for( x = 0; x < 512; x += 8 ){
-			if( Mode->Inter ) adr = y; else adr = y / 2;
+			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
 			//	輝度成分の取得
 			for( z = 0; z < 4; ++z ){
@@ -334,7 +334,7 @@ void draw_screen( const unsigned char *bmp, HDC hDC, const SETTING *Mode ){
 
 	FillRect( hDC, &rc, (HBRUSH)GetStockObject( BLACK_BRUSH ) );
 
-	switch( Mode->Mode ){
+	switch( Mode->mode ){
 	case MD_SC2:
 		_draw_screen2( bmp, hDC, Mode );	return;
 	case MD_SC3:

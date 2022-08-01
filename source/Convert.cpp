@@ -185,14 +185,14 @@ static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
 
 static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal,int pp,
 							  bool FourceZero,COLORREF FZColor );
-static bool cnvCompare( PAL* Pal1, PAL* Pal2 );
+static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 );
 
 static bool cnvRecolor8( COLORREF *in,int width,int height,
 						unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-						TAILPAT *tail,int tailcnt );
+						C_TILE_PATTERN *tail,int tailcnt );
 static bool cnvRecolor5( COLORREF *in,int width,int height,
 						unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-						TAILPAT *tail,int tailcnt );
+						C_TILE_PATTERN *tail,int tailcnt );
 
 static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal );
 static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog );
@@ -633,11 +633,11 @@ static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int Er
 // -------------------------------------------------------------
 bool cnvRecolor( COLORREF *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-					TAILPAT *tail,int tailcnt )
+					C_TILE_PATTERN *tail,int tailcnt )
 {
 	bool	bRet;
 
-	if( CnvMode->Mode == MD_SC8 || CnvMode->Mode == MD_SC8_256L ) {
+	if( CnvMode->mode == MD_SC8 || CnvMode->mode == MD_SC8_256L ) {
 		//	256色ビットマップへ変換する
 		return cnvRecolor8( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 	} else {
@@ -645,7 +645,7 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 		bRet = cnvRecolor5( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 
 		//	特殊な画面（SC2/3/4) にあわせて変換する		
-		switch( CnvMode->Mode ) {
+		switch( CnvMode->mode ) {
 		case MD_SC2:
 			bRet = bRet && cnvSC5toSC2( out, prog, pal );
 			break;
@@ -676,7 +676,7 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 // -------------------------------------------------------------
 static bool cnvRecolor8( COLORREF *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS p_progress_cbr,COLORREF *pal,
-					TAILPAT *tail,int tailcnt ) {
+					C_TILE_PATTERN *tail,int tailcnt ) {
 	int				x, y, ptr, buffer_size;
 	int				cr, cg, cb;		// 元画素のＲＧＢ
 	int				er, eg, eb;		// 誤差（正数へ丸める）
@@ -848,7 +848,7 @@ l_exit:
 // -------------------------------------------------------------
 static bool cnvRecolor5( COLORREF *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
-					TAILPAT *tail,int tailcnt ) {
+					C_TILE_PATTERN *tail,int tailcnt ) {
 	int				x,y,z,d,ptr;
 	int				cr,cg,cb;		// 元画素のＲＧＢ
 	int				er,eg,eb;		// 誤差（正数へ丸める）
@@ -885,7 +885,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	bit_depth_mask = bit_depth_mask & (( bit_depth_mask << 8 ) | 0xFF ) & (( bit_depth_mask << 16 ) | 0xFFFF );
 
 	// パレット数
-	switch( CnvMode->Mode ){
+	switch( CnvMode->mode ){
 	case MD_SC6:
 	case MD_SC6_256L:
 		palnum = 4;		break;
@@ -1181,7 +1181,7 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 	int		algo	= CnvMode->AlgoMode;
 	bool	rc		= CnvMode->JKrc;
 	int		ealgo	= CnvMode->ErrAlgo;
-	bool	sc10	= ( CnvMode->Mode == MD_SC10 || CnvMode->Mode == MD_SC10_256L );
+	bool	sc10	= ( CnvMode->mode == MD_SC10 || CnvMode->mode == MD_SC10_256L );
 	int		zero	= CnvMode->FourceZero ? (sc10 ? 0x10 : 0x08) : 0;
 	bool	ret		= false;
 
@@ -1605,7 +1605,7 @@ static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode )
+int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int mode )
 {
 	int i, j, k, l;
 	int r,g,b;
@@ -1666,7 +1666,7 @@ int cnvCreateTail4( PAL *pal,uchar *palen,bool zeroen,TAILPAT *tail, int mode )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static bool cnvCompare( PAL* Pal1, PAL* Pal2 )
+static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 )
 {
 	int	i;
 	int	mask;
@@ -1698,14 +1698,14 @@ static bool cnvCompare( PAL* Pal1, PAL* Pal2 )
 // -------------------------------------------------------------
 void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 {
-	PAL			Col[16] = { 0 }, tBakCol;	// SC5/SC7 におけるＭＳＸ側パレット指定
-	uchar		PalEn[16] = { 0 }, tBakEn;
+	C_PALETTE			Col[16] = { 0 }, tBakCol;	// SC5/SC7 におけるＭＳＸ側パレット指定
+	uint8_t		PalEn[16] = { 0 }, tBakEn;
 	COLORREF	pal[16] = { 0 }, tBakPal;
 	int			cnt, z, x, pnum;
 
 	//	パレットをコピー
 	cnt  = 0;
-	pnum = ( Mode->Mode == MD_SC6 || Mode->Mode == MD_SC6_256L ) ? 4 : 16;
+	pnum = ( Mode->mode == MD_SC6 || Mode->mode == MD_SC6_256L ) ? 4 : 16;
 	for( z = 0; z < pnum; ++z ) {
 		if( z == 0 && Mode->NonZero ) continue;
 		switch( Mode->SortMode ) {

@@ -728,7 +728,7 @@ EVENT( onColLButtonDown )
 
 	// 指定している色番号を得る
 	c = (( ( pos.x * 8 ) / w ) & 7 ) + (( ( pos.y * 2 ) / h ) & 1 ) * 8;
-	if( (EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && (c > 3) ) return 0;
+	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (c > 3) ) return 0;
 	SetEditColor( GetParent( hWnd ), c, true );
 	InvalidateRect( hWnd, NULL, FALSE );
 
@@ -797,7 +797,7 @@ EVENT( onColLButtonUp )
 	// 選択色とカーソル位置の色を入れ替える
 	p = (( ( pos.x * 8 ) / w ) & 7 ) + (( ( pos.y * 2 ) / h ) & 1 ) * 8;
 	if( p < 0 || p > 15 ) goto skip;
-	if( (EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && (p > 3) ) goto skip;
+	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (p > 3) ) goto skip;
 	ChangeColor( NowCol, p );
 
 	//	選択の更新
@@ -954,8 +954,8 @@ EVENT( onSetFZY )
 // -------------------------------------------------------------
 EVENT( onSetOk )
 {
-	if( EdtMode.Mode == MD_SC2 || EdtMode.Mode == MD_SC3 ) {
-		EdtMode.Inter = false;
+	if( EdtMode.mode == MD_SC2 || EdtMode.mode == MD_SC3 ) {
+		EdtMode.interlace = false;
 	}
 
 	if( NowMode.bDefault ) {
@@ -1038,7 +1038,7 @@ EVENT( onSetEnRevs		)
 {
 	int i, j;
 
-	if( EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L ) {
+	if( EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L ) {
 		j = 4;
 	} else {
 		j = 16;
@@ -1337,7 +1337,7 @@ EVENT( onSetPalEnable )
 // -------------------------------------------------------------
 EVENT( onSetInter )
 {
-	EdtMode.Inter = !EdtMode.Inter;
+	EdtMode.interlace = !EdtMode.interlace;
 	return TRUE;
 }
 
@@ -1392,7 +1392,7 @@ EVENT( onSetJKrc )
 EVENT( onSetPal )
 {
 	int i;
-	EdtMode.Pal = !EdtMode.Pal;
+	EdtMode.fixed_palette = !EdtMode.fixed_palette;
 	for( i=0; i<16; ++i ){
 		UpdateColor( i );
 	}
@@ -1486,7 +1486,7 @@ EVENT( onSet192 )
 // -------------------------------------------------------------
 EVENT( onSetResize )
 {
-	EdtMode.Resize = !EdtMode.Resize;
+	EdtMode.resize_enable = !EdtMode.resize_enable;
 	SetCtlEnable( hWnd );
 	return TRUE;
 }
@@ -1620,7 +1620,7 @@ EVENT( onSetFZero )
 EVENT( onSetMode )
 {
 	if( HIWORD( wp ) != CBN_SELCHANGE ) return TRUE;
-	EdtMode.Mode = ComboBox_GetCurSel( GetDlgItem( hWnd, IDC_CMBSCREEN ) );
+	EdtMode.mode = ComboBox_GetCurSel( GetDlgItem( hWnd, IDC_CMBSCREEN ) );
 	// コントロールの ON/OFF
 	SetCtlEnable( hWnd );
 	return TRUE;
@@ -1791,10 +1791,10 @@ static void UpdateAll( HWND hWnd )
 	for( i = 0; i < 16; i++ ) UpdateColor( i );
 	// 出力モード
 	Button_SetCheck( GetDlgItem( hWnd, IDC_GOSA		), EdtMode.diffusion_error_enable		? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_INTER	), EdtMode.Inter	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL		), EdtMode.Pal		? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_INTER	), EdtMode.interlace	? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL		), EdtMode.fixed_palette		? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_SELCOL	), EdtMode.SelCol	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_RESIZE	), EdtMode.Resize	? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_RESIZE	), EdtMode.resize_enable	? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_AUTONAME	), EdtMode.AutoName	? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_JKRC		), EdtMode.JKrc		? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKZERO	), EdtMode.NonZero	? BST_CHECKED : BST_UNCHECKED );
@@ -1821,7 +1821,7 @@ static void UpdateAll( HWND hWnd )
 	SetEditColor( hWnd, 0, true );
 	InvalidateRect( hWnd, NULL, FALSE );
 	// コンボボックス
-	ComboBox_Init( hWnd, IDC_CMBSCREEN	,ScrModeName,	ELMCNT( ScrModeName ),	EdtMode.Mode );
+	ComboBox_Init( hWnd, IDC_CMBSCREEN	,ScrModeName,	ELMCNT( ScrModeName ),	EdtMode.mode );
 	ComboBox_Init( hWnd, IDC_CMBPLT		,PltMode,		PLT_COUNT,				EdtMode.PltMode );
 	ComboBox_Init( hWnd, IDC_CMBALGO		,AlgoName,		ELMCNT( AlgoName ),		EdtMode.AlgoMode );
 	ComboBox_Init( hWnd, IDC_CMBERR		,ErrAlgoName,	ELMCNT( ErrAlgoName ),	EdtMode.ErrAlgo );
@@ -1859,7 +1859,7 @@ static void UpdateColor( int c )
 	bool	bDisable;
 
 	//	SCREEN 6 対策
-	bDisable = ((EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && c > 3);
+	bDisable = ((EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && c > 3);
 
 	r.left		= w * (  c & 7 )	   / 8;
 	r.right		= w * (( c & 7 ) + 1 ) / 8;
@@ -1886,7 +1886,7 @@ static void UpdateColor( int c )
 			// 使用無許可の場合は斜線を入れる
 			DrawIcon( hMemDC, r.left, r.top, LoadIcon( wu_get_instance(), MAKEINTRESOURCE(IDI_NOUSE) ) );
 		}
-		if( EdtMode.PalEn[ c ] == PALEN_USE || EdtMode.Pal ){
+		if( EdtMode.PalEn[ c ] == PALEN_USE || EdtMode.fixed_palette ){
 			// 固定なら横線を入れる
 			DrawIcon( hMemDC, r.left, r.top, LoadIcon( wu_get_instance(), MAKEINTRESOURCE(IDI_HOLD) ) );
 		}
@@ -1919,7 +1919,7 @@ static void ChangeColor( int p1, int p2 )
 	int	t;
 
 	//	SCREEN6 対策
-	if( (EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && ((p1 > 3) || (p2 > 3)) ) return;
+	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && ((p1 > 3) || (p2 > 3)) ) return;
 
 	//	パレット値の交換
 	t = EdtMode.Col[ p1 ].red;		EdtMode.Col[ p1 ].red	= EdtMode.Col[ p2 ].red;	EdtMode.Col[ p2 ].red	= t;
@@ -1947,7 +1947,7 @@ static void SetEditColor( HWND hWnd, int c, bool s )
 	char szBuf[ 32 ];
 	int back;
 	back	= NowCol;
-	if( (EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && c > 3) return;
+	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && c > 3) return;
 	NowCol	= c;
 	UpdateColor( back );
 	if( s ){
@@ -2023,10 +2023,10 @@ static void SetCtlEnable( HWND hWnd )
 	int i;
 	//	一般のコントロール
 	for( i = 0; i < ELMCNT( nCtrlCode ); ++i ){
-		EnableWindow( GetDlgItem( hWnd,nCtrlCode[ i ] ), nCtrlEnbl[ EdtMode.Mode ][ i ] );
+		EnableWindow( GetDlgItem( hWnd,nCtrlCode[ i ] ), nCtrlEnbl[ EdtMode.mode ][ i ] );
 	}
 	// 強制ｾﾞﾛ化
-	if( EdtMode.Mode < MD_SC10 || (EdtMode.Mode >= MD_SC5_256L && EdtMode.Mode < MD_SC10_256L) ) {
+	if( EdtMode.mode < MD_SC10 || (EdtMode.mode >= MD_SC5_256L && EdtMode.mode < MD_SC10_256L) ) {
 		EnableWindow( GetDlgItem( hWnd, IDC_FZERO ), TRUE );
 		switch( EdtMode.FourceZero ){
 		case FZ_NONE:
@@ -2052,10 +2052,10 @@ static void SetCtlEnable( HWND hWnd )
 		EnableWindow( GetDlgItem( hWnd, IDC_FZ_Y	), FALSE );
 	}
 	//	パレット表示
-	if( (EdtMode.Mode == MD_SC6 || EdtMode.Mode == MD_SC6_256L) && (NowCol > 3) ) {
+	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (NowCol > 3) ) {
 		SetEditColor( hWnd, 3, true );
 	}
-	if( EdtMode.Mode < MD_SC8 || (EdtMode.Mode >= MD_SC5_256L && EdtMode.Mode < MD_SC8_256L) ) {
+	if( EdtMode.mode < MD_SC8 || (EdtMode.mode >= MD_SC5_256L && EdtMode.mode < MD_SC8_256L) ) {
 		for( i = 0; i < 16; ++i ){
 			UpdateColor( i );
 		}
@@ -2078,7 +2078,7 @@ static void SetCtlEnable( HWND hWnd )
 		ShowWindow( GetDlgItem( hWnd, IDC_LBLSSET ), SW_SHOW );
 	}
 	//	サイズ調整
-	if( EdtMode.Resize ) {
+	if( EdtMode.resize_enable ) {
 		EnableWindow( GetDlgItem( hWnd, IDC_RESAMPLE ), TRUE );
 		EnableWindow( GetDlgItem( hWnd, IDC_SIZEMODE ), TRUE );
 	} else {
