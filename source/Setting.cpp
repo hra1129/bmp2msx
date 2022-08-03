@@ -128,6 +128,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_RESIZE		,	"an image is destroyed by the ratio regulating an input image in output size forcibly",
 	IDC_JKRC		,	"I calculate J/K value which is most suitable for Y value which I calculated after Y decision again and revise it",
 	IDC_AUTONAME	,	"I make the output file name from the input file name and do not display a file excellent input column",
+	IDC_BASIC_OUTPUT,	"It will now output a BASIC program that reads and displays the conversion results",
 	IDC_CMBALGO		,	"select a method of SCREEN10/12",
 	IDC_SELCOL		,	"I select a lot of colors using with precedence (a color of outline lines may not be selected)",
 	IDC_PAL			,	"I do not generate a color of a palette automatically",
@@ -266,6 +267,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_RESIZE		,	"入力画像のサイズ調節方法を使用するか否か指定します",
 	IDC_JKRC		,	"算出した Y 値に最適な J/K 値を Y 決定後に再計算して補正します",
 	IDC_AUTONAME	,	"出力ファイル名を入力ファイル名から作成し、ファイル名入力欄を表示しなくなります",
+	IDC_BASIC_OUTPUT,	"変換結果を読み込んで表示するBASICプログラムを出力するようになります",
 	IDC_CMBALGO		,	"自然画減色の方法を選択します",
 	IDC_SELCOL		,	"たくさん使っている色を優先的に選びます（輪郭線などの色が選ばれない可能性があります）",
 	IDC_PAL			,	"パレットの色を自動生成しません",
@@ -326,20 +328,20 @@ static const int nCtrlCode[]={
 };
 
 static const BOOL nCtrlEnbl[][ ELMCNT(nCtrlCode) ]={
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE   ,FALSE  ,TRUE  },   // SCREEN2/4
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE   ,FALSE  ,TRUE  },   // SCREEN3
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN5
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN6
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN7
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN8
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN10/11
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN12
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN5 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN6 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE   ,TRUE   ,TRUE  },   // SCREEN7 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN8 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN10/11 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE  ,TRUE   ,FALSE },   // SCREEN12 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE  },   // SCREEN2/4
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE  },   // SCREEN3
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN5
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN6
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN7
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN8
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN10/11
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN12
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN5 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN6 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE  },   // SCREEN7 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN8 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN10/11 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN12 (256 lines)
 };
 
 SETTING EdtMode;
@@ -365,6 +367,7 @@ EVENT( onSetResample	);
 EVENT( onSetSizeMode	);
 EVENT( onSetSelCol		);
 EVENT( onSetAutoName	);
+EVENT( onSetBasicOutput	);
 EVENT( onSetAlgo		);
 EVENT( onSetJKrc		);
 EVENT( onSetErr			);
@@ -423,7 +426,7 @@ static bool bDraging = false;			// パレットをドラッグ中か否か
 extern HINSTANCE	hIns;				// インスタンスハンドル( main.cpp )
 bool bRedo			= false;			// 再変換かﾃﾞﾌｫﾙﾄ設定か
 char szCaption[ 256 ]="";				// タイトル
-static COLORREF	CustColors[16]={		// 色選択ダイアログで使用するカスタムカラー
+static C_COLOR	CustColors[16]={		// 色選択ダイアログで使用するカスタムカラー
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
 };
@@ -623,47 +626,48 @@ EVENT( onSetCommand )
 	switch( LOWORD( wp ) )
 	{
 	// テキストボックス
-	ONEVENT( IDC_FZ_X		, onSetFZX		);		// 強制ゼロ化Ｘ座標
-	ONEVENT( IDC_FZ_Y		, onSetFZY		);		// 強制ゼロ化Ｙ座標
+	ONEVENT( IDC_FZ_X			, onSetFZX			);		// 強制ゼロ化Ｘ座標
+	ONEVENT( IDC_FZ_Y			, onSetFZY			);		// 強制ゼロ化Ｙ座標
 	// ボタン
-	ONEVENT( IDOK			, onSetOk		);		// OK
-	ONEVENT( IDCANCEL		, onSetClose	);		// ｷｬﾝｾﾙ
-	ONEVENT( IDC_LOADPLT	, onSetLoadPlt	);		// ﾊﾟﾚｯﾄ読み込み
-	ONEVENT( IDC_ENREVS		, onSetEnRevs	);		// 全て同じ許可
-	ONEVENT( IDC_SAVEAS		, onSetSaveAs	);		// ファイルへ保存
-	ONEVENT( IDC_LOAD		, onSetLoad		);		// ファイルから読み出し
-	ONEVENT( IDC_FZCOLOR	, onSetFZColor	);		// 強制ｾﾞﾛ化色指定
-	ONEVENT( IDC_FILLC		, onSetFCColor	);		// 背景色指定
-	ONEVENT( IDC_DEFAULT	, onSetDefault	);		// ﾃﾞﾌｫﾙﾄへｺﾋﾟｰ
-	ONEVENT( IDC_MSX1COLOR	, onSetMSX1		);		// MSX1色
-	ONEVENT( IDC_MSX2COLOR	, onSetMSX2		);		// MSX2デフォルト色
-	ONEVENT( IDC_SAVEPLT	, onSetSavePlt	);		// ﾊﾟﾚｯﾄ保存
+	ONEVENT( IDOK				, onSetOk			);		// OK
+	ONEVENT( IDCANCEL			, onSetClose		);		// ｷｬﾝｾﾙ
+	ONEVENT( IDC_LOADPLT		, onSetLoadPlt		);		// ﾊﾟﾚｯﾄ読み込み
+	ONEVENT( IDC_ENREVS			, onSetEnRevs		);		// 全て同じ許可
+	ONEVENT( IDC_SAVEAS			, onSetSaveAs		);		// ファイルへ保存
+	ONEVENT( IDC_LOAD			, onSetLoad			);		// ファイルから読み出し
+	ONEVENT( IDC_FZCOLOR		, onSetFZColor		);		// 強制ｾﾞﾛ化色指定
+	ONEVENT( IDC_FILLC			, onSetFCColor		);		// 背景色指定
+	ONEVENT( IDC_DEFAULT		, onSetDefault		);		// ﾃﾞﾌｫﾙﾄへｺﾋﾟｰ
+	ONEVENT( IDC_MSX1COLOR		, onSetMSX1			);		// MSX1色
+	ONEVENT( IDC_MSX2COLOR		, onSetMSX2			);		// MSX2デフォルト色
+	ONEVENT( IDC_SAVEPLT		, onSetSavePlt		);		// ﾊﾟﾚｯﾄ保存
 	// チェックボックス
-	ONEVENT( IDC_INTER		, onSetInter	);		// インターレース
-	ONEVENT( IDC_PAL		, onSetPal		);		// 固定パレット
-	ONEVENT( IDC_SELCOL		, onSetSelCol	);		// 選色モード
-	ONEVENT( IDC_AUTONAME	, onSetAutoName	);		// 自動ファイル名決定
-	ONEVENT( IDC_JKRC		, onSetJKrc		);		// 色差の再計算
-	ONEVENT( IDC_GOSA		, onSetGosa		);		// 誤差拡散
-	ONEVENT( IDC_CHKZERO	, onSetNonZero	);		// ０番を使わない
-	ONEVENT( IDC_TILE		, onSetTile		);		// 網がけタイル
-	ONEVENT( IDC_CHKDEF		, onSetChkDef	);		// 常にﾃﾞﾌｫﾙﾄへｺﾋﾟｰ
-	ONEVENT( IDC_192		, onSet192		);		// 192ライン出力
-	ONEVENT( IDC_RESIZE		, onSetResize	);		// ｻｲｽﾞ調整
+	ONEVENT( IDC_INTER			, onSetInter		);		// インターレース
+	ONEVENT( IDC_PAL			, onSetPal			);		// 固定パレット
+	ONEVENT( IDC_SELCOL			, onSetSelCol		);		// 選色モード
+	ONEVENT( IDC_AUTONAME		, onSetAutoName		);		// 自動ファイル名決定
+	ONEVENT( IDC_BASIC_OUTPUT	, onSetBasicOutput	);		// 自動ファイル名決定
+	ONEVENT( IDC_JKRC			, onSetJKrc			);		// 色差の再計算
+	ONEVENT( IDC_GOSA			, onSetGosa			);		// 誤差拡散
+	ONEVENT( IDC_CHKZERO		, onSetNonZero		);		// ０番を使わない
+	ONEVENT( IDC_TILE			, onSetTile			);		// 網がけタイル
+	ONEVENT( IDC_CHKDEF			, onSetChkDef		);		// 常にﾃﾞﾌｫﾙﾄへｺﾋﾟｰ
+	ONEVENT( IDC_192			, onSet192			);		// 192ライン出力
+	ONEVENT( IDC_RESIZE			, onSetResize		);		// ｻｲｽﾞ調整
 	// コンボボックス
-	ONEVENT( IDC_RESAMPLE	, onSetResample	);		// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
-	ONEVENT( IDC_CMBSCREEN	, onSetMode		);		// Screen5
-	ONEVENT( IDC_CMBPLT		, onSetPltMode	);		// パレットモード
-	ONEVENT( IDC_CMBALGO	, onSetAlgo		);		// 自然画生成アルゴリズム
-	ONEVENT( IDC_CMBERR		, onSetErr		);		// ディザパターン
-	ONEVENT( IDC_PREVIEW		, onSetPreView	);		// 出力先
-	ONEVENT( IDC_SEIDO		, onSetSeido	);		// 精度
-	ONEVENT( IDC_CMBERR2	, onSetErrAdd	);		// ディザ加算方法
-	ONEVENT( IDC_PALEN		, onSetPalEnable);		// パレット使用許可・未許可
-	ONEVENT( IDC_FZERO		, onSetFZero	);		// 強制ｾﾞﾛ化
-	ONEVENT( IDC_SORT		, onSetSort		);		// ソート
-	ONEVENT( IDC_CMBCNV		, onSetCmbCnv	);		// 変換設定
-	ONEVENT( IDC_SIZEMODE	, onSetSizeMode	);		// サイズ調整サイズモード
+	ONEVENT( IDC_RESAMPLE		, onSetResample		);		// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
+	ONEVENT( IDC_CMBSCREEN		, onSetMode			);		// Screen5
+	ONEVENT( IDC_CMBPLT			, onSetPltMode		);		// パレットモード
+	ONEVENT( IDC_CMBALGO		, onSetAlgo			);		// 自然画生成アルゴリズム
+	ONEVENT( IDC_CMBERR			, onSetErr			);		// ディザパターン
+	ONEVENT( IDC_PREVIEW			, onSetPreView		);		// 出力先
+	ONEVENT( IDC_SEIDO			, onSetSeido		);		// 精度
+	ONEVENT( IDC_CMBERR2		, onSetErrAdd		);		// ディザ加算方法
+	ONEVENT( IDC_PALEN			, onSetPalEnable	);		// パレット使用許可・未許可
+	ONEVENT( IDC_FZERO			, onSetFZero		);		// 強制ｾﾞﾛ化
+	ONEVENT( IDC_SORT			, onSetSort			);		// ソート
+	ONEVENT( IDC_CMBCNV			, onSetCmbCnv		);		// 変換設定
+	ONEVENT( IDC_SIZEMODE		, onSetSizeMode		);		// サイズ調整サイズモード
 	}
 	return TRUE;
 }
@@ -728,7 +732,7 @@ EVENT( onColLButtonDown )
 
 	// 指定している色番号を得る
 	c = (( ( pos.x * 8 ) / w ) & 7 ) + (( ( pos.y * 2 ) / h ) & 1 ) * 8;
-	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (c > 3) ) return 0;
+	if( (EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && (c > 3) ) return 0;
 	SetEditColor( GetParent( hWnd ), c, true );
 	InvalidateRect( hWnd, NULL, FALSE );
 
@@ -797,7 +801,7 @@ EVENT( onColLButtonUp )
 	// 選択色とカーソル位置の色を入れ替える
 	p = (( ( pos.x * 8 ) / w ) & 7 ) + (( ( pos.y * 2 ) / h ) & 1 ) * 8;
 	if( p < 0 || p > 15 ) goto skip;
-	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (p > 3) ) goto skip;
+	if( (EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && (p > 3) ) goto skip;
 	ChangeColor( NowCol, p );
 
 	//	選択の更新
@@ -954,7 +958,7 @@ EVENT( onSetFZY )
 // -------------------------------------------------------------
 EVENT( onSetOk )
 {
-	if( EdtMode.mode == MD_SC2 || EdtMode.mode == MD_SC3 ) {
+	if( EdtMode.screen_mode == MD_SC2 || EdtMode.screen_mode == MD_SC3 ) {
 		EdtMode.interlace = false;
 	}
 
@@ -985,7 +989,7 @@ EVENT( onSetFZColor )
 	memset( &cc, 0, sizeof( cc ) );
 	cc.lStructSize	= sizeof( cc );
 	cc.hwndOwner	= hWnd;
-	cc.lpCustColors	= CustColors;
+	cc.lpCustColors	= (COLORREF*)CustColors;
 	cc.Flags		= CC_FULLOPEN | CC_RGBINIT;
 	cc.rgbResult	= EdtMode.FZColor;
 	if( !ChooseColor( &cc ) ) return TRUE;
@@ -1013,7 +1017,7 @@ EVENT( onSetFCColor )
 	memset( &cc, 0, sizeof( cc ) );
 	cc.lStructSize	= sizeof( cc );
 	cc.hwndOwner	= hWnd;
-	cc.lpCustColors	= CustColors;
+	cc.lpCustColors	= (COLORREF*)CustColors;
 	cc.Flags		= CC_FULLOPEN | CC_RGBINIT;
 	cc.rgbResult	= EdtMode.FCColor;
 	if( !ChooseColor( &cc ) ) return TRUE;
@@ -1038,7 +1042,7 @@ EVENT( onSetEnRevs		)
 {
 	int i, j;
 
-	if( EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L ) {
+	if( EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L ) {
 		j = 4;
 	} else {
 		j = 16;
@@ -1238,7 +1242,7 @@ EVENT( onSetDefault )
 // -------------------------------------------------------------
 EVENT( onSetMSX1 )
 {
-	set_msx1_palette( EdtMode.Col );
+	set_msx1_palette( EdtMode.color_palette );
 	UpdateAll( hWnd );
 	return TRUE;
 }
@@ -1256,7 +1260,7 @@ EVENT( onSetMSX1 )
 //		なし
 // -------------------------------------------------------------
 EVENT( onSetMSX2 ){
-	set_msx2_palette( EdtMode.Col );
+	set_msx2_palette( EdtMode.color_palette );
 	UpdateAll( hWnd );
 	return TRUE;
 }
@@ -1356,6 +1360,23 @@ EVENT( onSetInter )
 EVENT( onSetAutoName )
 {
 	EdtMode.AutoName = !EdtMode.AutoName;
+	return TRUE;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		BAS出力チェックイベント
+//	2.	引数
+//		hWnd	...	(I)	ウィンドウハンドル
+//		wp		...	(I)	Ｗパラメータ
+//		lp		...	(I)	Ｌパラメータ
+//	3.	返値
+//		TRUE
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+EVENT( onSetBasicOutput ){
+	EdtMode.output_basic_enable = !EdtMode.output_basic_enable;
 	return TRUE;
 }
 
@@ -1530,13 +1551,13 @@ EVENT( onSetHScroll )
 		SetDlgItemText( hWnd, IDC_GOSARATIOS, szBuf );
 		return TRUE;
 	case IDC_RED:		// 赤
-		EdtMode.Col[ NowCol ].red   = pos;
+		EdtMode.color_palette[ NowCol ].red   = pos;
 		break;
 	case IDC_GREEN:		// 緑
-		EdtMode.Col[ NowCol ].green = pos;
+		EdtMode.color_palette[ NowCol ].green = pos;
 		break;
 	case IDC_BLUE:		// 青
-		EdtMode.Col[ NowCol ].blue  = pos;
+		EdtMode.color_palette[ NowCol ].blue  = pos;
 		break;
 	default:
 		return FALSE;
@@ -1620,7 +1641,7 @@ EVENT( onSetFZero )
 EVENT( onSetMode )
 {
 	if( HIWORD( wp ) != CBN_SELCHANGE ) return TRUE;
-	EdtMode.mode = ComboBox_GetCurSel( GetDlgItem( hWnd, IDC_CMBSCREEN ) );
+	EdtMode.screen_mode = ComboBox_GetCurSel( GetDlgItem( hWnd, IDC_CMBSCREEN ) );
 	// コントロールの ON/OFF
 	SetCtlEnable( hWnd );
 	return TRUE;
@@ -1790,17 +1811,18 @@ static void UpdateAll( HWND hWnd )
 	// カラーテーブルを描画する
 	for( i = 0; i < 16; i++ ) UpdateColor( i );
 	// 出力モード
-	Button_SetCheck( GetDlgItem( hWnd, IDC_GOSA		), EdtMode.diffusion_error_enable		? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_INTER	), EdtMode.interlace	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL		), EdtMode.fixed_palette		? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_SELCOL	), EdtMode.SelCol	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_RESIZE	), EdtMode.resize_enable	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_AUTONAME	), EdtMode.AutoName	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_JKRC		), EdtMode.JKrc		? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKZERO	), EdtMode.NonZero	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_TILE		), EdtMode.Tile		? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKDEF	), EdtMode.bDefault	? BST_CHECKED : BST_UNCHECKED );
-	Button_SetCheck( GetDlgItem( hWnd, IDC_192		), EdtMode.b192		? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_GOSA			), EdtMode.diffusion_error_enable	? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_INTER			), EdtMode.interlace				? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL			), EdtMode.fixed_palette			? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_SELCOL		), EdtMode.SelCol					? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_RESIZE		), EdtMode.resize_enable			? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_AUTONAME		), EdtMode.AutoName					? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_JKRC			), EdtMode.JKrc						? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKZERO		), EdtMode.NonZero					? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_TILE			), EdtMode.Tile						? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_CHKDEF		), EdtMode.bDefault					? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_192			), EdtMode.b192						? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_BASIC_OUTPUT	), EdtMode.output_basic_enable		? BST_CHECKED : BST_UNCHECKED );
 	// スライダの範囲を設定
 	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAVAL   ), 1, 500 );
 	SetSliderRange( GetDlgItem( hWnd, IDC_GOSAERR   ), 0, 255 );
@@ -1821,7 +1843,7 @@ static void UpdateAll( HWND hWnd )
 	SetEditColor( hWnd, 0, true );
 	InvalidateRect( hWnd, NULL, FALSE );
 	// コンボボックス
-	ComboBox_Init( hWnd, IDC_CMBSCREEN	,ScrModeName,	ELMCNT( ScrModeName ),	EdtMode.mode );
+	ComboBox_Init( hWnd, IDC_CMBSCREEN	,ScrModeName,	ELMCNT( ScrModeName ),	EdtMode.screen_mode );
 	ComboBox_Init( hWnd, IDC_CMBPLT		,PltMode,		PLT_COUNT,				EdtMode.PltMode );
 	ComboBox_Init( hWnd, IDC_CMBALGO		,AlgoName,		ELMCNT( AlgoName ),		EdtMode.AlgoMode );
 	ComboBox_Init( hWnd, IDC_CMBERR		,ErrAlgoName,	ELMCNT( ErrAlgoName ),	EdtMode.ErrAlgo );
@@ -1859,7 +1881,7 @@ static void UpdateColor( int c )
 	bool	bDisable;
 
 	//	SCREEN 6 対策
-	bDisable = ((EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && c > 3);
+	bDisable = ((EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && c > 3);
 
 	r.left		= w * (  c & 7 )	   / 8;
 	r.right		= w * (( c & 7 ) + 1 ) / 8;
@@ -1873,9 +1895,9 @@ static void UpdateColor( int c )
 	if( bDisable ) {
 		hBr = CreateSolidBrush( GetSysColor( COLOR_APPWORKSPACE ) );
 	} else {
-		hBr = CreateSolidBrush( RGB( convert7to255_r[ EdtMode.Col[ c ].red   ],
-									 convert7to255_g[ EdtMode.Col[ c ].green ],
-									 convert7to255_b[ EdtMode.Col[ c ].blue  ] ) );
+		hBr = CreateSolidBrush( GET_RGB( convert7to255_r[ EdtMode.color_palette[ c ].red   ],
+									 convert7to255_g[ EdtMode.color_palette[ c ].green ],
+									 convert7to255_b[ EdtMode.color_palette[ c ].blue  ] ) );
 	}
 	FillRect( hMemDC, &r, hBr );
 	DeleteBrush( hBr );
@@ -1919,12 +1941,12 @@ static void ChangeColor( int p1, int p2 )
 	int	t;
 
 	//	SCREEN6 対策
-	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && ((p1 > 3) || (p2 > 3)) ) return;
+	if( (EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && ((p1 > 3) || (p2 > 3)) ) return;
 
 	//	パレット値の交換
-	t = EdtMode.Col[ p1 ].red;		EdtMode.Col[ p1 ].red	= EdtMode.Col[ p2 ].red;	EdtMode.Col[ p2 ].red	= t;
-	t = EdtMode.Col[ p1 ].green;	EdtMode.Col[ p1 ].green	= EdtMode.Col[ p2 ].green;	EdtMode.Col[ p2 ].green	= t;
-	t = EdtMode.Col[ p1 ].blue;		EdtMode.Col[ p1 ].blue	= EdtMode.Col[ p2 ].blue;	EdtMode.Col[ p2 ].blue	= t;
+	t = EdtMode.color_palette[ p1 ].red;		EdtMode.color_palette[ p1 ].red	= EdtMode.color_palette[ p2 ].red;	EdtMode.color_palette[ p2 ].red	= t;
+	t = EdtMode.color_palette[ p1 ].green;	EdtMode.color_palette[ p1 ].green	= EdtMode.color_palette[ p2 ].green;	EdtMode.color_palette[ p2 ].green	= t;
+	t = EdtMode.color_palette[ p1 ].blue;		EdtMode.color_palette[ p1 ].blue	= EdtMode.color_palette[ p2 ].blue;	EdtMode.color_palette[ p2 ].blue	= t;
 
 	//	許可状態の交換
 	t = EdtMode.PalEn[ p1 ];		EdtMode.PalEn[ p1 ]		= EdtMode.PalEn[ p2 ];		EdtMode.PalEn[ p2 ]		= t;
@@ -1947,21 +1969,21 @@ static void SetEditColor( HWND hWnd, int c, bool s )
 	char szBuf[ 32 ];
 	int back;
 	back	= NowCol;
-	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && c > 3) return;
+	if( (EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && c > 3) return;
 	NowCol	= c;
 	UpdateColor( back );
 	if( s ){
-		SetSliderValue( GetDlgItem( hWnd,IDC_RED     ),EdtMode.Col[c].red   );
-		SetSliderValue( GetDlgItem( hWnd,IDC_GREEN   ),EdtMode.Col[c].green );
-		SetSliderValue( GetDlgItem( hWnd,IDC_BLUE    ),EdtMode.Col[c].blue  );
+		SetSliderValue( GetDlgItem( hWnd,IDC_RED     ),EdtMode.color_palette[c].red   );
+		SetSliderValue( GetDlgItem( hWnd,IDC_GREEN   ),EdtMode.color_palette[c].green );
+		SetSliderValue( GetDlgItem( hWnd,IDC_BLUE    ),EdtMode.color_palette[c].blue  );
 	}
 	wsprintf( szBuf, "COLOR=%d", c );
 	SetDlgItemText( hWnd, IDC_COL	, szBuf );
-	wsprintf( szBuf, "R=%d", EdtMode.Col[ c ].red   );
+	wsprintf( szBuf, "R=%d", EdtMode.color_palette[ c ].red   );
 	SetDlgItemText( hWnd, IDC_NRED	, szBuf );
-	wsprintf( szBuf, "G=%d", EdtMode.Col[ c ].green );
+	wsprintf( szBuf, "G=%d", EdtMode.color_palette[ c ].green );
 	SetDlgItemText( hWnd, IDC_NGREEN, szBuf );
-	wsprintf( szBuf, "B=%d", EdtMode.Col[ c ].blue  );
+	wsprintf( szBuf, "B=%d", EdtMode.color_palette[ c ].blue  );
 	SetDlgItemText( hWnd, IDC_NBLUE	, szBuf );
 	UpdateColor( NowCol );
 	ComboBox_SetCurSel( GetDlgItem( hWnd, IDC_PALEN	), EdtMode.PalEn[ NowCol ] );
@@ -2000,9 +2022,9 @@ static void LoadPLFile( const char *szFileName )
 	fu_read( hFile, Buf, sizeof( Buf ) );
 	// 入力データを反映する
 	for( i = 0; i < 16; ++i ){
-		EdtMode.Col[ i ].red  = (Buf[ i * 2 + 0 ] >> 4 ) & 0x07;
-		EdtMode.Col[ i ].blue =  Buf[ i * 2 + 0 ]        & 0x07;
-		EdtMode.Col[ i ].green=  Buf[ i * 2 + 1 ]        & 0x07;
+		EdtMode.color_palette[ i ].red  = (Buf[ i * 2 + 0 ] >> 4 ) & 0x07;
+		EdtMode.color_palette[ i ].blue =  Buf[ i * 2 + 0 ]        & 0x07;
+		EdtMode.color_palette[ i ].green=  Buf[ i * 2 + 1 ]        & 0x07;
 	}
 	// 終了
 	fu_close( hFile );
@@ -2023,10 +2045,10 @@ static void SetCtlEnable( HWND hWnd )
 	int i;
 	//	一般のコントロール
 	for( i = 0; i < ELMCNT( nCtrlCode ); ++i ){
-		EnableWindow( GetDlgItem( hWnd,nCtrlCode[ i ] ), nCtrlEnbl[ EdtMode.mode ][ i ] );
+		EnableWindow( GetDlgItem( hWnd,nCtrlCode[ i ] ), nCtrlEnbl[ EdtMode.screen_mode ][ i ] );
 	}
 	// 強制ｾﾞﾛ化
-	if( EdtMode.mode < MD_SC10 || (EdtMode.mode >= MD_SC5_256L && EdtMode.mode < MD_SC10_256L) ) {
+	if( EdtMode.screen_mode < MD_SC10 || (EdtMode.screen_mode >= MD_SC5_256L && EdtMode.screen_mode < MD_SC10_256L) ) {
 		EnableWindow( GetDlgItem( hWnd, IDC_FZERO ), TRUE );
 		switch( EdtMode.FourceZero ){
 		case FZ_NONE:
@@ -2052,10 +2074,10 @@ static void SetCtlEnable( HWND hWnd )
 		EnableWindow( GetDlgItem( hWnd, IDC_FZ_Y	), FALSE );
 	}
 	//	パレット表示
-	if( (EdtMode.mode == MD_SC6 || EdtMode.mode == MD_SC6_256L) && (NowCol > 3) ) {
+	if( (EdtMode.screen_mode == MD_SC6 || EdtMode.screen_mode == MD_SC6_256L) && (NowCol > 3) ) {
 		SetEditColor( hWnd, 3, true );
 	}
-	if( EdtMode.mode < MD_SC8 || (EdtMode.mode >= MD_SC5_256L && EdtMode.mode < MD_SC8_256L) ) {
+	if( EdtMode.screen_mode < MD_SC8 || (EdtMode.screen_mode >= MD_SC5_256L && EdtMode.screen_mode < MD_SC8_256L) ) {
 		for( i = 0; i < 16; ++i ){
 			UpdateColor( i );
 		}

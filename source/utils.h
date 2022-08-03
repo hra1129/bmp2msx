@@ -11,13 +11,13 @@
 #include "convert.h"
 
 bool GetName( HWND hWnd,char *szFileName,int size,const char *szTitle,const char *szFilter, const char* szExt );
-bool GetBmp( COLORREF **out,int *width,int *height,char **ptr );
-bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
-bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
-bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
-bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
-bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
-bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *out );
+bool GetBmp( C_COLOR **out,int *width,int *height,char **ptr );
+bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
+bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
+bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
+bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
+bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
+bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *out );
 void GetDefCfg( SETTING *Mode );
 void set_msx1_palette( C_PALETTE *pal );
 void set_msx2_palette( C_PALETTE *pal );

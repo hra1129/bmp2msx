@@ -9,10 +9,11 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include "Convert.h"
 
 // Œ^
 typedef struct {
-	COLORREF	colorcode;
+	C_COLOR		colorcode;
 	int			red;
 	int			green;
 	int			blue;

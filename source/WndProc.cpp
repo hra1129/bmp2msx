@@ -31,31 +31,6 @@
 // -----------------------------------------------------
 // 設定
 
-static const int mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12 };	// 画面モード番号
-
-// 画面サイズ
-struct C_SCREEN_SIZE{
-	int		w;			// 幅
-	int		h;			// 高さ
-};
-
-static const C_SCREEN_SIZE screen_size[]={
-	{ 256, 192 },	// screen 2/4
-	{  64,  48 },	// screen 3
-	{ 256, 212 },	// screen 5
-	{ 512, 212 },	// screen 6
-	{ 512, 212 },	// screen 7
-	{ 256, 212 },	// screen 8
-	{ 256, 212 },	// screen 10/11
-	{ 256, 212 },	// screen 12
-	{ 256, 256 },	// screen 5 (256 lines)
-	{ 512, 256 },	// screen 6 (256 lines)
-	{ 512, 256 },	// screen 7 (256 lines)
-	{ 256, 256 },	// screen 8 (256 lines)
-	{ 256, 256 },	// screen 10/11 (256 lines)
-	{ 256, 256 },	// screen 12 (256 lines)
-};
-
 // フラグ
 bool bSave	= false;	// 終了時に設定を保存するか否か
 bool bSrc	= false;	// プレビュー表示はソースか否（ディスティネーション）か
@@ -159,11 +134,11 @@ EVENT( onMenuChange			);
 EVENT( onMenuOriginal		);
 
 void Converter( SETTING *Mode,int nSrc );
-static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y );
+static inline C_COLOR GetPix( C_COLOR *in,int width,int height,int x,int y );
 bool DoEvents( void );	// main.cpp
 static void MakeSettingStr( char *szBuf,const char *szTitle,SETTING *Mode );
 static void UpdateVScreen( void );
-static bool CreatePal( int &n,SETTING *Mode,COLORREF *in,int w,int h,COLORREF *Pal );
+static bool CreatePal( int &n,SETTING *Mode,C_COLOR *in,int w,int h,C_COLOR *Pal );
 
 // -----------------------------------------------------
 // グローバル変数
@@ -290,7 +265,7 @@ EVENT( onCreate )
 	bSave = !GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) || bSave;
 	bSave = !GetCustomFile( CustomFile ) || bSave;
 	spi_initialize( g_sPlug );
-	LastMode.mode = -1;
+	LastMode.screen_mode = -1;
 	// 仮想画面を作成する
 	hDC = GetDC( hWnd );
 	hMemDC = CreateCompatibleDC( hDC );
@@ -426,7 +401,7 @@ EVENT( onDropFiles )
 			tmp = NowMode;
 			break;
 		case CM_LAST:
-			if( LastMode.mode == -1 ) {
+			if( LastMode.screen_mode == -1 ) {
 				tmp = NowMode;
 			} else {
 				tmp = LastMode;
@@ -630,7 +605,7 @@ EVENT( onOpen )
 		tmp = NowMode;
 		break;
 	case CM_LAST:
-		if( LastMode.mode == -1 ) {
+		if( LastMode.screen_mode == -1 ) {
 			tmp = NowMode;
 		} else {
 			tmp = LastMode;
@@ -810,9 +785,9 @@ EVENT( onMenuSave ) {
 	int	ecode;
 
 	if( pvIndex < 0 ) return 0;
-	w = screen_size[ tPreview[ pvIndex ].tMode.mode ].w;
-	if( ( tPreview[ pvIndex ].tMode.mode >= MD_SC5 ) && !tPreview[ pvIndex ].tMode.b192 ){
-		h = screen_size[ tPreview[ pvIndex ].tMode.mode ].h;
+	w = screen_size[ tPreview[ pvIndex ].tMode.screen_mode ].w;
+	if( ( tPreview[ pvIndex ].tMode.screen_mode >= MD_SC5 ) && !tPreview[ pvIndex ].tMode.b192 ){
+		h = screen_size[ tPreview[ pvIndex ].tMode.screen_mode ].h;
 	}
 	else{
 		h = 192;
@@ -849,9 +824,9 @@ EVENT( onMenuSaveAs ) {
 	SETTING tMode;
 	if( pvIndex < 0 ) return 0;
 	tMode = tPreview[pvIndex].tMode;
-	w=screen_size[ tMode.mode ].w; 
-	if( (tMode.mode >= MD_SC5) && !tMode.b192 ) {
-		h=screen_size[ tMode.mode ].h;
+	w=screen_size[ tMode.screen_mode ].w; 
+	if( (tMode.screen_mode >= MD_SC5) && !tMode.b192 ) {
+		h=screen_size[ tMode.screen_mode ].h;
 	} else {
 		h=192;
 	}
@@ -1083,7 +1058,7 @@ EVENT( onPaste	)
 		tmp = NowMode;
 		break;
 	case CM_LAST:
-		if( LastMode.mode == -1 ) {
+		if( LastMode.screen_mode == -1 ) {
 			tmp = NowMode;
 		} else {
 			tmp = LastMode;
@@ -1261,9 +1236,9 @@ EVENT( onVer )
 //		なし
 // -----------------------------------------------------
 void Converter( SETTING *Mode, int nSrc ) {
-	static COLORREF Pal[ 256 ];
+	static C_COLOR Pal[ 256 ];
 	static C_TILE_PATTERN	tail[ TAILMAX ];
-	COLORREF *in, *out;
+	C_COLOR *in, *out;
 	LPBYTE		bmp;
 	SETTING		tMode;
 	int			tailcnt = 0;
@@ -1296,14 +1271,14 @@ void Converter( SETTING *Mode, int nSrc ) {
 		Mode->FZColor = GetPix( in, width, height, Mode->FZX,Mode->FZY );
 	}
 	// 変換後のサイズを求め、メモリを確保する
-	owidth  = screen_size[ Mode->mode ].w;
-	if( (Mode->mode >= MD_SC5) && Mode->b192 ) {
+	owidth  = screen_size[ Mode->screen_mode ].w;
+	if( (Mode->screen_mode >= MD_SC5) && Mode->b192 ) {
 		oheight = 192;
 	} else {
-		oheight = screen_size[ Mode->mode ].h;
+		oheight = screen_size[ Mode->screen_mode ].h;
 	}
 	oheight = oheight * ( Mode->interlace ? 2 : 1 );
-	out = (COLORREF*)LocalAlloc( LMEM_FIXED,sizeof(COLORREF) * owidth * oheight );
+	out = (C_COLOR*)LocalAlloc( LMEM_FIXED,sizeof(C_COLOR) * owidth * oheight );
 	if( out==NULL ){
 		LocalFree( in );
 		MessageBox( hWnd, cszNotEnoughMem, MsgCap, MB_OK | MB_ICONWARNING );
@@ -1318,7 +1293,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		//	アスペクト比
 		switch( Mode->SizeMode ) {
 		case RM_MSX:
-			if( (Mode->mode == MD_SC6) || (Mode->mode == MD_SC7) || (Mode->mode == MD_SC6_256L) || (Mode->mode == MD_SC7_256L) ) {
+			if( (Mode->screen_mode == MD_SC6) || (Mode->screen_mode == MD_SC7) || (Mode->screen_mode == MD_SC6_256L) || (Mode->screen_mode == MD_SC7_256L) ) {
 				wwidth  = width  * 5 / 3;	//	横に 1.66倍
 				wheight = height;
 			} else {
@@ -1353,7 +1328,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 			cnvAntiResize( in, width, height, out, owidth, oheight, wwidth, wheight, prProg,Mode->Seido );
 			break;
 		default:			//	サイズ調節無し
-			if( Mode->interlace && Mode->mode != MD_SC6 && Mode->mode != MD_SC7 && Mode->mode != MD_SC6_256L && Mode->mode != MD_SC7_256L ) {
+			if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L ) {
 				cnvCopyInter( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
 			}else{
 				cnvCopy( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
@@ -1361,7 +1336,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		}
 	} else {
 		//	サイズ調整無し
-		if( Mode->interlace && Mode->mode != MD_SC6 && Mode->mode != MD_SC7 && Mode->mode != MD_SC6_256L && Mode->mode != MD_SC7_256L ) {
+		if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L ) {
 			cnvCopyInter( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
 		}else{
 			cnvCopy( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
@@ -1378,14 +1353,14 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	//	ﾊﾟﾚｯﾄをｿｰﾄする
-	if( Mode->mode < MD_SC8 || (Mode->mode >= MD_SC5_256L && Mode->mode < MD_SC8_256L) ) {
+	if( Mode->screen_mode < MD_SC8 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC8_256L) ) {
 		if( !( Mode->fixed_palette && (Mode->SortMode == SM_INCAUTO) ) ) {
 			cnvSortPalette( Mode, Pal );
 		}
 	}
 	// タイルパターンを求める
 	if( Mode->Tile ){
-		switch( Mode->mode ){
+		switch( Mode->screen_mode ){
 		case MD_SC2:
 		case MD_SC3:
 		case MD_SC5:
@@ -1394,7 +1369,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		case MD_SC5_256L:
 		case MD_SC6_256L:
 		case MD_SC7_256L:
-			tailcnt = cnvCreateTail4( Mode->Col, Mode->PalEn, !Mode->NonZero, tail, Mode->mode );
+			tailcnt = cnvCreateTail4( Mode->color_palette, Mode->PalEn, !Mode->NonZero, tail, Mode->screen_mode );
 			break;
 		}
 	}
@@ -1405,7 +1380,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	// 変換する(COLORREF配列→ＭＳＸ画像)
-	if( Mode->mode < MD_SC10 || (Mode->mode >= MD_SC5_256L && Mode->mode <= MD_SC10_256L) ) {	// Screen10/12 以外
+	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode <= MD_SC10_256L) ) {	// Screen10/12 以外
 		cnvRecolor( out, owidth, oheight, bmp, Mode, prProg, Pal, tail, tailcnt );
 	}else{							// Screen10/12
 		cnvNtcolor( out, owidth, oheight, bmp, Mode, prProg );
@@ -1459,7 +1434,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y )
+static inline C_COLOR GetPix( C_COLOR *in,int width,int height,int x,int y )
 {
 	// 範囲外修正
 	if( x<0 ) x=0;
@@ -1486,24 +1461,24 @@ static inline COLORREF GetPix( COLORREF *in,int width,int height,int x,int y )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORREF *Pal )
+static bool CreatePal( int &n, SETTING *Mode, C_COLOR *in, int w, int h, C_COLOR *Pal )
 {
-	COLORREF	*t;
+	C_COLOR	*t;
 	int			i, j, pp, pnum;
 
 	n = 0;
-	if( Mode->mode<MD_SC8 || (Mode->mode >= MD_SC5_256L && Mode->mode < MD_SC8_256L) ){	// Screen 5, 6 or 7
+	if( Mode->screen_mode<MD_SC8 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC8_256L) ){	// Screen 5, 6 or 7
 		j = 0;
 		pp = 0;
-		if( Mode->mode == MD_SC6 || Mode->mode == MD_SC6_256L ) pnum = 4; else pnum = 16;
+		if( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L ) pnum = 4; else pnum = 16;
 		for( i = 0 ; i < pnum; ++i ){
 			if( Mode->NonZero && i == 0 ) continue;
 			if( Mode->PalEn[ i ] == PALEN_NONE ) continue;
 			++n;
 			if( Mode->PalEn[ i ] == PALEN_USE ){
-				Pal[pp]=RGB( convert7to255_r[ Mode->Col[i].red   ],
-							 convert7to255_g[ Mode->Col[i].green ],
-							 convert7to255_b[ Mode->Col[i].blue	 ] );
+				Pal[pp]=GET_RGB( convert7to255_r[ Mode->color_palette[i].red   ],
+							 convert7to255_g[ Mode->color_palette[i].green ],
+							 convert7to255_b[ Mode->color_palette[i].blue	 ] );
 				++pp;
 			}
 		}
@@ -1512,12 +1487,12 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 			return false;
 		}
 		if( !Mode->fixed_palette ){		// 最適パレット
-			t = (COLORREF*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,sizeof( COLORREF)*w*h );	// 作業領域の確保
+			t = (C_COLOR*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,sizeof( C_COLOR)*w*h );	// 作業領域の確保
 			if( t==NULL ){
 				MessageBox( hWnd, cszNotEnoughMem, MsgCap, MB_OK | MB_ICONWARNING );
 				return false;
 			}
-			CopyMemory( t, in, w * h * sizeof( COLORREF ) );
+			CopyMemory( t, in, w * h * sizeof( C_COLOR ) );
 			cnvGetPalette( t, w, h, Pal, Mode->SelCol, n, pp, Mode->FourceZero != FZ_NONE,Mode->FZColor );
 			LocalFree( t );
 			// 最適パレットを固定パレットへ反映
@@ -1525,9 +1500,9 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 			for( i = 0; i < pnum; ++i ){
 				if( Mode->NonZero && i==0 ) continue;
 				if( Mode->PalEn[i]==PALEN_AUTO ){
-					Mode->Col[i].red	= convert_rgb_to_palette( convert7to255_r, 8, GetRValue( Pal[j] ) );
-					Mode->Col[i].green	= convert_rgb_to_palette( convert7to255_g, 8, GetGValue( Pal[j] ) );
-					Mode->Col[i].blue	= convert_rgb_to_palette( convert7to255_b, 8, GetBValue( Pal[j] ) );
+					Mode->color_palette[i].red	= convert_rgb_to_palette( convert7to255_r, 8, GET_RED( Pal[j] ) );
+					Mode->color_palette[i].green	= convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( Pal[j] ) );
+					Mode->color_palette[i].blue	= convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE( Pal[j] ) );
 					++j;
 				}
 			}
@@ -1536,11 +1511,11 @@ static bool CreatePal( int &n, SETTING *Mode, COLORREF *in, int w, int h, COLORR
 		// 固定パレット
 		for( i = 0; i < pnum; ++i ){
 			n = 256;
-			Pal[i] = RGB(	convert7to255_r[ Mode->Col[i].red   ],
-							convert7to255_g[ Mode->Col[i].green ],
-							convert7to255_b[ Mode->Col[i].blue  ] );
+			Pal[i] = GET_RGB(	convert7to255_r[ Mode->color_palette[i].red   ],
+							convert7to255_g[ Mode->color_palette[i].green ],
+							convert7to255_b[ Mode->color_palette[i].blue  ] );
 		}
-	}else if( Mode->mode==MD_SC8 || Mode->mode==MD_SC8_256L ){	// Screen8
+	}else if( Mode->screen_mode==MD_SC8 || Mode->screen_mode==MD_SC8_256L ){	// Screen8
 		cnvGetPaletteS8( Pal );
 	}
 	return true;
@@ -1631,7 +1606,7 @@ void MakeSettingStr( char *szBuf,const char *szTitle,SETTING *Mode )
 {
 	wsprintf( szBuf,cShowSet,
 					szTitle,
-					ScrModeName[Mode->mode],
+					ScrModeName[Mode->screen_mode],
 					PreViewName[Mode->PreView-1],
 					(Mode->diffusion_error_enable  ? cUse : cNoUse),(int)( Mode->diffusion_error_coef * 1000 ),Mode->err,
 					(Mode->fixed_palette   ? cUse : cNoUse),

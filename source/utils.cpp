@@ -134,7 +134,7 @@ bool GetName( HWND hWnd,char *szFileName,int size,const char *szTitle,const char
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp( COLORREF **out,int *width,int *height,char **ptr )
+bool GetBmp( C_COLOR **out,int *width,int *height,char **ptr )
 {
 	BITMAPINFOHEADER	bih;
 	// インフォヘッダを読み込む
@@ -143,7 +143,7 @@ bool GetBmp( COLORREF **out,int *width,int *height,char **ptr )
 	// ファイルの種類を調べる
 	if( bih.biCompression!=BI_RGB &&
 		bih.biCompression!=BI_BITFIELDS ) return false;			// 対応形式（非圧縮）
-	*out = (COLORREF*)LocalAlloc( LMEM_FIXED,sizeof( COLORREF )*bih.biWidth * bih.biHeight + 1 );
+	*out = (C_COLOR*)LocalAlloc( LMEM_FIXED,sizeof( C_COLOR )*bih.biWidth * bih.biHeight + 1 );
 	if( *out == NULL ) return false;							// メモリ確保失敗
 	// サイズの取得
 	*width  = bih.biWidth;
@@ -203,7 +203,7 @@ _error_exit:
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	RGBQUAD		p[2];		// パレット情報
 	int			i,w,x,y;	// 雑用、座標
@@ -221,7 +221,7 @@ bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 			c = *pinp;
 			c = (c >> ( 7-(x & 7) )) & 1;
 			if( (x & 7)==7 ) ++pinp;
-			*pout = RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
+			*pout = GET_RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
 			++pout;
 		}
 	}
@@ -240,7 +240,7 @@ bool GetBmp1( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	RGBQUAD		p[16];		// パレット情報
 	int			i,w,x,y;	// 雑用、座標
@@ -263,7 +263,7 @@ bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 			}else{
 				c =(c >> 4) & 0x0F;
 			}
-			*pout = RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
+			*pout = GET_RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
 			++pout;
 		}
 	}
@@ -282,7 +282,7 @@ bool GetBmp4( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	RGBQUAD	p[256];			// パレット情報
 	int		i,w,x,y;		// 雑用、座標
@@ -298,7 +298,7 @@ bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 		pinp = (BYTE*)( *ptr + y*w );
 		for( x=0; x<bih->biWidth; ++x ){
 			c = *pinp;
-			*pout = RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
+			*pout = GET_RGB( p[c].rgbRed,p[c].rgbGreen,p[c].rgbBlue );
 			++pout;
 			++pinp;
 		}
@@ -318,7 +318,7 @@ bool GetBmp8( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	int		w,x,y;			// 雑用、座標
 	BYTE	r,g,b;			// ＲＧＢ
@@ -334,7 +334,7 @@ bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 			b = (c & 0x001F)     *255/31;
 			g =((c & 0x07E0)>> 5)*255/63;
 			r =((c & 0xF800)>>11)*255/31;
-			*pout = RGB( r,g,b );
+			*pout = GET_RGB( r,g,b );
 			pout++;
 			pinp+=2;
 		}
@@ -354,7 +354,7 @@ bool GetBmp16( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	int		w,x,y;			// 雑用、座標
 	BYTE	r,g,b;			// ＲＧＢ
@@ -369,7 +369,7 @@ bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 			g = pinp[1];
 			r = pinp[2];
 			pinp+=3;
-			*pout = RGB( r,g,b );
+			*pout = GET_RGB( r,g,b );
 			pout++;
 		}
 	}
@@ -388,7 +388,7 @@ bool GetBmp24( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
+bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,C_COLOR *pout )
 {
 	int		w,x,y;			// 雑用、座標
 	BYTE	r,g,b;			// ＲＧＢ
@@ -403,7 +403,7 @@ bool GetBmp32( BITMAPINFOHEADER *bih,char **ptr,COLORREF *pout )
 			g = pinp[1];
 			r = pinp[2];
 			pinp+=4;
-			*pout = RGB( r,g,b );
+			*pout = GET_RGB( r,g,b );
 			pout++;
 		}
 	}
@@ -455,8 +455,8 @@ void set_msx2_palette( C_PALETTE *pal ){
 void GetDefCfg( SETTING *Mode )
 {
 	memset( Mode,0,sizeof( SETTING ) );
-	memcpy( Mode->Col,msx1_palette,sizeof(C_PALETTE)*16 );
-	Mode->mode = MD_SC5;			// SCREEN5
+	memcpy( Mode->color_palette,msx1_palette,sizeof(C_PALETTE)*16 );
+	Mode->screen_mode = MD_SC5;			// SCREEN5
 	Mode->diffusion_error_coef = 0.43f;			// 誤差拡散係数 0.430
 	Mode->err = 0;					// 切り捨て誤差 0
 	Mode->diffusion_error_enable = true;				// 誤差拡散 ON
@@ -510,7 +510,7 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	Mode->ErrAlgo		= Mode->ErrAlgo % EALGO_MAX;
 	Mode->AlgoMode		= Mode->AlgoMode % ALGO_MAX;
 	Mode->SelCol		= Mode->SelCol % SELCOL_MAX;
-	Mode->mode			= Mode->mode % MD_MAX;
+	Mode->screen_mode			= Mode->screen_mode % MD_MAX;
 	Mode->PltMode		= Mode->PltMode % PLT_MAX;
 	Mode->Seido			= Mode->Seido % SEIDO_MAX;
 	Mode->ErrAdd		= Mode->ErrAdd % EADD_MAX;
@@ -520,7 +520,7 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	if( Mode->diffusion_error_coef > 0.5f ) Mode->diffusion_error_coef = 0.5f;
 	if( Mode->diffusion_error_x_weight < 0.0f ) Mode->diffusion_error_x_weight = 0.0f;
 	if( Mode->diffusion_error_x_weight > 1.0f ) Mode->diffusion_error_x_weight = 1.0f;
-	if( Mode->mode == MD_SC2 || Mode->mode == MD_SC3 ) {
+	if( Mode->screen_mode == MD_SC2 || Mode->screen_mode == MD_SC3 ) {
 		Mode->interlace = false;
 	}
 

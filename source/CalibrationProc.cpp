@@ -153,7 +153,7 @@ static void update_color_bar_pal512( HWND hWnd, RECT &rc ){
 			r = pal512[ index & 7 ];
 			g = pal512[ (( index >> 3 ) & 7) + 8 ];
 			b = pal512[ (( index >> 6 ) & 7) + 16 ];
-			hBrush = CreateSolidBrush( RGB( r, g, b ) );
+			hBrush = CreateSolidBrush( GET_RGB( r, g, b ) );
 			FillRect( hMemDC, &fill_rc, hBrush );
 			DeleteObject( hBrush );
 			index++;
@@ -189,7 +189,7 @@ static void update_color_bar_screen8( HWND hWnd, RECT &rc ){
 			r = screen8[ index & 7 ];
 			g = screen8[ (( index >> 3 ) & 7) + 8 ];
 			b = screen8[ (( index >> 6 ) & 3) + 16 ];
-			hBrush = CreateSolidBrush( RGB( r, g, b ) );
+			hBrush = CreateSolidBrush( GET_RGB( r, g, b ) );
 			FillRect( hMemDC, &fill_rc, hBrush );
 			DeleteObject( hBrush );
 			index++;
@@ -224,7 +224,7 @@ static void update_color_bar_screen12( HWND hWnd, RECT &rc ){
 			r = screen12[  x * ( y       & 1 )       ];
 			g = screen12[ (x * ((y >> 1) & 1 )) + 32 ];
 			b = screen12[ (x * ((y >> 2) & 1 )) + 64 ];
-			hBrush = CreateSolidBrush( RGB( r, g, b ) );
+			hBrush = CreateSolidBrush( GET_RGB( r, g, b ) );
 			FillRect( hMemDC, &fill_rc, hBrush );
 			DeleteObject( hBrush );
 		}
@@ -250,7 +250,7 @@ static void update_color_bar( HWND hWnd, int index ){
 	hColorBar = GetDlgItem( hWnd, IDC_COLORBAR );
 
 	//	Ç‹Ç∏ëSëÃÇçïÇ≈ìhÇËÇ¬Ç‘Ç∑
-	hBrush = CreateSolidBrush( RGB( 0, 0, 0 ) );
+	hBrush = CreateSolidBrush( GET_RGB( 0, 0, 0 ) );
 	GetClientRect( hColorBar, &rc );
 	FillRect( hMemDC, &rc, hBrush );
 	DeleteObject( hBrush );

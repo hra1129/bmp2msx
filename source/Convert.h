@@ -11,6 +11,22 @@
 
 typedef bool ( *PROGRESS )( int );		// 経過表示用コールバック関数型
 
+extern const int screen_mode[];
+
+struct C_SCREEN_SIZE {
+	int		w;			// 幅
+	int		h;			// 高さ
+};
+
+extern const C_SCREEN_SIZE screen_size[];
+
+typedef uint32_t C_COLOR;
+
+#define GET_RED(   c_color )	( (uint8_t)(c_color) )
+#define GET_GREEN( c_color )	( (uint8_t)(c_color >> 8) )
+#define GET_BLUE(  c_color )	( (uint8_t)(c_color >> 16) )
+#define GET_RGB( r, g, b )		( (uint32_t)(r) | ((uint32_t)(g) << 8) | ((uint32_t)(b) << 16) )
+
 struct C_PALETTE {
 	int		green;		// 緑
 	int		red;		// 赤
@@ -18,7 +34,7 @@ struct C_PALETTE {
 };
 
 struct C_TILE_PATTERN {
-	COLORREF	c;		// 色
+	C_COLOR	c;		// 色
 	int			p[2];	// タイルに使われるパレットの番号
 };
 
@@ -148,7 +164,7 @@ enum{
 };
 
 struct SETTING {
-	uint32_t		mode;						// 変換先モード MD_SC??
+	uint32_t		screen_mode;				// 変換先モード MD_SC??
 	uint32_t		err;						// この値より小さい誤差は無視する
 	bool			diffusion_error_enable;		// 誤差拡散 する:true / しない:false
 	bool			interlace;					// インターレース する:true / しない:false
@@ -156,7 +172,7 @@ struct SETTING {
 	float			diffusion_error_coef;		// 誤差拡散係数 ( 0.000～0.500 )
 	bool			fixed_palette;				// 固定パレット する:true / しない:false
 	bool			resize_enable;				// サイズ調節
-	C_PALETTE		Col[16];					// SC5/SC7 におけるＭＳＸ側パレット指定
+	C_PALETTE		color_palette[16];			// SC5/SC7 におけるＭＳＸ側パレット指定
 	uint32_t		PltMode;					// パレット出力モード
 	bool			AutoName;					// 自動ファイル名決定
 	uint32_t		AlgoMode;					// 自然画生成アルゴリズム番号
@@ -168,7 +184,7 @@ struct SETTING {
 	uint32_t		ErrAdd;						// ディザ加算方法
 	bool			NonZero;					// ０番の色を使わない
 	uint32_t		FourceZero;					// 強制ゼロ化
-	COLORREF		FZColor;					// 強制ゼロ化する色
+	C_COLOR			FZColor;					// 強制ゼロ化する色
 	uint32_t		FZX;						// 強制ゼロ化Ｘ座標
 	uint32_t		FZY;						// 強制ゼロ化Ｙ座標
 	bool			Tile;						// 網がけタイルを使う
@@ -178,8 +194,9 @@ struct SETTING {
 	bool			b192;						// 192ラインモード
 	int				Resample;					// ｻｲｽﾞ調整ﾘｻﾝﾌﾟﾙ
 	int				SizeMode;					// ｻｲｽﾞ調整ﾓｰﾄﾞ
-	COLORREF		FCColor;					// 背景色
+	C_COLOR			FCColor;					// 背景色
 	float			diffusion_error_x_weight;	// 誤差拡散 X-Y比
+	bool			output_basic_enable;		// BAS出力
 };
 
 //	値の上限下限に従って値をクリップする
@@ -189,40 +206,40 @@ int range_limiter( int n, int min, int max );
 int convert_rgb_to_palette( const int *p_convert_table, int n, int v );
 
 //	縮小処理
-bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
-			    COLORREF *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
-bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
-			    COLORREF *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
+bool cnvNormResize( C_COLOR *in , int inwidth , int inheight ,
+			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
+bool cnvAntiResize( C_COLOR *in , int inwidth , int inheight ,
+			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
 
 //	複製処理
-bool cnvCopy( COLORREF *in ,int inwidth ,int inheight ,
-			  COLORREF *out,int outwidth,int outheight,PROGRESS prog,int seido );
-bool cnvCopyInter(	COLORREF *in ,int inwidth ,int inheight ,
-					COLORREF *out,int outwidth,int outheight,PROGRESS prog,int seido );
+bool cnvCopy( C_COLOR *in ,int inwidth ,int inheight ,
+			  C_COLOR *out,int outwidth,int outheight,PROGRESS prog,int seido );
+bool cnvCopyInter(	C_COLOR *in ,int inwidth ,int inheight ,
+					C_COLOR *out,int outwidth,int outheight,PROGRESS prog,int seido );
 
 //	減色処理
-bool cnvRecolor( COLORREF *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog,
-				 COLORREF *pal,C_TILE_PATTERN *tail,int tailcnt );
+bool cnvRecolor( C_COLOR *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog,
+				 C_COLOR *pal,C_TILE_PATTERN *tail,int tailcnt );
 
 //	減色処理（自然画コンバータ）
-bool cnvNtcolor( COLORREF *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog );
+bool cnvNtcolor( C_COLOR *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog );
 
 //	色比較
 int cnvColorTblCompare( const void *tbl1,const void *tbl2 );
 
 //	色取得
-bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int cnt,int pp,
-				    bool FourceZero,COLORREF FZColor );
-bool cnvGetPaletteS8( COLORREF *pal );
+bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int pp,
+				    bool FourceZero,C_COLOR FZColor );
+bool cnvGetPaletteS8( C_COLOR *pal );
 
 //	タイルパターン取得(SC5/SC7専用)
-int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int mode );
+int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int screen_mode );
 
 //	プレビュー作成（逆変換）
 void draw_screen( const unsigned char *bmp,HDC hDC,const SETTING *Mode );
 
 //	パレットのソート
-void cnvSortPalette( SETTING* Mode, COLORREF* Pal );
+void cnvSortPalette( SETTING* Mode, C_COLOR* Pal );
 
 //	プレビューのＢＭＰ保存
 bool cnvSaveBmpFile( const char *szInFileName, LPBYTE bmp, int width, int height, SETTING *Mode );

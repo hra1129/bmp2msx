@@ -9,14 +9,14 @@
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-#define	CFG_VERSION		"ver 2022_08_02 (C)2000-2022 HRA!"	//	バージョン番号
+#define	CFG_VERSION		"ver 2022_08_03 (C)2000-2022 HRA!"	//	バージョン番号
 
-#define	COLCUR1			RGB(255,255,240)				//	カラーテーブル現在位置カーソル色１（内側）
-#define	COLCUR2			RGB(15,15,0)					//	カラーテーブル現在位置カーソル色２（外側）
+#define	COLCUR1			GET_RGB(255,255,240)				//	カラーテーブル現在位置カーソル色１（内側）
+#define	COLCUR2			GET_RGB(15,15,0)					//	カラーテーブル現在位置カーソル色２（外側）
 #define PV_MAX			50								//	プレビュー記憶最大数
-#define cnDataBk1		RGB(0,0,120)					//	設定表示の背景（設定、変換結果画像）
-#define cnDataBk2		RGB(120,0,0)					//	設定表示の背景（変換元画像）
-#define cnDataText		RGB(255,255,255)				//	設定表示の背景
+#define cnDataBk1		GET_RGB(0,0,120)					//	設定表示の背景（設定、変換結果画像）
+#define cnDataBk2		GET_RGB(120,0,0)					//	設定表示の背景（変換元画像）
+#define cnDataText		GET_RGB(255,255,255)				//	設定表示の背景
 #define	cnWidth			512								//	幅
 #define	cnHeight		424								//	高さ
 #define	cnZoomMax		4								//	拡大率最大
@@ -41,8 +41,8 @@
 #define	CSZTITLE		"BMP to MSX"
 #define	CSZTITLESUB		"Original File"
 
-#define	BgColor			RGB(10,0,127)
-#define	FrColor			RGB(255,255,255)				//	文字の色
+#define	BgColor			GET_RGB(10,0,127)
+#define	FrColor			GET_RGB(255,255,255)				//	文字の色
 #define CustomFile		"BMP2MSX_CUSTOM.BIN"			//	設定ファイル
 #define CfgFile			"BMP2MSX.B2M"					//	設定ファイル
 #define PathFile		"BMP2MSX.CFG"					//	設定ファイル

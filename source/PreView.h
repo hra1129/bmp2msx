@@ -38,7 +38,7 @@ void pvAllDelete( void );
 int pvNextPreview( int Index );
 int pvPrevPreview( int Index );
 bool pvAddPreview( int Index );
-void pvDrawBmp( HDC hDC, int Index, COLORREF *in, int width, int height );
+void pvDrawBmp( HDC hDC, int Index, C_COLOR *in, int width, int height );
 int pvGetNum( int Index );
 int pvGetCnt( void );
 

@@ -276,9 +276,9 @@ EVENT( onSubLButton )
 	sd.x			= pos.x;
 	sd.y			= pos.y;
 	sd.colorcode	= GetPixel( hDC,pos.x,pos.y );
-	sd.red			= GetRValue( sd.colorcode );
-	sd.green		= GetGValue( sd.colorcode );
-	sd.blue			= GetBValue( sd.colorcode );
+	sd.red			= GET_RED( sd.colorcode );
+	sd.green		= GET_GREEN( sd.colorcode );
+	sd.blue			= GET_BLUE( sd.colorcode );
 	ReleaseDC( hWnd,hDC );
 	spShow( hWnd,&sd );
 	return 0;

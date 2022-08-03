@@ -4,6 +4,7 @@
 //										(C)2000 HRA!
 // -------------------------------------------------------------
 
+#include <cstring>
 #include "bsave.h"
 #include "utils.h"
 #include "fileuty.h"
@@ -18,7 +19,7 @@ static const char* smode="235678AC5678AC";			// ファイル名の最後につける記号
 // -------------------------------------------------------------
 class C_BSAVE {
 private:
-	uint32_t	mode;
+	uint32_t	screen_mode;
 	bool	interlace;
 	uint32_t	palette_mode;
 };
@@ -26,7 +27,7 @@ private:
 // -------------------------------------------------------------
 // プロトタイプ宣言
 // -------------------------------------------------------------
-static int _SaveHeader( FU_FILE *hf, int mode, int width, int height, int paltbl );
+static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int paltbl );
 static int _SaveBodyS2( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SaveBodyS3( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int pitch, int *outadr );
@@ -34,6 +35,7 @@ static int _SaveColorS2( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outadr );
 static void _GetOutFilename( char* szOutFile, const char* szInFile, int nScrMode, int nInter, bool pal );
 static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode );
+static bool _save_basic_file( SETTING *Mode, const char *szFileName );
 
 // -------------------------------------------------------------
 //	1.	日本語名
@@ -55,7 +57,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 	int				save_width, save_height, interc, outadr, pitch;
 	byte*			ptr;
 	FU_FILE			*hf;
-	int				paltbl	= PalTblAdr[ Mode->mode ];
+	int				paltbl	= PalTblAdr[ Mode->screen_mode ];
 	bool			inter	= Mode->interlace;
 	int				ecode	= 0;
 #ifdef _ENGLISH
@@ -72,7 +74,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 					};
 #endif
 
-	switch( Mode->mode ){
+	switch( Mode->screen_mode ){
 	case MD_SC5:
 	case MD_SC7:
 		save_width = width >> 1;
@@ -111,7 +113,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		//	ファイル名
 		hf = FU_INVALID_HANDLE;
 		if( Mode->AutoName ){	//	自動決定の場合
-			_GetOutFilename( szFileName, szInFileName, Mode->mode, interc - 1 + ( inter ? 1 : 0 ), ( Mode->PltMode == PLT_BSAVE ) );
+			_GetOutFilename( szFileName, szInFileName, Mode->screen_mode, interc - 1 + ( inter ? 1 : 0 ), ( Mode->PltMode == PLT_BSAVE ) );
 		}else{					//	手動決定の場合
 			if( !GetName( hWnd, szFileName, MAX_PATH, szTitle[ interc - 1 + ( inter ? 1 : 0 ) ], cszDefExp, NULL ) ){
 				break;
@@ -127,14 +129,14 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 
 		//	ヘッダ
 		if( Mode->PltMode == PLT_BSAVE ) {
-			ecode = _SaveHeader( hf, Mode->mode, save_width, save_height, paltbl );
+			ecode = _SaveHeader( hf, Mode->screen_mode, save_width, save_height, paltbl );
 		} else {
-			ecode = _SaveHeader( hf, Mode->mode, save_width, save_height, 0 );
+			ecode = _SaveHeader( hf, Mode->screen_mode, save_width, save_height, 0 );
 		}
 		if( ecode != BSV_NOERR ) break;
 
 		// ピクセルの保存
-		switch( Mode->mode ) {
+		switch( Mode->screen_mode ) {
 		case MD_SC2:	//	SCREEN 2
 			ecode = _SaveBodyS2( hf, ptr, &outadr );
 			break;
@@ -147,13 +149,13 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		if( ecode != BSV_NOERR ) break;
 		
 		// パレットテーブルが有れば保存する
-		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->mode < MD_SC5_256L ){
-			ecode = _SavePaletteTable( hf, paltbl, Mode->Col, &outadr );
+		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->screen_mode < MD_SC5_256L ){
+			ecode = _SavePaletteTable( hf, paltbl, Mode->color_palette, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
 
 		//	カラーテーブル( SCREEN 2/4 )
-		if( Mode->mode == MD_SC2 ) {
+		if( Mode->screen_mode == MD_SC2 ) {
 			ecode = _SaveColorS2( hf, ptr, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
@@ -166,13 +168,13 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		if( paltbl != 0 ){
 			switch( Mode->PltMode ) {
 			case PLT_PL:	// グラフサウルス *.PL? 形式
-				if( GetName( hWnd,szFileName,MAX_PATH,PLSave ,cszDefPL, NULL ) ) {
-					bsvSavePLFile( hWnd,szFileName,Mode );
+				if( GetName( hWnd, szFileName, MAX_PATH, PLSave, cszDefPL, NULL ) ){
+					bsvSavePLFile( hWnd, szFileName, Mode );
 				}
 				break;
 			case PLT_CSV:	// ＣＳＶ形式
-				if( GetName( hWnd,szFileName,MAX_PATH,CSVSave,cszDefCSV, CfgCsv ) ) {
-					_SaveCSVFile( hWnd,szFileName,Mode );
+				if( GetName( hWnd, szFileName, MAX_PATH, CSVSave, cszDefCSV, CfgCsv ) ){
+					_SaveCSVFile( hWnd, szFileName, Mode );
 				}
 				break;
 			}
@@ -181,7 +183,14 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		ptr = bmp;
 		interc--;
 	}
-	if( hf != FU_INVALID_HANDLE ) fu_close( hf );
+	if( hf != FU_INVALID_HANDLE ) {
+		fu_close( hf );
+	}
+	if( Mode->output_basic_enable ) {
+		if( !_save_basic_file( Mode, szFileName ) ) {
+			MessageBox( hWnd, WriteErr, MsgCap, MB_OK | MB_ICONWARNING );
+		}
+	}
 	return ecode;
 }
 
@@ -208,8 +217,8 @@ void bsvSavePLFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 	}
 	// 出力データを作成する
 	for( i=0;i<16;++i ) {
-		Buf[ i*2+0 ] = (Mode->Col[i].red<<4) | Mode->Col[i].blue;
-		Buf[ i*2+1 ] =  Mode->Col[i].green;
+		Buf[ i*2+0 ] = (Mode->color_palette[i].red<<4) | Mode->color_palette[i].blue;
+		Buf[ i*2+1 ] =  Mode->color_palette[i].green;
 	}
 	// データを出力する
 	for( i=0;i<8;++i ) {
@@ -230,7 +239,7 @@ void bsvSavePLFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void bsvLoadPLBsaveFile( SETTING *mode, const char *szFileName ) {
+void bsvLoadPLBsaveFile( SETTING *screen_mode, const char *szFileName ) {
 	FU_FILE	*hf;
 	byte	Buf[ 32 ];
 	int		i, adr;
@@ -266,9 +275,9 @@ void bsvLoadPLBsaveFile( SETTING *mode, const char *szFileName ) {
 	if( fu_read( hf, Buf, sizeof(Buf) ) ) {
 		// 入力データを反映する
 		for( i = 0; i < 16; ++i ) {
-			mode->Col[ i ].red  = (Buf[ i * 2 + 0 ] >> 4 ) & 0x07;
-			mode->Col[ i ].blue =  Buf[ i * 2 + 0 ]        & 0x07;
-			mode->Col[ i ].green=  Buf[ i * 2 + 1 ]        & 0x07;
+			screen_mode->color_palette[ i ].red  = (Buf[ i * 2 + 0 ] >> 4 ) & 0x07;
+			screen_mode->color_palette[ i ].blue =  Buf[ i * 2 + 0 ]        & 0x07;
+			screen_mode->color_palette[ i ].green=  Buf[ i * 2 + 1 ]        & 0x07;
 		}
 	}
 	// 終了
@@ -447,13 +456,13 @@ static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static int _SaveHeader( FU_FILE *hf, int mode, int width, int height, int paltbl ) {
+static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int paltbl ) {
 	BSAVEHEADER		bsh =  { 0 };
 
 	//	ヘッダの構築
 	bsh.type	= 0xFE;
 	bsh.start	= 0;
-	switch( mode ) {
+	switch( screen_mode ) {
 	case MD_SC2:
 		bsh.end	= 0x37FF;
 		break;
@@ -538,18 +547,145 @@ static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 	hf = fu_open( szFileName, "wb" );
 	if( hf == FU_INVALID_HANDLE ) {
 		MessageBox( hWnd, WriteErr, MsgCap,MB_OK | MB_ICONWARNING );
-		return;		// ファイルが作れない
+		return;		// ファイルを作れない
 	}
 
 	// データを出力する
 	fu_write( hf, cszCSVHead, lstrlen(cszCSVHead) );
-	palnum = ( Mode->mode == MD_SC6 || Mode->mode == MD_SC6_256L ) ? 4 : 16;
+	palnum = ( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L ) ? 4 : 16;
 	for( i = 0; i < palnum; ++i ){
-		Buf[ 0 ] = (Mode->Col[i].red<<4) | Mode->Col[i].blue;
-		Buf[ 1 ] =  Mode->Col[i].green;
+		Buf[ 0 ] = (Mode->color_palette[i].red<<4) | Mode->color_palette[i].blue;
+		Buf[ 1 ] =  Mode->color_palette[i].green;
 		wsprintf( szBuf,"%02X,%02X%s", Buf[0], Buf[1], (i==15)?"\x0D\x0A":"," );
 		fu_write( hf, szBuf, lstrlen(szBuf) );
 	}
 	// 終了
 	fu_close( hf );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		BASICファイルを保存する
+//	2.	引数
+//		szFileName	...	(I)	ファイル名
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
+	char s_basic_name[ MAX_PATH + 3 ];
+	char *s_file_name = s_basic_name;
+	char *p, *pp;
+	FU_FILE *hf;
+	int line_no = 100;
+	int i;
+
+	strcpy( s_basic_name, szFileName );
+	p = strrchr( s_basic_name, '.' );
+	strcpy( p, ".BAS" );
+	// ファイルを開く
+	hf = fu_open( s_basic_name, "w" );
+	if( hf == FU_INVALID_HANDLE ){
+		return false;		// ファイルを作れない
+	}
+
+	fu_printf( hf, "%d DEFINT A-Z:COLOR 15,0,0:SCREEN %d", line_no, screen_mode[ Mode->screen_mode ] );
+	if( Mode->interlace ) {
+		fu_printf( hf, ",,,,,3" );
+	}
+	fu_printf( hf, "\n" );
+	line_no += 10;
+
+	if( screen_mode[ Mode->screen_mode ] < 4 ) {
+		fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n", line_no );
+		line_no += 10;
+	}
+	else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ) {
+		fu_printf( hf, "%d FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n", line_no );
+		line_no += 10;
+	}
+	else {
+		//	パレット無しのモード ( SCREEN 8, 12 )
+	}
+
+	strcpy( s_file_name, szFileName );
+	p = strrchr( s_file_name, '.' );
+	pp = strrchr( s_file_name, '\\' );
+	if( pp == NULL ) {
+		pp = strrchr( s_file_name, '/' );
+		if( pp == NULL ) {
+			pp = s_file_name;
+		}
+		else {
+			pp++;
+		}
+	}
+	else {
+		pp++;
+	}
+	if( Mode->interlace ) {
+		p[ 3 ] = '0';
+		fu_printf( hf, "%d SET PAGE 0,0:BLOAD\"%s\",S\n", line_no, pp );
+		line_no += 10;
+		p[ 3 ] = '1';
+		fu_printf( hf, "%d SET PAGE 1,1:BLOAD\"%s\",S\n", line_no, pp );
+		line_no += 10;
+	}
+	else {
+		fu_printf( hf, "%d BLOAD\"%s\",S\n", line_no, pp );
+		line_no += 10;
+	}
+
+	if( Mode->PltMode == PLT_BSAVE ) {
+		if( screen_mode[ Mode->screen_mode ] < 4 ){
+			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN COLOR=RESTORE\n", line_no );
+			line_no += 10;
+		}
+		else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ){
+			fu_printf( hf, "%d COLOR=RESTORE\n", line_no );
+			line_no += 10;
+		}
+		else{
+			//	パレット無しのモード ( SCREEN 8, 12 )
+		}
+	}
+	else {
+		if( screen_mode[ Mode->screen_mode ] < 4 ){
+			fu_printf( hf, "%d P$=\"", line_no );
+			for( i = 0; i < 16; i++ ){
+				fu_printf( hf, "%d%d%d", Mode->color_palette[ i ].red, Mode->color_palette[ i ].green, Mode->color_palette[ i ].blue );
+			}
+			fu_printf( hf, "\"\n" );
+			line_no += 10;
+
+			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n", line_no );
+			line_no += 10;
+		}
+		else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ){
+			fu_printf( hf, "%d P$=\"", line_no );
+			for( i = 0; i < 16; i++ ){
+				fu_printf( hf, "%d%d%d", Mode->color_palette[ i ].red, Mode->color_palette[ i ].green, Mode->color_palette[ i ].blue );
+			}
+			fu_printf( hf, "\"\n" );
+			line_no += 10;
+
+			fu_printf( hf, "%d FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n", line_no );
+			line_no += 10;
+		}
+		else{
+			//	パレット無しのモード ( SCREEN 8, 12 )
+		}
+	}
+	fu_printf( hf, "%d A$=INPUT$(1)\n", line_no );
+	line_no += 10;
+
+	if( Mode->interlace ) {
+		fu_printf( hf, "%d SCREEN,,,,,0\n", line_no );
+		line_no += 10;
+	}
+
+	// 終了
+	fu_close( hf );
+	return true;
 }

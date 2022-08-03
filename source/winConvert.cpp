@@ -48,22 +48,22 @@ static void _draw_screen2( const unsigned char *bmp,HDC hDC,const SETTING *Mode 
 			adr = y / 2;
 			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
 			// 下位４ビット（バックグランド）
-			r[ 0 ] = convert7to255_r[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].red ];
-			g[ 0 ] = convert7to255_g[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].green ];
-			b[ 0 ] = convert7to255_b[ Mode->Col[ bmp[ adr + SC2COLOR ] & 0x0F ].blue ];
+			r[ 0 ] = convert7to255_r[ Mode->color_palette[ bmp[ adr + SC2COLOR ] & 0x0F ].red ];
+			g[ 0 ] = convert7to255_g[ Mode->color_palette[ bmp[ adr + SC2COLOR ] & 0x0F ].green ];
+			b[ 0 ] = convert7to255_b[ Mode->color_palette[ bmp[ adr + SC2COLOR ] & 0x0F ].blue ];
 			// 上位４ビット（フォアグランド）
-			r[ 1 ] = convert7to255_r[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].red ];
-			g[ 1 ] = convert7to255_g[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].green ];
-			b[ 1 ] = convert7to255_b[ Mode->Col[ bmp[ adr + SC2COLOR ] >> 4 ].blue ];
+			r[ 1 ] = convert7to255_r[ Mode->color_palette[ bmp[ adr + SC2COLOR ] >> 4 ].red ];
+			g[ 1 ] = convert7to255_g[ Mode->color_palette[ bmp[ adr + SC2COLOR ] >> 4 ].green ];
+			b[ 1 ] = convert7to255_b[ Mode->color_palette[ bmp[ adr + SC2COLOR ] >> 4 ].blue ];
 
 			//	８ドットペアの描画
 			c = bmp[ adr ];
 			for( i = 0; i < 8; ++i ){
 				bit = ( c & 0x80 ) >> 7;
-				SetPixel( hDC, x + i * 2 + 0, y + 20, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 1, y + 20, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 0, y + 21, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
-				SetPixel( hDC, x + i * 2 + 1, y + 21, RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 0, y + 20, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 1, y + 20, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 0, y + 21, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 1, y + 21, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
 				c = c << 1;
 			}
 
@@ -92,18 +92,18 @@ static void _draw_screen3( const unsigned char *bmp,HDC hDC,const SETTING *Mode 
 			adr = y / 8;
 			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
 			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] >> 4 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] >> 4 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] >> 4 ].blue ];
 			for( i = 0; i < 8; ++i ){
-				SetPixel( hDC, x + i, y + 20, RGB( r, g, b ) );
+				SetPixel( hDC, x + i, y + 20, GET_RGB( r, g, b ) );
 			}
 			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] & 0x0F ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] & 0x0F ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] & 0x0F ].blue ];
 			for( i = 0; i < 8; ++i ){
-				SetPixel( hDC, x + i + 8, y + 20, RGB( r, g, b ) );
+				SetPixel( hDC, x + i + 8, y + 20, GET_RGB( r, g, b ) );
 			}
 
 		}
@@ -135,17 +135,17 @@ static void _draw_screen5( const unsigned char *bmp,HDC hDC,const SETTING *Mode 
 			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 128 + x / 4;
 			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] >> 4 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] >> 4 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] >> 4 ].blue ];
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
 			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
-			SetPixel( hDC, x + 2, y + t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 3, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] & 0x0F ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] & 0x0F ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] & 0x0F ].blue ];
+			SetPixel( hDC, x + 2, y + t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 3, y + t, GET_RGB( r, g, b ) );
 		}
 	}
 }
@@ -175,25 +175,25 @@ static void _draw_screen6( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 128 + x / 4;
 			// 上位２ビット（左側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 6 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ ( bmp[ adr ] >> 6 ) & 0x03 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ ( bmp[ adr ] >> 6 ) & 0x03 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ ( bmp[ adr ] >> 6 ) & 0x03 ].blue ];
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
 			// 上位２ビット（中左側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 4 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ ( bmp[ adr ] >> 4 ) & 0x03 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ ( bmp[ adr ] >> 4 ) & 0x03 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ ( bmp[ adr ] >> 4 ) & 0x03 ].blue ];
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
 			// 下位２ビット（中右側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] >> 2 ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 2, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ ( bmp[ adr ] >> 2 ) & 0x03 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ ( bmp[ adr ] >> 2 ) & 0x03 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ ( bmp[ adr ] >> 2 ) & 0x03 ].blue ];
+			SetPixel( hDC, x + 2, y + t, GET_RGB( r, g, b ) );
 			// 下位２ビット（右側）
-			r = convert7to255_r[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].red ];
-			g = convert7to255_g[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].green ];
-			b = convert7to255_b[ Mode->Col[ ( bmp[ adr ] ) & 0x03 ].blue ];
-			SetPixel( hDC, x + 3, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ ( bmp[ adr ] ) & 0x03 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ ( bmp[ adr ] ) & 0x03 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ ( bmp[ adr ] ) & 0x03 ].blue ];
+			SetPixel( hDC, x + 3, y + t, GET_RGB( r, g, b ) );
 		}
 	}
 }
@@ -223,15 +223,15 @@ static void _draw_screen7( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 			if( Mode->interlace ) adr = y; else adr = y / 2;
 			adr = adr * 256 + x / 2;
 			// 上位４ビット（左側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] >> 4 ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] >> 4 ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] >> 4 ].blue ];
-			SetPixel( hDC, x + 0, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] >> 4 ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] >> 4 ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] >> 4 ].blue ];
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
 			// 下位４ビット（右側）
-			r = convert7to255_r[ Mode->Col[ bmp[ adr ] & 0x0F ].red ];
-			g = convert7to255_g[ Mode->Col[ bmp[ adr ] & 0x0F ].green ];
-			b = convert7to255_b[ Mode->Col[ bmp[ adr ] & 0x0F ].blue ];
-			SetPixel( hDC, x + 1, y + t, RGB( r, g, b ) );
+			r = convert7to255_r[ Mode->color_palette[ bmp[ adr ] & 0x0F ].red ];
+			g = convert7to255_g[ Mode->color_palette[ bmp[ adr ] & 0x0F ].green ];
+			b = convert7to255_b[ Mode->color_palette[ bmp[ adr ] & 0x0F ].blue ];
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
 		}
 	}
 }
@@ -263,8 +263,8 @@ static void _draw_screen8( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 			r = convert7to255_s8r[(bmp[ adr ] & 0x1C) >> 2 ];
 			g = convert7to255_s8g[(bmp[ adr ] & 0xE0) >> 5 ];
 			b = convert3to255_s8b[ bmp[ adr ] & 0x03       ];
-			SetPixel( hDC, x + 0, y+t, RGB( r, g, b ) );
-			SetPixel( hDC, x + 1, y+t, RGB( r, g, b ) );
+			SetPixel( hDC, x + 0, y+t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 1, y+t, GET_RGB( r, g, b ) );
 		}
 	}
 }
@@ -310,8 +310,8 @@ static void _draw_screen12( const unsigned char *bmp, HDC hDC, const SETTING *Mo
 				if( r == 246 && g == 246 && b == 255 ) {
 					r = r;
 				}
-				SetPixel( hDC, x + z * 2 + 0, y + t, RGB( r, g, b ) );
-				SetPixel( hDC, x + z * 2 + 1, y + t, RGB( r, g, b ) );
+				SetPixel( hDC, x + z * 2 + 0, y + t, GET_RGB( r, g, b ) );
+				SetPixel( hDC, x + z * 2 + 1, y + t, GET_RGB( r, g, b ) );
 			}
 		}
 	}
@@ -334,7 +334,7 @@ void draw_screen( const unsigned char *bmp, HDC hDC, const SETTING *Mode ){
 
 	FillRect( hDC, &rc, (HBRUSH)GetStockObject( BLACK_BRUSH ) );
 
-	switch( Mode->mode ){
+	switch( Mode->screen_mode ){
 	case MD_SC2:
 		_draw_screen2( bmp, hDC, Mode );	return;
 	case MD_SC3:

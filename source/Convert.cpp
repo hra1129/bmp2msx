@@ -12,15 +12,38 @@
 // -------------------------------------------------------------
 // 型
 // -------------------------------------------------------------
-typedef struct {
-	COLORREF			c;		// 色
+struct C_COLOR_TABLE {
+	C_COLOR				c;		// 色
 	int					n;		// その数
-} COLORTBL;
+};
 
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-const int dith[][8][8]={	// ディザリングパターン
+
+const int screen_mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12 };	// 画面モード番号
+
+// 画面サイズ
+const C_SCREEN_SIZE screen_size[] = {
+	{ 256, 192 },	// screen 2/4
+	{ 64, 48 },	// screen 3
+	{ 256, 212 },	// screen 5
+	{ 512, 212 },	// screen 6
+	{ 512, 212 },	// screen 7
+	{ 256, 212 },	// screen 8
+	{ 256, 212 },	// screen 10/11
+	{ 256, 212 },	// screen 12
+	{ 256, 256 },	// screen 5 (256 lines)
+	{ 512, 256 },	// screen 6 (256 lines)
+	{ 512, 256 },	// screen 7 (256 lines)
+	{ 256, 256 },	// screen 8 (256 lines)
+	{ 256, 256 },	// screen 10/11 (256 lines)
+	{ 256, 256 },	// screen 12 (256 lines)
+};
+
+
+// ディザリングパターン
+const int dith[][8][8]={
 	{	// ディザ１（疑似ランダム）
 		{0 ,15,7 ,14,6 ,15,5 ,15},
 		{13,4 ,9 ,2 ,12,7 ,8 ,2 },
@@ -177,24 +200,24 @@ static unsigned char vram[ 0x4000 ];
 // -------------------------------------------------------------
 // プロトタイプ
 // -------------------------------------------------------------
-static inline COLORREF _get_pixel( COLORREF *in, int width, int height, int x, int y );
-static inline void _set_pixel( COLORREF *out, int width, int height, int x, int y, COLORREF c );
+static inline C_COLOR _get_pixel( C_COLOR *in, int width, int height, int x, int y );
+static inline void _set_pixel( C_COLOR *out, int width, int height, int x, int y, C_COLOR c );
 static inline int _abs( int a );
-static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int ErrAdd, int x, int y, COLORREF c );
+static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode, int ErrAdd, int x, int y, C_COLOR c );
 static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
 
-static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal,int pp,
-							  bool FourceZero,COLORREF FZColor );
+static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
+							  bool FourceZero,C_COLOR FZColor );
 static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 );
 
-static bool cnvRecolor8( COLORREF *in,int width,int height,
-						unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
+static bool cnvRecolor8( C_COLOR *in,int width,int height,
+						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 						C_TILE_PATTERN *tail,int tailcnt );
-static bool cnvRecolor5( COLORREF *in,int width,int height,
-						unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
+static bool cnvRecolor5( C_COLOR *in,int width,int height,
+						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 						C_TILE_PATTERN *tail,int tailcnt );
 
-static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, COLORREF *pal );
+static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, C_COLOR *pal );
 static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog );
 
 // -----------------------------------------------------
@@ -244,12 +267,12 @@ int convert_rgb_to_palette( const int *p_convert_table, int n, int v ){
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool cnvCopy( COLORREF *in ,int inwidth ,int inheight ,
-			  COLORREF *out,int outwidth,int outheight, PROGRESS prog, int seido )
+bool cnvCopy( C_COLOR *in ,int inwidth ,int inheight ,
+			  C_COLOR *out,int outwidth,int outheight, PROGRESS prog, int seido )
 {
 	int	x,y,w;
 	int	hh;
-	COLORREF mask;
+	C_COLOR mask;
 
 	// 精度制限用マスク作成
 	mask = ~((1<<seido)-1);
@@ -291,13 +314,13 @@ bool cnvCopy( COLORREF *in ,int inwidth ,int inheight ,
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-bool cnvCopyInter( COLORREF *in ,int inwidth ,int inheight ,
-			  COLORREF *out,int outwidth,int outheight,PROGRESS prog,int seido )
+bool cnvCopyInter( C_COLOR *in ,int inwidth ,int inheight ,
+			  C_COLOR *out,int outwidth,int outheight,PROGRESS prog,int seido )
 {
 	int	x,y;
 	int	ww, hh;
-	COLORREF c1,c2;
-	COLORREF mask;
+	C_COLOR c1,c2;
+	C_COLOR mask;
 
 	if( outheight < inheight ) hh = outheight; else hh = inheight;
 	if( outwidth  < inwidth  ) ww = outwidth;  else ww = inwidth / 2;
@@ -312,9 +335,9 @@ bool cnvCopyInter( COLORREF *in ,int inwidth ,int inheight ,
 		for( x = 0; x < ww; ++x ){	
 			c1=in[ x * 2 + 0];
 			c2=in[ x * 2 + 1];
-			out[ x ]=RGB(	( GetRValue( c1 ) + GetRValue( c2 ) ) / 2,
-							( GetGValue( c1 ) + GetGValue( c2 ) ) / 2,
-							( GetBValue( c1 ) + GetBValue( c2 ) ) / 2 ) & mask;
+			out[ x ]=GET_RGB(	( GET_RED(   c1 ) + GET_RED(   c2 ) ) / 2,
+								( GET_GREEN( c1 ) + GET_GREEN( c2 ) ) / 2,
+								( GET_BLUE(  c1 ) + GET_BLUE(  c2 ) ) / 2 ) & mask;
 		}
 		out += outwidth;
 		in  += inwidth;
@@ -342,12 +365,12 @@ bool cnvCopyInter( COLORREF *in ,int inwidth ,int inheight ,
 //	4.	備考
 //		途中経過表示関数が失敗すると中断して失敗を返す
 // -------------------------------------------------------------
-bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
-			    COLORREF *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido )
+bool cnvNormResize( C_COLOR *in , int inwidth , int inheight ,
+			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido )
 {
 	int			x, y, xx, yy;
-	COLORREF	c;
-	COLORREF	mask;
+	C_COLOR	c;
+	C_COLOR	mask;
 
 	// 精度制限用マスク作成
 	mask = ~(( 1 << seido ) - 1 );
@@ -372,7 +395,7 @@ bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
 			// 入力画像の座標に変換
 			xx  = x * inwidth / wwidth;
 			c   = _get_pixel( in, inwidth, inheight, xx, yy );
-			_set_pixel( out, outwidth, outheight, x, y, RGB(GetRValue( c ), GetGValue( c ), GetBValue( c )) & mask );
+			_set_pixel( out, outwidth, outheight, x, y, GET_RGB(GET_RED( c ), GET_GREEN( c ), GET_BLUE( c )) & mask );
 		}	// x
 	}	// y
 	return true;
@@ -398,13 +421,13 @@ bool cnvNormResize( COLORREF *in , int inwidth , int inheight ,
 //	4.	備考
 //		途中経過表示関数が失敗すると中断して失敗を返す
 // -------------------------------------------------------------
-bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
-			    COLORREF *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido )
+bool cnvAntiResize( C_COLOR *in , int inwidth , int inheight ,
+			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido )
 {
 	int			x, y, xx, yy, ix, iy, ixm1, ixm2, iym1, iym2, ixw, iyw;
 	float		ax, ay, prx, pgx, pbx, pry, pgy, pby, am;
-	COLORREF	c;
-	COLORREF	mask;
+	C_COLOR	c;
+	C_COLOR	mask;
 	bool		bWZoom;	//	幅拡大
 	bool		bHZoom;	//	高さ拡大
 
@@ -452,33 +475,33 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 					ax  = (float(x) * inwidth / wwidth ) - float(xx);	//	位置 xx+1 への一致度
 					ay  = (float(y) * inheight/ wheight) - float(yy);	//	位置 xx+1 への一致度
 					c   = _get_pixel( in, inwidth, inheight, xx, yy );
-					prx = GetRValue( c ) * (1-ax) * (1-ay);
-					pgx = GetGValue( c ) * (1-ax) * (1-ay);
-					pbx = GetBValue( c ) * (1-ax) * (1-ay);
+					prx = GET_RED( c ) * (1-ax) * (1-ay);
+					pgx = GET_GREEN( c ) * (1-ax) * (1-ay);
+					pbx = GET_BLUE( c ) * (1-ax) * (1-ay);
 					c	= _get_pixel( in, inwidth, inheight, xx+1, yy );
-					prx += GetRValue( c ) * ax * (1-ay);
-					pgx += GetGValue( c ) * ax * (1-ay);
-					pbx += GetBValue( c ) * ax * (1-ay);
+					prx += GET_RED( c ) * ax * (1-ay);
+					pgx += GET_GREEN( c ) * ax * (1-ay);
+					pbx += GET_BLUE( c ) * ax * (1-ay);
 					c   = _get_pixel( in, inwidth, inheight, xx, yy+1 );
-					prx += GetRValue( c ) * (1-ax) * ay;
-					pgx += GetGValue( c ) * (1-ax) * ay;
-					pbx += GetBValue( c ) * (1-ax) * ay;
+					prx += GET_RED( c ) * (1-ax) * ay;
+					pgx += GET_GREEN( c ) * (1-ax) * ay;
+					pbx += GET_BLUE( c ) * (1-ax) * ay;
 					c	= _get_pixel( in, inwidth, inheight, xx+1, yy+1 );
-					prx += GetRValue( c ) * ax * ay;
-					pgx += GetGValue( c ) * ax * ay;
-					pbx += GetBValue( c ) * ax * ay;
+					prx += GET_RED( c ) * ax * ay;
+					pgx += GET_GREEN( c ) * ax * ay;
+					pbx += GET_BLUE( c ) * ax * ay;
 					ax = 1.0f;
 				} else {
 					//	水平縮小の場合
 					if( ixw == 0 ){
 						c	= _get_pixel( in, inwidth, inheight, ixm1, yy );
-						prx = GetRValue( c ) * (1-ay);
-						pgx = GetGValue( c ) * (1-ay);
-						pbx = GetBValue( c ) * (1-ay);
+						prx = GET_RED( c ) * (1-ay);
+						pgx = GET_GREEN( c ) * (1-ay);
+						pbx = GET_BLUE( c ) * (1-ay);
 						c	= _get_pixel( in, inwidth, inheight, ixm1, yy+1 );
-						prx += GetRValue( c ) * ay;
-						pgx += GetGValue( c ) * ay;
-						pbx += GetBValue( c ) * ay;
+						prx += GET_RED( c ) * ay;
+						pgx += GET_GREEN( c ) * ay;
+						pbx += GET_BLUE( c ) * ay;
 						ax  = am = 1.0f;
 					}else{
 						ax = 0;					// 重みの合計値（Ｘ軸方向）
@@ -488,19 +511,19 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 							if( am < 0 ) am = -am;
 							am = 1.0f - am;
 							c = _get_pixel( in, inwidth, inheight, ix, yy );
-							prx += GetRValue( c ) * am * (1-ay);
-							pgx += GetGValue( c ) * am * (1-ay);
-							pbx += GetBValue( c ) * am * (1-ay);
+							prx += GET_RED( c ) * am * (1-ay);
+							pgx += GET_GREEN( c ) * am * (1-ay);
+							pbx += GET_BLUE( c ) * am * (1-ay);
 							c = _get_pixel( in, inwidth, inheight, ix, yy+1 );
-							prx += GetRValue( c ) * am * ay;
-							pgx += GetGValue( c ) * am * ay;
-							pbx += GetBValue( c ) * am * ay;
+							prx += GET_RED( c ) * am * ay;
+							pgx += GET_GREEN( c ) * am * ay;
+							pbx += GET_BLUE( c ) * am * ay;
 							ax  += am;
 						}	// ix
 					}
 				}
 				_set_pixel( out, outwidth, outheight, x, y,
-						RGB( int( prx/ax ), int( pgx/ax ), int( pbx/ax ) ) & mask );
+						GET_RGB( int( prx/ax ), int( pgx/ax ), int( pbx/ax ) ) & mask );
 			} else {
 				//	垂直縮小の場合
 				for( iy = iym1; iy <= iym2; ++iy ){
@@ -509,21 +532,21 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 						xx  = x * inwidth / wwidth;
 						ax  = (float(x) * inwidth / wwidth) - float(xx);	//	位置 xx+1 への一致度
 						c   = _get_pixel( in, inwidth, inheight, xx, iy );
-						prx = GetRValue( c ) * (1-ax);
-						pgx = GetGValue( c ) * (1-ax);
-						pbx = GetBValue( c ) * (1-ax);
+						prx = GET_RED( c ) * (1-ax);
+						pgx = GET_GREEN( c ) * (1-ax);
+						pbx = GET_BLUE( c ) * (1-ax);
 						c = _get_pixel( in, inwidth, inheight, xx+1, iy );
-						prx += GetRValue( c ) * ax;
-						pgx += GetGValue( c ) * ax;
-						pbx += GetBValue( c ) * ax;
+						prx += GET_RED( c ) * ax;
+						pgx += GET_GREEN( c ) * ax;
+						pbx += GET_BLUE( c ) * ax;
 						ax = 1.0f;
 					} else {
 						//	水平縮小の場合
 						if( ixw == 0 ){
 							c = _get_pixel( in, inwidth, inheight, ixm1, iy );
-							prx = GetRValue( c );
-							pgx = GetGValue( c );
-							pbx = GetBValue( c );
+							prx = GET_RED( c );
+							pgx = GET_GREEN( c );
+							pbx = GET_BLUE( c );
 							ax  = am = 1.0f;
 						}else{
 							ax = 0;					// 重みの合計値（Ｘ軸方向）
@@ -533,9 +556,9 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 								if( am < 0 ) am = -am;
 								am = 1.0f - am;
 								c = _get_pixel( in, inwidth, inheight, ix, iy );
-								prx += GetRValue( c ) * am;
-								pgx += GetGValue( c ) * am;
-								pbx += GetBValue( c ) * am;
+								prx += GET_RED( c ) * am;
+								pgx += GET_GREEN( c ) * am;
+								pbx += GET_BLUE( c ) * am;
 								ax  += am;
 							}	// ix
 						}
@@ -555,7 +578,7 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 				}	// iy
 				ay *= ax;
 				_set_pixel( out, outwidth, outheight, x, y,
-						RGB( int( pry/ay ), int( pgy/ay ), int( pby/ay ) ) & mask );
+						GET_RGB( int( pry/ay ), int( pgy/ay ), int( pby/ay ) ) & mask );
 			}
 		}	// x
 	}	// y
@@ -579,35 +602,35 @@ bool cnvAntiResize( COLORREF *in , int inwidth , int inheight ,
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int ErrAdd, int x, int y, COLORREF c )
+static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode, int ErrAdd, int x, int y, C_COLOR c )
 {
-	if( mode >= EALGO_DITH1 ){
+	if( screen_mode >= EALGO_DITH1 ){
 		switch( ErrAdd ){
 		case EADD_ROTATE:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ];
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][       y & 7  ][ x & 7 ];
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ];
+			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ];
+			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][       y & 7  ][ x & 7 ];
+			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ];
 			break;
 		case EADD_NONE:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
 			break;
 		case EADD_X:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ];
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 1 ) & 7 ];
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ];
+			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ];
+			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 1 ) & 7 ];
+			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ];
 			break;
 		case EADD_Y:
-			*r = GetRValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ];
-			*g = GetGValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 1 ) & 7 ][ x & 7 ];
-			*b = GetBValue( c ) + dith[ mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ];
+			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ];
+			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 1 ) & 7 ][ x & 7 ];
+			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ];
 			break;
 		}
 	}else{
-		*r = GetRValue( c );
-		*g = GetGValue( c );
-		*b = GetBValue( c );
+		*r = GET_RED( c );
+		*g = GET_GREEN( c );
+		*b = GET_BLUE( c );
 	}
 }
 
@@ -631,13 +654,13 @@ static inline void _put_dither_pattern( int *r, int *g, int *b, int mode, int Er
 //	4.	備考
 //		今のところメモリ不足以外で失敗することはない	
 // -------------------------------------------------------------
-bool cnvRecolor( COLORREF *in,int width,int height,
-					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
+bool cnvRecolor( C_COLOR *in,int width,int height,
+					unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 					C_TILE_PATTERN *tail,int tailcnt )
 {
 	bool	bRet;
 
-	if( CnvMode->mode == MD_SC8 || CnvMode->mode == MD_SC8_256L ) {
+	if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
 		//	256色ビットマップへ変換する
 		return cnvRecolor8( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 	} else {
@@ -645,7 +668,7 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 		bRet = cnvRecolor5( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 
 		//	特殊な画面（SC2/3/4) にあわせて変換する		
-		switch( CnvMode->mode ) {
+		switch( CnvMode->screen_mode ) {
 		case MD_SC2:
 			bRet = bRet && cnvSC5toSC2( out, prog, pal );
 			break;
@@ -674,22 +697,22 @@ bool cnvRecolor( COLORREF *in,int width,int height,
 //	4.	備考
 //		同じことを数カ所に書いているのは高速化のため。
 // -------------------------------------------------------------
-static bool cnvRecolor8( COLORREF *in,int width,int height,
-					unsigned char *out,SETTING *CnvMode,PROGRESS p_progress_cbr,COLORREF *pal,
+static bool cnvRecolor8( C_COLOR *in,int width,int height,
+					unsigned char *out,SETTING *CnvMode,PROGRESS p_progress_cbr,C_COLOR *pal,
 					C_TILE_PATTERN *tail,int tailcnt ) {
 	int				x, y, ptr, buffer_size;
 	int				cr, cg, cb;		// 元画素のＲＧＢ
 	int				er, eg, eb;		// 誤差（正数へ丸める）
 	int				n;
-	COLORREF c,cc,*pin;
-	COLORREF fource_zero_color = -1;
+	C_COLOR c,cc,*pin;
+	C_COLOR fource_zero_color = -1;
 	signed short *p_diffusion_error[2] = { nullptr, nullptr };
 	signed short *p_x_diffusion_error, *p_y_diffusion_error;
 	int diffusion_error_coef = 0;
 	int x_diffusion_error_coef = 0;
 	int y_diffusion_error_coef = 0;
 	int ee = CnvMode->err;
-	COLORREF bit_depth_mask;
+	C_COLOR bit_depth_mask;
 	bool ret = false;
 	int convert14to255_s8r[ 15 ] = { 0 };
 	int convert14to255_s8g[ 15 ] = { 0 };
@@ -794,13 +817,13 @@ static bool cnvRecolor8( COLORREF *in,int width,int height,
 				eb = 0;
 			}
 			n = ( er << 2 ) | ( eg << 5 ) | eb;
-			cc = RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
+			cc = GET_RGB( convert7to255_s8r[ er ], convert7to255_s8g[ eg ], convert3to255_s8b[ eb ] );
 
 			if( diffusion_error_coef ) {
 				// 誤差を周囲のピクセルへ拡散させる
-				er = range_limiter( ( cr - GetRValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eg = range_limiter( ( cg - GetGValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eb = range_limiter( ( cb - GetBValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				er = range_limiter( ( cr - GET_RED( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eg = range_limiter( ( cg - GET_GREEN( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GET_BLUE( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				// 微細な誤差は消滅させる
 				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
 				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
@@ -846,15 +869,15 @@ l_exit:
 //	4.	備考
 //		今のところメモリ不足以外で失敗することはない	
 // -------------------------------------------------------------
-static bool cnvRecolor5( COLORREF *in,int width,int height,
-					unsigned char *out,SETTING *CnvMode,PROGRESS prog,COLORREF *pal,
+static bool cnvRecolor5( C_COLOR *in,int width,int height,
+					unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 					C_TILE_PATTERN *tail,int tailcnt ) {
 	int				x,y,z,d,ptr;
 	int				cr,cg,cb;		// 元画素のＲＧＢ
 	int				er,eg,eb;		// 誤差（正数へ丸める）
 	int				r,n,nr;
-	COLORREF c, cc, *pin;
-	COLORREF fource_zero_color = -1;
+	C_COLOR c, cc, *pin;
+	C_COLOR fource_zero_color = -1;
 	signed short *p_diffusion_error[2] = { nullptr, nullptr };
 	signed short *p_x_diffusion_error, *p_y_diffusion_error;
 	int palnum;
@@ -862,7 +885,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	int x_diffusion_error_coef = 0;
 	int y_diffusion_error_coef = 0;
 	int ee = CnvMode->err;
-	COLORREF bit_depth_mask;
+	C_COLOR bit_depth_mask;
 	bool ret = false;
 	int color_num;
 
@@ -885,7 +908,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 	bit_depth_mask = bit_depth_mask & (( bit_depth_mask << 8 ) | 0xFF ) & (( bit_depth_mask << 16 ) | 0xFFFF );
 
 	// パレット数
-	switch( CnvMode->mode ){
+	switch( CnvMode->screen_mode ){
 	case MD_SC6:
 	case MD_SC6_256L:
 		palnum = 4;		break;
@@ -940,7 +963,7 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 					// 非タイルモード
 					c = pal[ z ];
 				}
-				r = _distance( cr, cg, cb, GetRValue(c), GetGValue(c), GetBValue(c) );
+				r = _distance( cr, cg, cb, GET_RED(c), GET_GREEN(c), GET_BLUE(c) );
 				if( r < nr ){
 					nr = r;
 					if( CnvMode->Tile ) {
@@ -958,9 +981,9 @@ static bool cnvRecolor5( COLORREF *in,int width,int height,
 
 			if( diffusion_error_coef ) {
 				// 誤差を周囲のピクセルへ拡散させる
-				er = range_limiter( ( cr - GetRValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eg = range_limiter( ( cg - GetGValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eb = range_limiter( ( cb - GetBValue( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				er = range_limiter( ( cr - GET_RED( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eg = range_limiter( ( cg - GET_GREEN( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GET_BLUE( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				// 微細な誤差は消滅させる
 				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
 				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
@@ -1019,14 +1042,14 @@ l_exit:
 //	4.	備考
 //		インターレースモードは使えない
 // -------------------------------------------------------------
-static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, COLORREF *pal )
+static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 {
 	int	x, y, i, j, adr, dadr;
 	int	cc, c, p;
 	int	cnt, idx1, idx2, len, l;
 	int	ccnt[ 8 ] = { 0 };
 	int	ccol[ 8 ] = { 0 };
-	COLORREF	c1, c2;
+	C_COLOR	c1, c2;
 
 	memset( vram, 0, sizeof( vram ) );
 
@@ -1072,7 +1095,7 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, COLORREF *pal )
 				for( i = 0; i < cnt; ++i ) {
 					if( i == idx1 ) continue;
 					cc = ccol[i];
-					l = _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 ));
+					l = _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ));
 					if( l >= len ) {
 						len = l;
 						idx2 = i;
@@ -1091,8 +1114,8 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, COLORREF *pal )
 					}
 					//	選ばれた２色との色距離を比較
 					p = p << 1;
-					if( _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c1 ), GetGValue( c1 ), GetBValue( c1 )) 
-					  < _distance( GetRValue( pal[cc] ), GetGValue( pal[cc] ), GetBValue( pal[cc] ), GetRValue( c2 ), GetGValue( c2 ), GetBValue( c2 )) ) {
+					if( _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 )) 
+					  < _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 )) ) {
 						p = p | 1;
 					}
 				}
@@ -1160,12 +1183,12 @@ static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog )
 //	4.	備考
 //		今のところメモリ不足以外で失敗することはない
 // -------------------------------------------------------------
-bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
+bool cnvNtcolor( C_COLOR *in ,int width ,int height ,unsigned char *out ,
 				 SETTING *CnvMode ,PROGRESS prog )
 {
 	int				x, y, z, xx;
 	int				convert31to255_s12y[ 32 ];
-	COLORREF		c;
+	C_COLOR		c;
 	int				r[ 5 ] = { 0 }, g[ 5 ] = { 0 }, b[ 5 ] = { 0 };
 	int				vy, min, tyy, txx;
 	int				rr, gg, bb, er, eg, eb;
@@ -1181,7 +1204,7 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 	int		algo	= CnvMode->AlgoMode;
 	bool	rc		= CnvMode->JKrc;
 	int		ealgo	= CnvMode->ErrAlgo;
-	bool	sc10	= ( CnvMode->mode == MD_SC10 || CnvMode->mode == MD_SC10_256L );
+	bool	sc10	= ( CnvMode->screen_mode == MD_SC10 || CnvMode->screen_mode == MD_SC10_256L );
 	int		zero	= CnvMode->FourceZero ? (sc10 ? 0x10 : 0x08) : 0;
 	bool	ret		= false;
 
@@ -1219,9 +1242,9 @@ bool cnvNtcolor( COLORREF *in ,int width ,int height ,unsigned char *out ,
 			txx = xx;
 			for( z = 0; z < 4; ++z ){
 				c = _get_pixel( in, width, height, x + z, y );
-				r[ z ] = convert31to255_s12r[ convert_rgb_to_palette( convert31to255_s12r, 32, GetRValue( c ) + errbuf0[ txx + 0 ] ) ];
-				g[ z ] = convert31to255_s12g[ convert_rgb_to_palette( convert31to255_s12g, 32, GetGValue( c ) + errbuf0[ txx + 1 ] ) ];
-				b[ z ] = convert31to255_s12b[ convert_rgb_to_palette( convert31to255_s12b, 32, GetBValue( c ) + errbuf0[ txx + 2 ] ) ];
+				r[ z ] = convert31to255_s12r[ convert_rgb_to_palette( convert31to255_s12r, 32, GET_RED( c ) + errbuf0[ txx + 0 ] ) ];
+				g[ z ] = convert31to255_s12g[ convert_rgb_to_palette( convert31to255_s12g, 32, GET_GREEN( c ) + errbuf0[ txx + 1 ] ) ];
+				b[ z ] = convert31to255_s12b[ convert_rgb_to_palette( convert31to255_s12b, 32, GET_BLUE( c ) + errbuf0[ txx + 2 ] ) ];
 				vy   = range_limiter( b[ z ] / 2 + r[ z ] / 4 + g[ z ] / 8, 0, 255 );
 				jj += r[ z ] - vy;
 				kk += g[ z ] - vy;
@@ -1402,7 +1425,7 @@ l_exit:
 // -------------------------------------------------------------
 int cnvColorTblCompare( const void *tbl1,const void *tbl2 )
 {
-	return( (long)(((COLORTBL*)tbl2)->n )-(long)(((COLORTBL*)tbl1)->n ) );
+	return( (long)(((C_COLOR_TABLE*)tbl2)->n )-(long)(((C_COLOR_TABLE*)tbl1)->n ) );
 }
 
 // -------------------------------------------------------------
@@ -1419,11 +1442,11 @@ int cnvColorTblCompare( const void *tbl1,const void *tbl2 )
 //			FZColor		強制ゼロ化の色
 // 返値：	成功 true / 失敗 false
 // -------------------------------------------------------------
-bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int cnt,int pp,
-				    bool FourceZero,COLORREF FZColor )
+bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int pp,
+				    bool FourceZero,C_COLOR FZColor )
 {
-	COLORREF	c;
-	COLORTBL	*tbl, tmp;
+	C_COLOR	c;
+	C_COLOR_TABLE	*tbl, tmp;
 	int			n, i, j;
 	int			r, g, b, v, w, y;
 
@@ -1433,26 +1456,26 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 	// ヒストグラムの作成
 	n=cnvCreateHistgram( in, width * height, &tbl, pal, pp, FourceZero, FZColor );
 	if( tbl == NULL ) return false;
-	ZeroMemory( pal + pp, sizeof( COLORREF ) * ( cnt - pp ) );	
+	ZeroMemory( pal + pp, sizeof( C_COLOR ) * ( cnt - pp ) );	
 
 	// 色をソートする
-	qsort( tbl, n, sizeof( COLORTBL ), cnvColorTblCompare );
+	qsort( tbl, n, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
 
-	if( mode==0 ){
+	if( screen_mode==0 ){
 		// 目的の色数になるまで似た色を削除し続ける
 		i=0;
 		while( n > cnt ){
 			// 着目色を取得
 			c = tbl[ i ].c;
-			r = GetRValue( c );
-			g = GetGValue( c );
-			b = GetBValue( c );
+			r = GET_RED( c );
+			g = GET_GREEN( c );
+			b = GET_BLUE( c );
 			y = -1;							// 選出した色のインデックス
 			w = 0x7FFFFFFFL;				// 選出した色の距離
 			for( j = i + 1; j < n; ++j ){	// 着目色に最も近くて使用数が少ない色を検索する
 				if( j < pp ) continue;
 				c = tbl[ j ].c;
-				v = _distance( r, g, b, GetRValue( c ), GetGValue( c ), GetBValue( c ) );
+				v = _distance( r, g, b, GET_RED( c ), GET_GREEN( c ), GET_BLUE( c ) );
 				if( w < v ) continue;
 				y = j;
 				w = v;
@@ -1461,7 +1484,7 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 				tbl[ i ].n += tbl[ y ].n;
 				if( tbl[ i ].n < 0 )
 					tbl[ i ].n = 0x7FFFFFFFL;
-				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( COLORTBL ) * ( n - 1 - y ) );
+				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( C_COLOR_TABLE ) * ( n - 1 - y ) );
 				--n;
 				for( j = i; j > 0; --j ) {
 					if( tbl[ j ].n <= tbl[ j-1 ].n ) break;
@@ -1478,19 +1501,19 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 		for( i = 0; i < pp; ++i ){
 			// 着目色（選択色を使用の色）を取得
 			c = tbl[ i ].c;
-			r = GetRValue( c );
-			g = GetGValue( c );
-			b = GetBValue( c );
+			r = GET_RED( c );
+			g = GET_GREEN( c );
+			b = GET_BLUE( c );
 			y = -1;
 			for( j = pp; j < n; ++j ){	// 着目色と一致する色を検索する（１つしかない）
 				c = tbl[ j ].c;
-				if( (r == GetRValue( c )) && (g == GetGValue( c )) && (b == GetBValue( c )) ) {
+				if( (r == GET_RED( c )) && (g == GET_GREEN( c )) && (b == GET_BLUE( c )) ) {
 					y = j;
 					break;
 				}
 			}
 			if( y > 0 ){			// 検索して見つかった色を削除する
-				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( COLORTBL ) * ( n - 1 - y ) );
+				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( C_COLOR_TABLE ) * ( n - 1 - y ) );
 				--n;
 			}
 		}
@@ -1514,18 +1537,18 @@ bool cnvGetPalette( COLORREF *in,int width,int height,COLORREF *pal,int mode,int
 // 備考：	SCREEN8 色番号のビットマップ
 //			(MSB) [G][G][G][R][R][R][B][B] (LSB)
 // -------------------------------------------------------------
-bool cnvGetPaletteS8( COLORREF *pal ){
+bool cnvGetPaletteS8( C_COLOR *pal ){
 	int			i, r, g, b;
 
 	// ヒストグラムの作成
-	ZeroMemory( pal, sizeof( COLORREF ) * 256 );
+	ZeroMemory( pal, sizeof( C_COLOR ) * 256 );
 
 	for( i = 0; i < 256; ++i ){
 		// 着目色（選択色を使用の色）を取得
 		r = convert7to255_r[ ( i >> 2 ) & 7 ];
 		g = convert7to255_g[ ( i >> 5 ) & 7 ];
 		b = convert7to255_b[ i & 3 ];
-		pal[ i ] = RGB( r, g, b );
+		pal[ i ] = GET_RGB( r, g, b );
 	}
 	return true;
 }
@@ -1542,13 +1565,13 @@ bool cnvGetPaletteS8( COLORREF *pal ){
 //			FZColor		除外する色
 // 返値：	tbl のサイズ
 // -------------------------------------------------------------
-static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal,int pp,
-							  bool FourceZero,COLORREF FZColor )
+static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
+							  bool FourceZero,C_COLOR FZColor )
 {
-	COLORTBL	hash[ 512 ];
+	C_COLOR_TABLE	hash[ 512 ];
 	int			cnv[ 256 ] = { 0 };
 	int			i,n,cnt,t,r,g,b;
-	COLORREF	c;
+	C_COLOR	c;
 	// NULL クリア
 	ZeroMemory( hash,sizeof( hash ) );
 	*tbl=NULL;
@@ -1563,17 +1586,17 @@ static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal
 	for( i = 0; i < size; ++i ){
 		c = in[ i ];
 		if( c == FZColor && FourceZero ) continue;
-		r = cnv[ GetRValue( c ) ];
-		g = cnv[ GetGValue( c ) ];
-		b = cnv[ GetBValue( c ) ];
+		r = cnv[ GET_RED( c ) ];
+		g = cnv[ GET_GREEN( c ) ];
+		b = cnv[ GET_BLUE( c ) ];
 		n = r * 64 + g * 8 + b;		//	ハッシュ関数
-		hash[ n ].c = RGB( convert7to255_r[r], convert7to255_g[g], convert7to255_b[b] );
+		hash[ n ].c = GET_RGB( convert7to255_r[r], convert7to255_g[g], convert7to255_b[b] );
 		++hash[ n ].n;
 		if( hash[ n ].n == 1 ) ++cnt;
 	}	// for
 
 	// カラーテーブルを確保する
-	*tbl=(COLORTBL*) LocalAlloc( LMEM_FIXED, sizeof( COLORTBL ) * ( cnt + pp ) );
+	*tbl=(C_COLOR_TABLE*) LocalAlloc( LMEM_FIXED, sizeof( C_COLOR_TABLE ) * ( cnt + pp ) );
 	if( *tbl == NULL ) return 0;
 
 	// ハッシュ表から tbl へ変換
@@ -1605,7 +1628,7 @@ static int cnvCreateHistgram( COLORREF *in,int size,COLORTBL **tbl,COLORREF *pal
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int mode )
+int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int screen_mode )
 {
 	int i, j, k, l;
 	int r,g,b;
@@ -1615,7 +1638,7 @@ int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *ta
 	int	pnum;
 	// すべての色の組み合わせを処理する
 	l = zeroen ? 0 : 1;
-	pnum = ( mode == MD_SC6 || mode == MD_SC6_256L ) ? 4 : 16;
+	pnum = ( screen_mode == MD_SC6 || screen_mode == MD_SC6_256L ) ? 4 : 16;
 	for( i = l; i < pnum; ++i ){
 		if( palen[ i ] == 1 ) continue;
 		r = pal[ i ].red;
@@ -1644,7 +1667,7 @@ int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *ta
 				}
 			}
 			if( m != -1 ){
-				tail[ m ].c = RGB( ( convert7to255_r[ r ] + convert7to255_r[ rr ] ) / 2, ( convert7to255_g[ g ] + convert7to255_g[ gg ] ) / 2, ( convert7to255_b[ b ] + convert7to255_b[ bb ] ) / 2 );
+				tail[ m ].c = GET_RGB( ( convert7to255_r[ r ] + convert7to255_r[ rr ] ) / 2, ( convert7to255_g[ g ] + convert7to255_g[ gg ] ) / 2, ( convert7to255_b[ b ] + convert7to255_b[ bb ] ) / 2 );
 				tail[ m ].p[ 0 ] = i;
 				tail[ m ].p[ 1 ] = j;
 				if( m == n ) ++n;
@@ -1696,30 +1719,30 @@ static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
+void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 {
-	C_PALETTE			Col[16] = { 0 }, tBakCol;	// SC5/SC7 におけるＭＳＸ側パレット指定
+	C_PALETTE			color_palette[16] = { 0 }, tBakCol;	// SC5/SC7 におけるＭＳＸ側パレット指定
 	uint8_t		PalEn[16] = { 0 }, tBakEn;
-	COLORREF	pal[16] = { 0 }, tBakPal;
+	C_COLOR	pal[16] = { 0 }, tBakPal;
 	int			cnt, z, x, pnum;
 
 	//	パレットをコピー
 	cnt  = 0;
-	pnum = ( Mode->mode == MD_SC6 || Mode->mode == MD_SC6_256L ) ? 4 : 16;
+	pnum = ( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L ) ? 4 : 16;
 	for( z = 0; z < pnum; ++z ) {
 		if( z == 0 && Mode->NonZero ) continue;
 		switch( Mode->SortMode ) {
 		case SM_INCAUTO:
 		case SM_DECAUTO:
 			if( Mode->PalEn[ z ] != PALEN_AUTO ) continue;
-			Col[ cnt ]   = Mode->Col[ z ];
+			color_palette[ cnt ]   = Mode->color_palette[ z ];
 			PalEn[ cnt ] = Mode->PalEn[ z ];
 			pal[ cnt ]   = Pal[ z ];
 			++cnt;
 			break;
 		case SM_INC:
 		case SM_DEC:
-			Col[ cnt ]   = Mode->Col[ z ];
+			color_palette[ cnt ]   = Mode->color_palette[ z ];
 			PalEn[ cnt ] = Mode->PalEn[ z ];
 			pal[ cnt ]   = Pal[ z ];
 			++cnt;
@@ -1734,10 +1757,10 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 	case SM_INC:
 		for( z = cnt - 1; z >= 0; --z ) {
 			for( x = 0; x < z; ++x ) {
-				if( cnvCompare( &Col[ x ], &Col[ x + 1 ] ) ) {
-					tBakCol        = Col[ x ];
-					Col[ x ]       = Col[ x + 1 ];
-					Col[ x + 1 ]   = tBakCol;
+				if( cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) {
+					tBakCol        = color_palette[ x ];
+					color_palette[ x ]       = color_palette[ x + 1 ];
+					color_palette[ x + 1 ]   = tBakCol;
 					tBakEn         = PalEn[ x ];
 					PalEn[ x ]     = PalEn[ x + 1 ];
 					PalEn[ x + 1 ] = tBakEn;
@@ -1752,10 +1775,10 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 	case SM_DEC:
 		for( z = cnt - 1; z >= 0; --z ) {
 			for( x = 0; x < z; ++x ) {
-				if( !cnvCompare( &Col[ x ], &Col[ x + 1 ] ) ) {
-					tBakCol        = Col[ x ];
-					Col[ x ]       = Col[ x + 1 ];
-					Col[ x + 1 ]   = tBakCol;
+				if( !cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) {
+					tBakCol        = color_palette[ x ];
+					color_palette[ x ]       = color_palette[ x + 1 ];
+					color_palette[ x + 1 ]   = tBakCol;
 					tBakEn         = PalEn[ x ];
 					PalEn[ x ]     = PalEn[ x + 1 ];
 					PalEn[ x + 1 ] = tBakEn;
@@ -1776,14 +1799,14 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 		case SM_INCAUTO:
 		case SM_DECAUTO:
 			if( Mode->PalEn[ z ] != PALEN_AUTO ) continue;
-			Mode->Col[ z ]   = Col[ cnt ];
+			Mode->color_palette[ z ]   = color_palette[ cnt ];
 			Mode->PalEn[ z ] = PalEn[ cnt ];
 			Pal[ z ]         = pal[ cnt ];
 			++cnt;
 			break;
 		case SM_INC:
 		case SM_DEC:
-			Mode->Col[ z ]   = Col[ cnt ];
+			Mode->color_palette[ z ]   = color_palette[ cnt ];
 			Mode->PalEn[ z ] = PalEn[ cnt ];
 			Pal[ z ]         = pal[ cnt ];
 			++cnt;
@@ -1809,7 +1832,7 @@ void cnvSortPalette( SETTING* Mode, COLORREF* Pal )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline COLORREF _get_pixel( COLORREF *in,int width,int height,int x,int y )
+static inline C_COLOR _get_pixel( C_COLOR *in,int width,int height,int x,int y )
 {
 	// 範囲外修正
 	x = range_limiter( x,0,width-1  );
@@ -1833,7 +1856,7 @@ static inline COLORREF _get_pixel( COLORREF *in,int width,int height,int x,int y
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-static inline void _set_pixel( COLORREF *out,int width,int height,int x,int y,COLORREF c )
+static inline void _set_pixel( C_COLOR *out,int width,int height,int x,int y,C_COLOR c )
 {
 	// 範囲外修正
 	x = range_limiter( x,0,width-1  );

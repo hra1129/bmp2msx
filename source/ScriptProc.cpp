@@ -905,7 +905,7 @@ bool scrScreen( const char *szText,int *ptr )
 		MessageBox( NULL,cszScrMode,MsgCap,MB_OK | MB_ICONWARNING );
 		return false;
 	}
-	scrset.mode = m;
+	scrset.screen_mode = m;
 	return true;
 }
 
@@ -1050,9 +1050,9 @@ bool scrPalette( const char *szText,int *ptr )
 		return false;
 	}
 	// ƒpƒŒƒbƒg‚ğİ’è‚·‚é
-	scrset.Col[p].red   = r;
-	scrset.Col[p].green = g;
-	scrset.Col[p].blue  = b;
+	scrset.color_palette[p].red   = r;
+	scrset.color_palette[p].green = g;
+	scrset.color_palette[p].blue  = b;
 	return true;
 }
 

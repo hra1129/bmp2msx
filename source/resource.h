@@ -83,6 +83,8 @@
 #define IDC_GOSARATIOS                  1044
 #define IDC_SCRIPT                      1045
 #define IDC_MSXCOLOR                    1045
+#define IDC_AUTONAME2                   1045
+#define IDC_BASIC_OUTPUT                1045
 #define IDC_VERSION                     1046
 #define IDC_SORT                        1047
 #define IDC_CHKDEF                      1048

@@ -211,11 +211,11 @@ bool pvAddPreview( int Index )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
-void pvDrawBmp( HDC hDC, int Index, COLORREF *in, int width, int height )
+void pvDrawBmp( HDC hDC, int Index, C_COLOR *in, int width, int height )
 {
 	RECT	r = { 0, 0, cnMAXWidth, cnMAXHeight };
 	int x,y,t,h;
-	COLORREF c;
+	C_COLOR c;
 
 	HBITMAP hMemBM = SelectBitmap( hDC,tPreview[Index].hBmpSrc );	// 一時的に仮想画面用メモリＤＣを使用する
 
