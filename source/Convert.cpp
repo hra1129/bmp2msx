@@ -205,6 +205,7 @@ static inline void _set_pixel( C_COLOR *out, int width, int height, int x, int y
 static inline int _abs( int a );
 static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode, int ErrAdd, int x, int y, C_COLOR c );
 static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
+static inline int _distance_itp( int r1, int g1, int b1, int r2, int g2, int b2 );
 
 static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
 							  bool FourceZero,C_COLOR FZColor );
@@ -607,30 +608,30 @@ static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode,
 	if( screen_mode >= EALGO_DITH1 ){
 		switch( ErrAdd ){
 		case EADD_ROTATE:
-			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ];
+			*r = GET_RED(   c ) + dith[ screen_mode - EALGO_DITH1 ][       x & 7  ][ y & 7 ];
 			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][       y & 7  ][ x & 7 ];
-			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ];
+			*b = GET_BLUE(  c ) + dith[ screen_mode - EALGO_DITH1 ][ 7 - ( x & 7 )][ y & 7 ];
 			break;
 		case EADD_NONE:
-			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*r = GET_RED(   c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
 			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
-			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
+			*b = GET_BLUE(  c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ x & 7 ];
 			break;
 		case EADD_X:
-			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ];
+			*r = GET_RED(   c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 0 ) & 7 ];
 			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 1 ) & 7 ];
-			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ];
+			*b = GET_BLUE(  c ) + dith[ screen_mode - EALGO_DITH1 ][ y & 7 ][ ( x + 2 ) & 7 ];
 			break;
 		case EADD_Y:
-			*r = GET_RED( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ];
+			*r = GET_RED(   c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 0 ) & 7 ][ x & 7 ];
 			*g = GET_GREEN( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 1 ) & 7 ][ x & 7 ];
-			*b = GET_BLUE( c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ];
+			*b = GET_BLUE(  c ) + dith[ screen_mode - EALGO_DITH1 ][ ( y + 2 ) & 7 ][ x & 7 ];
 			break;
 		}
 	}else{
-		*r = GET_RED( c );
+		*r = GET_RED(   c );
 		*g = GET_GREEN( c );
-		*b = GET_BLUE( c );
+		*b = GET_BLUE(  c );
 	}
 }
 
@@ -872,10 +873,11 @@ l_exit:
 static bool cnvRecolor5( C_COLOR *in,int width,int height,
 					unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 					C_TILE_PATTERN *tail,int tailcnt ) {
-	int				x,y,z,d,ptr;
-	int				cr,cg,cb;		// 元画素のＲＧＢ
-	int				er,eg,eb;		// 誤差（正数へ丸める）
-	int				r,n,nr;
+	int x, y, z, d, ptr;
+	int cr, cg, cb;		// 元画素のＲＧＢ
+	int pr, pg, pb;		// 画素値
+	int er, eg, eb;		// 誤差（正数へ丸める）
+	int r, n, nr;
 	C_COLOR c, cc, *pin;
 	C_COLOR fource_zero_color = -1;
 	signed short *p_diffusion_error[2] = { nullptr, nullptr };
@@ -896,7 +898,7 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 		y_diffusion_error_coef = 256 - x_diffusion_error_coef;
 	}
 
-	// 誤差蓄積用ﾊﾞｯﾌｧの作成
+	// 誤差蓄積用バッファの作成
 	memset( p_diffusion_error, 0, sizeof( p_diffusion_error ) );
 	for( x = 0; x < 2; ++x ) {
 		p_diffusion_error[ x ] = (signed short*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, ( width + 5 ) * 4 * sizeof( signed short ) );
@@ -951,9 +953,18 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 			// 最も近い色を見つける
 			nr = 0x7FFFFFFFL;
 
-			if( CnvMode->NonZero ) z = 1; else z = 0;
+			if( CnvMode->NonZero ) {
+				z = 1; 
+			}
+			else {
+				z = 0;
+			}
+			// 比較する色は実際に表示できる色で無ければならないため、範囲外をクリップする
+			pr = range_limiter( cr, 0, 255 );
+			pg = range_limiter( cg, 0, 255 );
+			pb = range_limiter( cb, 0, 255 );
+
 			for( ; z < color_num; ++z ){
-				if( CnvMode->PalEn[ z ] == PALEN_NONE ) continue;
 				// 近いか？
 				if( CnvMode->Tile ) {
 					// タイルモード
@@ -961,9 +972,13 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 				}
 				else {
 					// 非タイルモード
+					if( CnvMode->PalEn[ z ] == PALEN_NONE ) {
+						//	このパレットは使用禁止
+						continue;
+					}
 					c = pal[ z ];
 				}
-				r = _distance( cr, cg, cb, GET_RED(c), GET_GREEN(c), GET_BLUE(c) );
+				r = _distance_itp( pr, pg, pb, GET_RED(c), GET_GREEN(c), GET_BLUE(c) );
 				if( r < nr ){
 					nr = r;
 					if( CnvMode->Tile ) {
@@ -981,9 +996,9 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 
 			if( diffusion_error_coef ) {
 				// 誤差を周囲のピクセルへ拡散させる
-				er = range_limiter( ( cr - GET_RED( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				er = range_limiter( ( cr - GET_RED(   cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				eg = range_limiter( ( cg - GET_GREEN( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eb = range_limiter( ( cb - GET_BLUE( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GET_BLUE(  cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
 				// 微細な誤差は消滅させる
 				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
 				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
@@ -1095,7 +1110,7 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 				for( i = 0; i < cnt; ++i ) {
 					if( i == idx1 ) continue;
 					cc = ccol[i];
-					l = _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ));
+					l = _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ));
 					if( l >= len ) {
 						len = l;
 						idx2 = i;
@@ -1114,8 +1129,8 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 					}
 					//	選ばれた２色との色距離を比較
 					p = p << 1;
-					if( _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 )) 
-					  < _distance( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 )) ) {
+					if( _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 )) 
+					  < _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 )) ) {
 						p = p | 1;
 					}
 				}
@@ -1269,7 +1284,7 @@ bool cnvNtcolor( C_COLOR *in ,int width ,int height ,unsigned char *out ,
 					gg = range_limiter( g[z], 0, 255 );
 					bb = range_limiter( b[z], 0, 255 );
 					for( vy = 0; vy < 255; ++vy ){
-						s = _distance( rr, gg, bb,
+						s = _distance_itp( rr, gg, bb,
 							range_limiter( vy + jj, 0, 255 ),  
 							range_limiter( vy + kk, 0, 255 ), 
 							range_limiter( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
@@ -1291,7 +1306,7 @@ bool cnvNtcolor( C_COLOR *in ,int width ,int height ,unsigned char *out ,
 					gg = range_limiter( g[z], 0, 255 );
 					bb = range_limiter( b[z], 0, 255 );
 					for( vy = 0; vy < 255; ++vy ){
-						s = _distance( rr, gg, bb,
+						s = _distance_itp( rr, gg, bb,
 							range_limiter( vy + jj, 0, 255 ),  
 							range_limiter( vy + kk, 0, 255 ), 
 							range_limiter( vy * 5 / 4 - jj / 2 - kk / 4, 0, 255 ) );
@@ -1423,9 +1438,9 @@ l_exit:
 //			tbl1=tbl2	0
 //			tbl1>tbl2	負数
 // -------------------------------------------------------------
-int cnvColorTblCompare( const void *tbl1,const void *tbl2 )
-{
-	return( (long)(((C_COLOR_TABLE*)tbl2)->n )-(long)(((C_COLOR_TABLE*)tbl1)->n ) );
+int cnvColorTblCompare( const void *tbl1, const void *tbl2 ){
+	//	ヒストグラムのカウント値で大小比較する
+	return( (long)( ( (C_COLOR_TABLE *)tbl2 )->n ) - (long)( ( (C_COLOR_TABLE *)tbl1 )->n ) );
 }
 
 // -------------------------------------------------------------
@@ -1442,90 +1457,93 @@ int cnvColorTblCompare( const void *tbl1,const void *tbl2 )
 //			FZColor		強制ゼロ化の色
 // 返値：	成功 true / 失敗 false
 // -------------------------------------------------------------
-bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int pp,
+bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int fixed_color_num,
 				    bool FourceZero,C_COLOR FZColor )
 {
 	C_COLOR	c;
-	C_COLOR_TABLE	*tbl, tmp;
-	int			n, i, j;
-	int			r, g, b, v, w, y;
+	C_COLOR_TABLE *p_color_table, swap_buffer;
+	int			n, base_color, compare_color, compare_count_distance;
+	int			r, g, b, compare_color_distance, delete_color_distance, delete_base_color, delete_color, delete_count_distance;
 
 	// ２～１６色しか処理できない
-	if( cnt < 2 || cnt > 16 || cnt <= pp ) return false;
+	if( cnt < 2 || cnt > 16 || cnt <= fixed_color_num ) return false;
 	
 	// ヒストグラムの作成
-	n=cnvCreateHistgram( in, width * height, &tbl, pal, pp, FourceZero, FZColor );
-	if( tbl == NULL ) return false;
-	ZeroMemory( pal + pp, sizeof( C_COLOR ) * ( cnt - pp ) );	
+	n = cnvCreateHistgram( in, width * height, &p_color_table, pal, fixed_color_num, FourceZero, FZColor );
+	if( p_color_table == NULL ) {
+		return false;
+	}
+	memset( pal + fixed_color_num, 0, sizeof( C_COLOR ) * ( cnt - fixed_color_num ) );	
 
-	// 色をソートする
-	qsort( tbl, n, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
+	// 色をソートする (固定色は、ヒストカウントが∞なので、上位に集まる)
+	qsort( p_color_table, n, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
 
-	if( screen_mode==0 ){
+	if( screen_mode == 0 ){
 		// 目的の色数になるまで似た色を削除し続ける
-		i=0;
 		while( n > cnt ){
-			// 着目色を取得
-			c = tbl[ i ].c;
-			r = GET_RED( c );
-			g = GET_GREEN( c );
-			b = GET_BLUE( c );
-			y = -1;							// 選出した色のインデックス
-			w = 0x7FFFFFFFL;				// 選出した色の距離
-			for( j = i + 1; j < n; ++j ){	// 着目色に最も近くて使用数が少ない色を検索する
-				if( j < pp ) continue;
-				c = tbl[ j ].c;
-				v = _distance( r, g, b, GET_RED( c ), GET_GREEN( c ), GET_BLUE( c ) );
-				if( w < v ) continue;
-				y = j;
-				w = v;
-			}
-			if( y > 0 ){			// 検索して見つかった色を着目色に吸収する
-				tbl[ i ].n += tbl[ y ].n;
-				if( tbl[ i ].n < 0 )
-					tbl[ i ].n = 0x7FFFFFFFL;
-				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( C_COLOR_TABLE ) * ( n - 1 - y ) );
-				--n;
-				for( j = i; j > 0; --j ) {
-					if( tbl[ j ].n <= tbl[ j-1 ].n ) break;
-					tmp			= tbl[ j ];
-					tbl[ j ]	= tbl[ j-1 ];
-					tbl[ j-1 ]	= tmp;
+			delete_base_color = -1;					// 基準となる色のインデックス
+			delete_color = -1;						// 削除対象として選択した色のインデックス
+			delete_color_distance = 0x7FFFFFFF;		// 削除対象として選択した色の距離
+			delete_count_distance = 0;				// ヒストカウントの差
+			for( base_color = 0; base_color < (n - 1); base_color++ ) {
+				// 着目色
+				c = p_color_table[ base_color ].c;
+				r = GET_RED(   c );
+				g = GET_GREEN( c );
+				b = GET_BLUE(  c );
+				for( compare_color = base_color + 1; compare_color < n; compare_color++ ){	// 着目色(base_color)に最も近くて使用数が少ない色(y)を検索する
+					if( compare_color < fixed_color_num ) {
+						//	0 ～ pp-1 は、変更してはいけない固定色なので対象外
+						continue;
+					}
+					c = p_color_table[ compare_color ].c;
+					compare_color_distance = _distance_itp( r, g, b, GET_RED( c ), GET_GREEN( c ), GET_BLUE( c ) );
+					compare_count_distance = (p_color_table[ base_color ].n - p_color_table[ compare_color ].n);
+					if( delete_count_distance > compare_count_distance ) {
+						//	前回のヒットよりも ヒストグラムのカウント数の差が小さい ので対象外
+						//continue;
+					}
+					if( delete_color_distance < compare_color_distance ) {
+						//	前回のヒットよりも 似てない ので対象外
+						continue;
+					}
+					delete_base_color = base_color;
+					delete_color = compare_color;
+					delete_color_distance = compare_color_distance;
+					delete_count_distance = compare_count_distance;
 				}
 			}
-			++i;					// 次の色
-			if( i >= n ) i = 0;		// 見つかるまで循環して検索する
+			if( delete_color > 0 ){			// 検索して見つかった色を着目色に吸収する
+				if( delete_base_color >= fixed_color_num ) {
+					p_color_table[ delete_base_color ].n += p_color_table[ delete_color ].n;
+				}
+				if( delete_color < (n - 1) ) {
+					//	削除対象が最後の1個でなければ、削除して詰める
+					memcpy( &p_color_table[ delete_color ], &p_color_table[ delete_color + 1 ], sizeof( C_COLOR_TABLE ) * ( n - 1 - delete_color ) );
+				}
+				n--;
+				//	多い順になるようにソートし直し
+				for( compare_color = delete_color; compare_color > 0; compare_color-- ) {
+					if( p_color_table[ compare_color ].n <= p_color_table[ compare_color - 1 ].n ) {
+						break;
+					}
+					swap_buffer                        = p_color_table[ compare_color     ];
+					p_color_table[ compare_color     ] = p_color_table[ compare_color - 1 ];
+					p_color_table[ compare_color - 1 ] = swap_buffer;
+				}
+			}
 		}
 	} else {
 		//	多分布選色
-		for( i = 0; i < pp; ++i ){
-			// 着目色（選択色を使用の色）を取得
-			c = tbl[ i ].c;
-			r = GET_RED( c );
-			g = GET_GREEN( c );
-			b = GET_BLUE( c );
-			y = -1;
-			for( j = pp; j < n; ++j ){	// 着目色と一致する色を検索する（１つしかない）
-				c = tbl[ j ].c;
-				if( (r == GET_RED( c )) && (g == GET_GREEN( c )) && (b == GET_BLUE( c )) ) {
-					y = j;
-					break;
-				}
-			}
-			if( y > 0 ){			// 検索して見つかった色を削除する
-				if( y < n - 1 ) CopyMemory( &tbl[ y ], &tbl[ y + 1 ], sizeof( C_COLOR_TABLE ) * ( n - 1 - y ) );
-				--n;
-			}
-		}
 	}
 
 	// テーブル内のパレット先頭 cnt 個を採用する
-	for( i = 0; i < n && i < cnt; ++i ){
-		pal[ i ] = tbl[ i ].c;
+	for( base_color = 0; base_color < n && base_color < cnt; ++base_color ){
+		pal[ base_color ] = p_color_table[ base_color ].c;
 	}
 
 	// メモリを解放する
-	LocalFree( tbl );
+	LocalFree( p_color_table );
 	return true;
 }
 
@@ -1565,51 +1583,64 @@ bool cnvGetPaletteS8( C_COLOR *pal ){
 //			FZColor		除外する色
 // 返値：	tbl のサイズ
 // -------------------------------------------------------------
-static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
-							  bool FourceZero,C_COLOR FZColor )
-{
-	C_COLOR_TABLE	hash[ 512 ];
-	int			cnv[ 256 ] = { 0 };
-	int			i,n,cnt,t,r,g,b;
-	C_COLOR	c;
-	// NULL クリア
-	ZeroMemory( hash,sizeof( hash ) );
-	*tbl=NULL;
-	cnt=0;		// 色の使用数
+static int cnvCreateHistgram( C_COLOR *in, int size, C_COLOR_TABLE **tbl, C_COLOR *pal, int pp,
+		bool FourceZero, C_COLOR FZColor ) {
 
-	//	変換テーブルを生成する
-	for( i = 0; i < 256; ++i ) {
-		cnv[i] = ( i + 18 ) * 7 / 255;
+	C_COLOR_TABLE hash[ 512 ];
+	int i, n, using_color_num, t, r, g, b;
+	C_COLOR	c;
+
+	// NULL クリア
+	*tbl = NULL;
+	using_color_num = 0;		// 色の使用数
+
+	memset( hash, 0, sizeof( hash ) );
+	for( i = 0; i < 512; i++ ) {
+		r = convert7to255_r[ (i >> 6) & 7 ];
+		g = convert7to255_g[ (i >> 3) & 7 ];
+		b = convert7to255_b[ (i >> 0) & 7 ];
+		hash[ i ].c = GET_RGB( r, g, b );
 	}
 
 	// 画素の数を数える
-	for( i = 0; i < size; ++i ){
+	for( i = 0; i < size; i++ ) {
 		c = in[ i ];
 		if( c == FZColor && FourceZero ) continue;
-		r = cnv[ GET_RED( c ) ];
-		g = cnv[ GET_GREEN( c ) ];
-		b = cnv[ GET_BLUE( c ) ];
+		r = convert_rgb_to_palette( convert7to255_r, 8, GET_RED(   c ) );
+		g = convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( c ) );
+		b = convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE(  c ) );
 		n = r * 64 + g * 8 + b;		//	ハッシュ関数
-		hash[ n ].c = GET_RGB( convert7to255_r[r], convert7to255_g[g], convert7to255_b[b] );
-		++hash[ n ].n;
-		if( hash[ n ].n == 1 ) ++cnt;
+		hash[ n ].n++;
+		if( hash[ n ].n == 1 ) {
+			using_color_num++;
+		}
 	}	// for
 
 	// カラーテーブルを確保する
-	*tbl=(C_COLOR_TABLE*) LocalAlloc( LMEM_FIXED, sizeof( C_COLOR_TABLE ) * ( cnt + pp ) );
+	*tbl=(C_COLOR_TABLE*) LocalAlloc( LMEM_FIXED, sizeof( C_COLOR_TABLE ) * ( using_color_num + pp ) );
 	if( *tbl == NULL ) return 0;
 
 	// ハッシュ表から tbl へ変換
 	t=0;
 	for( i = 0; i < pp ; ++i ){
+		//	確実に採用する色は、ヒストグラムのカウント値を ∞ (0x7FFFFFFF) にして入れておく
 		(*tbl)[ t ].c = pal[ i ];
 		(*tbl)[ t ].n = 0x7FFFFFFF;
-		++t;
+		//	hash の中の同一色を採用しないために、ヒストグラムのカウント値を 0 にしておく
+		r = convert_rgb_to_palette( convert7to255_r, 8, GET_RED(   pal[ i ] ) );
+		g = convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( pal[ i ] ) );
+		b = convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE(  pal[ i ] ) );
+		n = r * 64 + g * 8 + b;		//	ハッシュ関数
+		hash[ n ].n = 0;
+		//	次へ
+		t++;
 	}
 	for( i = 0; i < 512; ++i ){
-		if( hash[i].n == 0 ) continue;
+		if( hash[ i ].n == 0 ) {
+			continue;
+		}
 		(*tbl)[ t ] = hash[ i ];
-		++t;
+		t++;
 	}
 	return t;
 }
@@ -1656,8 +1687,8 @@ int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *ta
 					if( ( r + rr ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].red   + pal[ tail[ k ].p[ 1 ] ].red   ) / 2 ||
 						( g + gg ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].green + pal[ tail[ k ].p[ 1 ] ].green ) / 2 ||
 						( b + bb ) / 2 != ( pal[ tail[ k ].p[ 0 ] ].blue  + pal[ tail[ k ].p[ 1 ] ].blue  ) / 2 ) continue;
-					if( _distance( r, g, b, rr, gg, bb ) <
-						_distance( pal[ tail[ k ].p[ 0 ] ].red,pal[ tail[ k ].p[ 0 ] ].green,pal[ tail[ k ].p[ 0 ] ].blue,
+					if( _distance_itp( r, g, b, rr, gg, bb ) <
+						_distance_itp( pal[ tail[ k ].p[ 0 ] ].red,pal[ tail[ k ].p[ 0 ] ].green,pal[ tail[ k ].p[ 0 ] ].blue,
 								  pal[ tail[ k ].p[ 1 ] ].red,pal[ tail[ k ].p[ 1 ] ].green,pal[ tail[ k ].p[ 1 ] ].blue ) ){
 						m = k;
 					}else{
@@ -1902,6 +1933,63 @@ static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 )
 	g = g2 - g1;
 	b = b2 - b1;
 	return( r*r + g*g + b*b );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		RGB → ICtCp変換
+//	2.	引数
+//		p_i		...	(O)	強度
+//		p_ct	...	(O)	青黄
+//		p_cp	...	(O)	赤緑
+//		r		...	(I)	赤 (0-255)
+//		g		...	(I)	緑 (0-255)
+//		b		...	(I)	青 (0-255)
+//	3.	返値
+//		遠さ
+//	4.	備考
+//		”遠さ”を示す比較用の値であり、スケールに意味はない
+// -------------------------------------------------------------
+static void _rgb_to_itp( double *p_i, double *p_ct, double *p_cp, int r, int g, int b ){
+	double l, m, s;
+
+	l = ( 1688. * r + 2146. * g +  262. * b ) / ( 4096. * 255. );
+	m = (  683. * r + 2951. * g +  462. * b ) / ( 4096. * 255. );
+	s = (   99. * r +  309. * g + 3688. * b ) / ( 4096. * 255. );
+
+	l = 0.5 * sqrt( l );
+	m = 0.5 * sqrt( m );
+	s = 0.5 * sqrt( s );
+
+	*p_i  = ( 2048. * l + 2048. * m             ) / 4096.;
+	*p_ct = ( 3625. * l - 7465. * m + 3840. * s ) / 4096.;
+	*p_cp = ( 9500. * l - 9212. * m -  288. * s ) / 4096.;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		２色の距離を求める（遠さ） ICtCp (HLG) Version
+//	2.	引数
+//		r1	...	(I)	色１赤
+//		g1	...	(I)	色１緑
+//		b1	...	(I)	色１青
+//		r2	...	(I)	色２赤
+//		g2	...	(I)	色２緑
+//		b2	...	(I)	色２青
+//	3.	返値
+//		遠さ
+//	4.	備考
+//		”遠さ”を示す比較用の値であり、スケールに意味はない
+// -------------------------------------------------------------
+static inline int _distance_itp( int r1, int g1, int b1, int r2, int g2, int b2 ){
+	double i1, t1, p1, i2, t2, p2, i, t, p;
+
+	_rgb_to_itp( &i1, &t1, &p1, r1, g1, b1 );
+	_rgb_to_itp( &i2, &t2, &p2, r2, g2, b2 );
+	i = i1 - i2;
+	t = t1 - t2;
+	p = p1 - p2;
+	return( (int)(sqrt(i * i + t * t + p * p) * 65536.) );
 }
 
 // -------------------------------------------------------------

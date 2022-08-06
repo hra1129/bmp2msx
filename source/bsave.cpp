@@ -467,10 +467,16 @@ static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int
 		bsh.end	= 0x37FF;
 		break;
 	default:
-		if( paltbl ) {
-			bsh.end	= paltbl + 32 - 1;
-		} else {
-			bsh.end	= width * height - 1;
+		if( screen_mode >= MD_SC5_256L ) {
+			bsh.end = width * height - 1;
+		}
+		else {
+			if( paltbl ){
+				bsh.end = paltbl + 32 - 1;
+			}
+			else{
+				bsh.end = width * height - 1;
+			}
 		}
 	}
 	bsh.run		= 0;

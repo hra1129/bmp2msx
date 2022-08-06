@@ -1380,7 +1380,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	// •ÏŠ·‚·‚é(COLORREF”z—ñ¨‚l‚r‚w‰æ‘œ)
-	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode <= MD_SC10_256L) ) {	// Screen10/12 ˆÈŠO
+	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC10_256L) ) {	// Screen10/12 ˆÈŠO
 		cnvRecolor( out, owidth, oheight, bmp, Mode, prProg, Pal, tail, tailcnt );
 	}else{							// Screen10/12
 		cnvNtcolor( out, owidth, oheight, bmp, Mode, prProg );
