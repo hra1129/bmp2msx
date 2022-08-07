@@ -479,7 +479,12 @@ static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int
 			}
 		}
 	}
-	bsh.run		= 0;
+	//	未使用の run の部分に実際のサイズを入れておく
+	bsh.run		= bsh.end;
+	//	end が 0xFFFF になってしまう場合は、0xFFFE に置き換える
+	if( bsh.end == 0xFFFF ) {
+		bsh.end = 0xFFFE;
+	}
 
 	//	保存
 	if( !fu_write( hf, &bsh, sizeof(BSAVEHEADER) ) ) return BSV_ERR_WRITE;
@@ -603,6 +608,12 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	fu_printf( hf, "\n" );
 	line_no += 10;
 
+	if( Mode->screen_mode >= MD_SC5_256L ){
+		//	256ラインモードの場合は、スプライトを表示禁止にする
+		fu_printf( hf, "%d VDP(9)=VDP(9)OR2\n", line_no );
+		line_no += 10;
+	}
+
 	if( screen_mode[ Mode->screen_mode ] < 4 ) {
 		fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n", line_no );
 		line_no += 10;
@@ -683,8 +694,14 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 			//	パレット無しのモード ( SCREEN 8, 12 )
 		}
 	}
-	fu_printf( hf, "%d A$=INPUT$(1)\n", line_no );
-	line_no += 10;
+	if( Mode->screen_mode >= MD_SC5_256L ) {
+		fu_printf( hf, "%d A$=INKEY$:if A$<>" "THEN VDP(24)=(VDP(24)+1)AND255:FORI=0TO100:NEXT:GOTO %d\n", line_no, line_no );
+		line_no += 10;
+	}
+	else {
+		fu_printf( hf, "%d A$=INPUT$(1)\n", line_no );
+		line_no += 10;
+	}
 
 	if( Mode->interlace ) {
 		fu_printf( hf, "%d SCREEN,,,,,0\n", line_no );
