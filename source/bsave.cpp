@@ -605,21 +605,21 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	if( Mode->interlace ) {
 		fu_printf( hf, ",,,,,3" );
 	}
-	fu_printf( hf, "\n" );
+	fu_printf( hf, "\n\r" );
 	line_no += 10;
 
 	if( Mode->screen_mode >= MD_SC5_256L ){
 		//	256ラインモードの場合は、スプライトを表示禁止にする
-		fu_printf( hf, "%d VDP(9)=VDP(9)OR2\n", line_no );
+		fu_printf( hf, "%d VDP(9)=VDP(9)OR2\n\r", line_no );
 		line_no += 10;
 	}
 
 	if( screen_mode[ Mode->screen_mode ] < 4 ) {
-		fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n", line_no );
+		fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n\r", line_no );
 		line_no += 10;
 	}
 	else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ) {
-		fu_printf( hf, "%d FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n", line_no );
+		fu_printf( hf, "%d FOR I=0 TO 15:COLOR=(I,0,0,0):NEXT\n\r", line_no );
 		line_no += 10;
 	}
 	else {
@@ -643,24 +643,24 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	}
 	if( Mode->interlace ) {
 		p[ 3 ] = '0';
-		fu_printf( hf, "%d SET PAGE 0,0:BLOAD\"%s\",S\n", line_no, pp );
+		fu_printf( hf, "%d SET PAGE 0,0:BLOAD\"%s\",S\n\r", line_no, pp );
 		line_no += 10;
 		p[ 3 ] = '1';
-		fu_printf( hf, "%d SET PAGE 1,1:BLOAD\"%s\",S\n", line_no, pp );
+		fu_printf( hf, "%d SET PAGE 1,1:BLOAD\"%s\",S\n\r", line_no, pp );
 		line_no += 10;
 	}
 	else {
-		fu_printf( hf, "%d BLOAD\"%s\",S\n", line_no, pp );
+		fu_printf( hf, "%d BLOAD\"%s\",S\n\r", line_no, pp );
 		line_no += 10;
 	}
 
 	if( Mode->PltMode == PLT_BSAVE ) {
 		if( screen_mode[ Mode->screen_mode ] < 4 ){
-			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN COLOR=RESTORE\n", line_no );
+			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN COLOR=RESTORE\n\r", line_no );
 			line_no += 10;
 		}
 		else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ){
-			fu_printf( hf, "%d COLOR=RESTORE\n", line_no );
+			fu_printf( hf, "%d COLOR=RESTORE\n\r", line_no );
 			line_no += 10;
 		}
 		else{
@@ -673,10 +673,10 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 			for( i = 0; i < 16; i++ ){
 				fu_printf( hf, "%d%d%d", Mode->color_palette[ i ].red, Mode->color_palette[ i ].green, Mode->color_palette[ i ].blue );
 			}
-			fu_printf( hf, "\"\n" );
+			fu_printf( hf, "\"\n\r" );
 			line_no += 10;
 
-			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n", line_no );
+			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n\r", line_no );
 			line_no += 10;
 		}
 		else if( screen_mode[ Mode->screen_mode ] < 8 || screen_mode[ Mode->screen_mode ] == 10 ){
@@ -684,10 +684,10 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 			for( i = 0; i < 16; i++ ){
 				fu_printf( hf, "%d%d%d", Mode->color_palette[ i ].red, Mode->color_palette[ i ].green, Mode->color_palette[ i ].blue );
 			}
-			fu_printf( hf, "\"\n" );
+			fu_printf( hf, "\"\n\r" );
 			line_no += 10;
 
-			fu_printf( hf, "%d FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n", line_no );
+			fu_printf( hf, "%d FOR I=0 TO 15:R=VAL(MID$(P$,I*3+1,1)):G=VAL(MID$(P$,I*3+2,1)):B=VAL(MID$(P$,I*3+3,1)):COLOR=(I,R,G,B):NEXT\n\r", line_no );
 			line_no += 10;
 		}
 		else{
@@ -695,16 +695,16 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 		}
 	}
 	if( Mode->screen_mode >= MD_SC5_256L ) {
-		fu_printf( hf, "%d A$=INKEY$:if A$<>" "THEN VDP(24)=(VDP(24)+1)AND255:FORI=0TO100:NEXT:GOTO %d\n", line_no, line_no );
+		fu_printf( hf, "%d A$=INKEY$:if A$<>" "THEN VDP(24)=(VDP(24)+1)AND255:FORI=0TO100:NEXT:GOTO %d\n\r", line_no, line_no );
 		line_no += 10;
 	}
 	else {
-		fu_printf( hf, "%d A$=INPUT$(1)\n", line_no );
+		fu_printf( hf, "%d A$=INPUT$(1)\n\r", line_no );
 		line_no += 10;
 	}
 
 	if( Mode->interlace ) {
-		fu_printf( hf, "%d SCREEN,,,,,0\n", line_no );
+		fu_printf( hf, "%d SCREEN,,,,,0\n\r", line_no );
 		line_no += 10;
 	}
 
