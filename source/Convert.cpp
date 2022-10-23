@@ -1047,20 +1047,41 @@ l_exit:
 
 // -------------------------------------------------------------
 //	1.	日本語名
+//		カラーパレットの明るさを取得する
+//	2.	引数
+//		p_pal	...	パレットに対応する色
+//		c ......... パレット番号
+//	3.	返値
+//		輝度レベル 0-65535
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+static int _get_palette_luminance( C_COLOR *p_pal, int c ) {
+	int r, g, b;
+
+	r = GET_RED( p_pal[ c ] );
+	g = GET_GREEN( p_pal[ c ] );
+	b = GET_BLUE( p_pal[ c ] );
+	return (77 * r + 150 * g + 29 * b);
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
 //		SCREEN5 イメージを SCREEN2/4 イメージへ変換する
 //	2.	引数
 //		p_image	...	VRAMイメージ
 //		prog	...	経過表示関数
+//		p_pal	...	パレットに対応する色
 //	3.	返値
 //		true	...	成功
 //		false	...	失敗
 //	4.	備考
 //		インターレースモードは使えない
 // -------------------------------------------------------------
-static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
+static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *p_pal )
 {
 	int	x, y, i, j, adr, dadr;
-	int	cc, c, p;
+	int	cc, c, p, lum1, lum2;
 	int	cnt, idx1, idx2, len, l;
 	int	ccnt[ 8 ] = { 0 };
 	int	ccol[ 8 ] = { 0 };
@@ -1106,11 +1127,11 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 
 				//	１色目と最も異なる２色目を選択する（コントラスト重視）
 				len  = 0;
-				c1= pal[ ccol[ idx1 ] ];
+				c1= p_pal[ ccol[ idx1 ] ];
 				for( i = 0; i < cnt; ++i ) {
 					if( i == idx1 ) continue;
 					cc = ccol[i];
-					l = _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ));
+					l = _distance_itp( GET_RED( p_pal[cc] ), GET_GREEN( p_pal[cc] ), GET_BLUE( p_pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ));
 					if( l >= len ) {
 						len = l;
 						idx2 = i;
@@ -1119,7 +1140,7 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 
 				c = ( ccol[ idx1 ] << 4 ) | ccol[ idx2 ];
 				p = 0;
-				c2= pal[ ccol[ idx2 ] ];
+				c2= p_pal[ ccol[ idx2 ] ];
 				for( j = 0; j < 8; j++ ) {
 					cc = p_image[ adr + j / 2 ];
 					if( j & 1 ) {
@@ -1129,12 +1150,22 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *pal )
 					}
 					//	選ばれた２色との色距離を比較
 					p = p << 1;
-					if( _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 )) 
-					  < _distance_itp( GET_RED( pal[cc] ), GET_GREEN( pal[cc] ), GET_BLUE( pal[cc] ), GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 )) ) {
+					if( _distance_itp( GET_RED( p_pal[cc] ), GET_GREEN( p_pal[cc] ), GET_BLUE( p_pal[cc] ), GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 )) 
+					  < _distance_itp( GET_RED( p_pal[cc] ), GET_GREEN( p_pal[cc] ), GET_BLUE( p_pal[cc] ), GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 )) ) {
 						p = p | 1;
 					}
 				}
 
+			}
+
+			//	明るい色の方を パターンジェネレータのbit値 = 1 の方に割り当てる
+			if( cnt >= 2 ) {
+				lum1 = _get_palette_luminance( p_pal, c & 0x0F );
+				lum2 = _get_palette_luminance( p_pal, ( c >> 4 ) & 0x0F );
+				if( ( lum1 == lum2 && (c & 0x0F) > ((c >> 4) & 0x0F) ) || (lum1 > lum2) ) {
+					p = p ^ 255;
+					c = ((c << 4) & 0xF0) | ((c >> 4) & 0x0F);
+				}
 			}
 
 			//	格納
