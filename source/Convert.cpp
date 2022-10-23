@@ -1167,6 +1167,14 @@ static bool cnvSC5toSC2( unsigned char *p_image, PROGRESS prog, C_COLOR *p_pal )
 					c = ((c << 4) & 0xF0) | ((c >> 4) & 0x0F);
 				}
 			}
+			else {
+				//	1色しか無い場合でも、明るい色なら前景色 (パターンジェネレータの bit値 = 1) に変更する
+				lum1 = _get_palette_luminance( p_pal, c & 0x0F );
+				if( lum1 >= (128 << 8) ) {
+					p = p ^ 255;
+					c = ( ( c << 4 ) & 0xF0 ) | ( ( c >> 4 ) & 0x0F );
+				}
+			}
 
 			//	格納
 			dadr = ( y & 7 ) + ( x * 8 ) + ( y >> 3 )*256;
