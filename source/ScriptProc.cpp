@@ -596,33 +596,34 @@ EVENT( onScriptRun )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-void scrPlayScript( char *szText,char *szFileName )
-{
+void scrPlayScript( char *szText,char *szFileName ) {
 	char word[ WORD_MAX ];
-	int ptr=0;
+	int ptr = 0;
 	int cmd;
 	// 設定を初期化する
 	scrset = NowMode;
-	lstrcpy( szTarget,szFileName );
+	lstrcpy( szTarget, szFileName );
 	// 処理ループ
-	while( szText[ptr]!=0 ){
+	while( szText[ptr] != 0 ) {
 		// 改行/ホワイトスペースを読み飛ばす
-		scrSkipSpace( szText,&ptr );
+		scrSkipSpace( szText, &ptr );
 		// 単語を取得
-		scrGetWord( szText,&ptr,word,WORD_MAX );
-		if( word[0]==0 ) break;								// すべて実行
-		// 単語コードを検索
-		cmd = scrSearch( word,scrword,ELMCNT( scrword ) );
-		if( cmd != SW_NONE ){
-			if( !(scrfunc[cmd])( szText,&ptr ) ) break;		// コマンド関数を呼びエラー発生時は終了
-		}else{
-			MessageBox( NULL,cszSyntax,MsgCap,MB_OK | MB_ICONWARNING );
-			break;											// 不正な文法
+		scrGetWord( szText, &ptr, word, WORD_MAX );
+		if( word[0] == 0 ) {
+			break;								// すべて実行を終えた
 		}
-		if( szText[ptr]==0 ) break;
+		// 単語コードを検索
+		cmd = scrSearch( word, scrword, ELMCNT( scrword ) );
+		if( cmd != SW_NONE ) {
+			if( !( scrfunc[cmd] )( szText,&ptr ) ) break;		// コマンド関数を呼びエラー発生時は終了
+		}else{
+			MessageBox( NULL, cszSyntax, MsgCap, MB_OK | MB_ICONWARNING );
+			break;												// 不正な文法
+		}
+		if( szText[ptr] == 0 ) break;
 	}
 	// 実行を終えた位置にカーソルを移動する
-	Edit_SetSel( hText,ptr,ptr );
+	Edit_SetSel( hText, ptr, ptr );
 }
 
 // -------------------------------------------------------------

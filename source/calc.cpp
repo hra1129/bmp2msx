@@ -78,7 +78,7 @@ bool calc_exp( int *n_result,const char *s_line,int *ptr )
 	// \‘¢‘Ì‚Ì‰Šú‰»
 	p_calcpar.n_class		= calc_class_none;
 	p_calcpar.s_line		= s_line;
-	p_calcpar.n_ptr			= 0;
+	p_calcpar.n_ptr			= *ptr;
 	p_calcpar.n_result		= 0;
 	p_calcpar.b_lpar		= false;
 	p_calcpar.n_level		= 0;
