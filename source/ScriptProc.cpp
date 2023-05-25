@@ -674,15 +674,15 @@ static void scrSkipSpace( const char *szText,int *ptr )
 // -------------------------------------------------------------
 static void scrGetWord( const char *szText,int *ptr,char *word,int WordMax )
 {
-	int i=0;
-	--WordMax;
-	word[0]=0;
-	scrSkipSpace( szText,ptr );
-	while( szText[ *ptr ]!='=' && szText[ *ptr ]!=',' && 
-		   szText[ *ptr ]!= 0  && !scrIsSpace( szText[ *ptr ] ) && i<WordMax ){
-		word[i++]=szText[ (*ptr)++ ];
+	int i = 0;
+	WordMax--;
+	word[ 0 ] = 0;
+	scrSkipSpace( szText, ptr );
+	while( szText[ *ptr ] != '=' && szText[ *ptr ] != ',' && 
+		   szText[ *ptr ] != 0  && !scrIsSpace( szText[ *ptr ] ) && i < WordMax ) {
+		word[ i++ ] = szText[ (*ptr)++ ];
 	}
-	word[i]=0;
+	word[ i ]=0;
 }
 
 // -------------------------------------------------------------

@@ -1,18 +1,7 @@
-﻿  PlugProc.cpp
-  PreView.cpp
-  ScriptProc.cpp
-  Setting.cpp
-  SubProc.cpp
-  Ver.cpp
-  WndProc.cpp
-  bsave.cpp
-  calc.cpp
-  main.cpp
-  utils.cpp
-  CalibrationProc.cpp
+﻿  ScriptProc.cpp
   コード生成しています。
-  7 of 318 functions ( 2.2%) were compiled, the rest were copied from previous compilation.
+  0 of 318 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   コード生成が終了しました。
   BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\bmp2msx\source\ReleaseE\BMP2MSXE.exe
