@@ -509,7 +509,10 @@ EVENT( onScriptSave ) {
 		MessageBox( hWnd,cszOpenErr, MsgCap, MB_OK | MB_ICONWARNING );
 		return TRUE;
 	}
-	fu_write( hFile, szBuf, TXT_SIZE );
+	HWND hText = GetDlgItem( hWnd, IDC_SCRIPT );
+	GetWindowText( hText, szBuf, sizeof(szBuf) );
+	int length = strlen( szBuf );
+	fu_write( hFile, szBuf, length );
 	fu_close( hFile );
 	return TRUE;
 }
