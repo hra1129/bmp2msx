@@ -431,7 +431,7 @@ EVENT( onScriptNew )
 EVENT( onScriptOpen )
 {
 	char			szFileName[ MAX_PATH ];
-	char			szBuf[ TXT_SIZE ],c;
+	char			szBuf[ TXT_SIZE ], c;
 	FU_FILE			*hFile;
 	int				i = 0;
 	int				tmp;
@@ -460,12 +460,12 @@ EVENT( onScriptOpen )
 		return TRUE;
 	}
 	tmp = fu_read( hFile, szBuf, TXT_SIZE );
-	if( tmp > TXT_SIZE ){
-		szBuf[ TXT_SIZE-1 ]=0;
+	if( tmp >= TXT_SIZE ){
+		szBuf[ TXT_SIZE - 1 ] = 0;
 	}else if( tmp ){
-		szBuf[ tmp ]=0;
+		szBuf[ tmp ] = 0;
 	}else{
-		szBuf[ 0 ]=0;
+		szBuf[ 0 ] = 0;
 	}
 	// バイナリデータを強引に読み出した場合にはエラーではじく
 	while( (c=szBuf[i++])!=0 ){
