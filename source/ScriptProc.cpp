@@ -26,7 +26,7 @@ void Converter( SETTING *Mode,int nSrc );			// WndProc.cpp : 変換処理関数
 
 #define cnFontSize	16								// スクリプトのフォントサイズ
 #define TXT_SIZE	30000							// スクリプトファイルの最大サイズ
-#define WORD_MAX	32								// 単語最大長
+#define WORD_MAX		512								// 単語最大長
 #define MSG_MAX		1024							// メッセージボックス文字列長
 
 #ifdef _ENGLISH
