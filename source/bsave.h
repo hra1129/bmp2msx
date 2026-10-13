@@ -1,4 +1,4 @@
-// -------------------------------------------------------------
+ï»¿// -------------------------------------------------------------
 // BMP to MSX
 //											(C)2000 HRA!
 // -------------------------------------------------------------
@@ -9,17 +9,17 @@
 #include <windows.h>
 #include "convert.h"
 
-// BSAVE Œ`®ƒtƒ@ƒCƒ‹ƒwƒbƒ_
+// BSAVE å½¢å¼ãƒ•ã‚¡ã‚¤ãƒ«ãƒ˜ãƒƒãƒ€
 #pragma pack( push,bsave,1 )
 typedef struct {
 	unsigned char	type;		// 0xFE;
-	unsigned short	start;		// ŠJnƒAƒhƒŒƒX
-	unsigned short	end;		// I—¹ƒAƒhƒŒƒX
-	unsigned short	run;		// ÀsŠJnƒAƒhƒŒƒX
+	unsigned short	start;		// é–‹å§‹ã‚¢ãƒ‰ãƒ¬ã‚¹
+	unsigned short	end;		// çµ‚äº†ã‚¢ãƒ‰ãƒ¬ã‚¹
+	unsigned short	run;		// å®Ÿè¡Œé–‹å§‹ã‚¢ãƒ‰ãƒ¬ã‚¹
 } BSAVEHEADER;
 #pragma pack( pop,bsave )
 
-// ƒpƒŒƒbƒgƒe[ƒuƒ‹ƒAƒhƒŒƒX
+// ãƒ‘ãƒ¬ãƒƒãƒˆãƒ†ãƒ¼ãƒ–ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
 static const int PalTblAdr[]={
 	0x01B80,		// screen 2/4
 	0x02020,		// screen 3

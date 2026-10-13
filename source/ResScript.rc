@@ -1,4 +1,5 @@
-// Microsoft Visual C++ generated resource script.
+ï»¿// Microsoft Visual C++ generated resource script.
+#pragma code_page(65001)
 //
 #include "resource.h"
 
@@ -13,11 +14,10 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// “ú–{Œê (“ú–{) resources
+// æ—¥æœ¬èªž (æ—¥æœ¬) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
-#pragma code_page(932)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -68,80 +68,79 @@ END
 
 IDR_MENU MENU
 BEGIN
-    POPUP "ƒtƒ@ƒCƒ‹(&F)"
+    POPUP "ãƒ•ã‚¡ã‚¤ãƒ«(&F)"
     BEGIN
-        MENUITEM "ƒtƒ@ƒCƒ‹‚ðŠJ‚­(&O)",                 IDM_OPEN
+        MENUITEM "ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã(&O)",                 IDM_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "ƒXƒNƒŠƒvƒgƒ‚[ƒh(&A)",                IDM_SCRIPT
+        MENUITEM "ã‚¹ã‚¯ãƒªãƒ—ãƒˆãƒ¢ãƒ¼ãƒ‰(&A)",                IDM_SCRIPT
         MENUITEM SEPARATOR
-        MENUITEM "I—¹(&X)",                      IDM_EXIT
+        MENUITEM "çµ‚äº†(&X)",                      IDM_EXIT
     END
-    POPUP "•ÒW(&E)"
+    POPUP "ç·¨é›†(&E)"
     BEGIN
-        MENUITEM "ƒNƒŠƒbƒvƒ{[ƒh‚Ì‰æ‘œ‚ð•ÏŠ·(&P)\tCtrl+V",   IDM_PASTE
+        MENUITEM "ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®ç”»åƒã‚’å¤‰æ›(&P)\tCtrl+V",   IDM_PASTE
     END
-    POPUP "ƒvƒŒƒrƒ…[(&P)"
+    POPUP "ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼(&P)"
     BEGIN
-        POPUP "•\Ž¦(&V)"
+        POPUP "è¡¨ç¤º(&V)"
         BEGIN
-            MENUITEM "ŽŸ‚Ì‰æ‘œ(&N)\t¨",                 IDM_NEXT
-            MENUITEM "‘O‚Ì‰æ‘œ(&P)\t©",                 IDM_PREV
+            MENUITEM "æ¬¡ã®ç”»åƒ(&N)\tâ†’",                 IDM_NEXT
+            MENUITEM "å‰ã®ç”»åƒ(&P)\tâ†",                 IDM_PREV
             MENUITEM SEPARATOR
-            MENUITEM "•ÏŠ·Œ³/•ÏŠ·Œ‹‰ÊØ‚è‘Ö‚¦\tSpace",         IDM_CHANGE
-            MENUITEM "ƒIƒŠƒWƒiƒ‹‰æ‘œ‚Ì•\Ž¦\tCtrl+O",          IDM_ORIGNAL
+            MENUITEM "å¤‰æ›å…ƒ/å¤‰æ›çµæžœåˆ‡ã‚Šæ›¿ãˆ\tSpace",         IDM_CHANGE
+            MENUITEM "ã‚ªãƒªã‚¸ãƒŠãƒ«ç”»åƒã®è¡¨ç¤º\tCtrl+O",          IDM_ORIGNAL
             MENUITEM SEPARATOR
-            MENUITEM "Šg‘å\tF7",                      IDM_ZOOMUP
-            MENUITEM "k¬\tF8",                      IDM_ZOOMDOWN
+            MENUITEM "æ‹¡å¤§\tF7",                      IDM_ZOOMUP
+            MENUITEM "ç¸®å°\tF8",                      IDM_ZOOMDOWN
         END
         MENUITEM SEPARATOR
-        MENUITEM "ƒvƒŒƒrƒ…[‚ÌƒNƒŠƒA(&C)\tDel",          IDM_CLEAR
-        MENUITEM "ƒvƒŒƒrƒ…[‚Ì‘SƒNƒŠƒA(&A)\tCtrl+A",      IDM_ALLCLEAR
+        MENUITEM "ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®ã‚¯ãƒªã‚¢(&C)\tDel",          IDM_CLEAR
+        MENUITEM "ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®å…¨ã‚¯ãƒªã‚¢(&A)\tCtrl+A",      IDM_ALLCLEAR
         MENUITEM SEPARATOR
-        MENUITEM "•Û‘¶",                          IDM_SAVE
-        MENUITEM "–¼‘O‚ð•t‚¯‚Ä•Û‘¶(&S)\tCtrl+S",        IDM_SAVEAS
-        MENUITEM "BMP‚Å•Û‘¶",                      IDM_BMPSAVE
+        MENUITEM "ä¿å­˜",                          IDM_SAVE
+        MENUITEM "åå‰ã‚’ä»˜ã‘ã¦ä¿å­˜(&S)\tCtrl+S",        IDM_SAVEAS
+        MENUITEM "BMPã§ä¿å­˜",                      IDM_BMPSAVE
         MENUITEM SEPARATOR
-        MENUITEM "Ä•ÏŠ·(&R)\tCtrl+R",             IDM_REDO
+        MENUITEM "å†å¤‰æ›(&R)\tCtrl+R",             IDM_REDO
     END
-    POPUP "Ý’è(&S)"
+    POPUP "è¨­å®š(&S)"
     BEGIN
-        MENUITEM "Ý’è(&S)...\tCtrl+E",           IDM_SETTING
-        MENUITEM "Ý’è‚Ì•\Ž¦(&V)\tTab",              IDM_DATA
+        MENUITEM "è¨­å®š(&S)...\tCtrl+E",           IDM_SETTING
+        MENUITEM "è¨­å®šã®è¡¨ç¤º(&V)\tTab",              IDM_DATA
         MENUITEM SEPARATOR
-        MENUITEM "Ý’è‚ð‰Šú’l‚É–ß‚·(&D)",               IDM_DEFSET
+        MENUITEM "è¨­å®šã‚’åˆæœŸå€¤ã«æˆ»ã™(&D)",               IDM_DEFSET
         MENUITEM SEPARATOR
-        MENUITEM "ƒvƒ‰ƒOƒCƒ“Ý’è",                     IDM_PLUGIN
-        MENUITEM "ƒJƒ‰[ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“",                IDM_COLOR_CALIBRATION
+        MENUITEM "ã‚«ãƒ©ãƒ¼ã‚­ãƒ£ãƒªãƒ–ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³",                IDM_COLOR_CALIBRATION
     END
-    POPUP "ƒwƒ‹ƒv(&H)"
+    POPUP "ãƒ˜ãƒ«ãƒ—(&H)"
     BEGIN
-        MENUITEM "ƒwƒ‹ƒv(&H)...",                  IDM_HELP
-        MENUITEM "ƒo[ƒWƒ‡ƒ“•\Ž¦(&V)...",              IDM_VER
+        MENUITEM "ãƒ˜ãƒ«ãƒ—(&H)...",                  IDM_HELP
+        MENUITEM "ãƒãƒ¼ã‚¸ãƒ§ãƒ³è¡¨ç¤º(&V)...",              IDM_VER
     END
 END
 
 IDR_MENUSUB MENU
 BEGIN
-    MENUITEM "•Â‚¶‚é(&X)",                     IDM_EXIT
-    POPUP "‹@”\(&F)"
+    MENUITEM "é–‰ã˜ã‚‹(&X)",                     IDM_EXIT
+    POPUP "æ©Ÿèƒ½(&F)"
     BEGIN
-        MENUITEM "“™”{•\Ž¦",                        IDM_SINGLE
-        MENUITEM "‚Q”{•\Ž¦",                        IDM_DOUBLE
+        MENUITEM "ç­‰å€è¡¨ç¤º",                        IDM_SINGLE
+        MENUITEM "ï¼’å€è¡¨ç¤º",                        IDM_DOUBLE
     END
 END
 
 IDR_MENUSCRIPT MENU
 BEGIN
-    POPUP "ƒtƒ@ƒCƒ‹(&F)"
+    POPUP "ãƒ•ã‚¡ã‚¤ãƒ«(&F)"
     BEGIN
-        MENUITEM "V‹Kì¬(&N)",                    IDM_NEW
-        MENUITEM "ŠJ‚­(&O)",                      IDM_OPEN
+        MENUITEM "æ–°è¦ä½œæˆ(&N)",                    IDM_NEW
+        MENUITEM "é–‹ã(&O)",                      IDM_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "•Û‘¶(&S)",                      IDM_SAVE
+        MENUITEM "ä¿å­˜(&S)",                      IDM_SAVE
         MENUITEM SEPARATOR
-        MENUITEM "•Â‚¶‚é(&X)",                     IDM_EXIT
+        MENUITEM "é–‰ã˜ã‚‹(&X)",                     IDM_EXIT
     END
-    MENUITEM "ŽÀs(&R)",                      IDM_RUN
+    MENUITEM "å®Ÿè¡Œ(&R)",                      IDM_RUN
 END
 
 
@@ -152,8 +151,8 @@ END
 
 IDD_VER DIALOG 0, 0, 210, 51
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ƒo[ƒWƒ‡ƒ“î•ñ"
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN"
+CAPTION "ãƒãƒ¼ã‚¸ãƒ§ãƒ³æƒ…å ±"
+FONT 12, "ï¼­ï¼³ ï¼°ã‚´ã‚·ãƒƒã‚¯"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
     ICON            IDI_ICON,IDC_STATIC,7,7,20,20
@@ -163,32 +162,32 @@ END
 
 IDD_SETTING DIALOGEX 0, 0, 438, 403
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Ý’è"
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN", 0, 0, 0x1
+CAPTION "è¨­å®š"
+FONT 12, "ï¼­ï¼³ ï¼°ã‚´ã‚·ãƒƒã‚¯", 0, 0, 0x1
 BEGIN
     COMBOBOX        IDC_CMBSCREEN,77,17,160,117,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_PREVIEW,77,33,160,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "192ƒ‰ƒCƒ“o—Í",IDC_192,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,51,58,11
-    CONTROL         "ƒCƒ“ƒ^[ƒŒ[ƒX",IDC_INTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,62,58,11
-    CONTROL         "ƒtƒ@ƒCƒ‹–¼Ž©“®Œˆ’è",IDC_AUTONAME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,51,71,11
-    CONTROL         "BASo—Í",IDC_BASIC_OUTPUT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,62,71,11
+    CONTROL         "192ãƒ©ã‚¤ãƒ³å‡ºåŠ›",IDC_192,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,51,58,11
+    CONTROL         "ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ¬ãƒ¼ã‚¹",IDC_INTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,62,58,11
+    CONTROL         "ãƒ•ã‚¡ã‚¤ãƒ«åè‡ªå‹•æ±ºå®š",IDC_AUTONAME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,51,71,11
+    CONTROL         "BASå‡ºåŠ›",IDC_BASIC_OUTPUT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,62,71,11
     COMBOBOX        IDC_CMBCNV,342,74,80,84,CBS_DROPDOWNLIST | WS_TABSTOP
     COMBOBOX        IDC_CMBERR,89,97,83,109,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "FÄŒ»¸“x",IDC_STATIC,208,100,65,8
+    LTEXT           "è‰²å†ç¾ç²¾åº¦",IDC_STATIC,208,100,65,8
     COMBOBOX        IDC_SEIDO,275,97,61,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_CMBERR2,89,112,83,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "50%:50%‚Ì–ÔÀ²Ù",IDC_TILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,114,60,8
-    CONTROL         "Œë·ŠgŽU",IDC_GOSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,127,58,11
+    CONTROL         "50%:50%ã®ç¶²ï¾€ï½²ï¾™",IDC_TILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,114,60,8
+    CONTROL         "èª¤å·®æ‹¡æ•£",IDC_GOSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,127,58,11
     CONTROL         "Slider1",IDC_GOSAVAL,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,140,98,12
     CONTROL         "Slider1",IDC_GOSAERR,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,152,98,12
     CONTROL         "Slider1",IDC_GOSARATIO,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,57,164,98,12
-    LTEXT           "Ž©‘R‰æ¶¬±ÙºÞØ½ÞÑ",IDC_STATIC,208,126,80,8
+    LTEXT           "è‡ªç„¶ç”»ç”Ÿæˆï½±ï¾™ï½ºï¾žï¾˜ï½½ï¾žï¾‘",IDC_STATIC,208,126,80,8
     COMBOBOX        IDC_CMBALGO,214,135,107,54,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "F·(JK)‚ÌÄŒvŽZ",IDC_JKRC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,151,68,11
-    CONTROL         "ƒTƒCƒY’²®‚·‚é",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,198,67,8
+    CONTROL         "è‰²å·®(JK)ã®å†è¨ˆç®—",IDC_JKRC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,151,68,11
+    CONTROL         "ã‚µã‚¤ã‚ºèª¿æ•´ã™ã‚‹",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,198,67,8
     COMBOBOX        IDC_RESAMPLE,69,218,56,174,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_SIZEMODE,187,218,107,109,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "”wŒiF",IDC_FILLC,306,218,31,12
+    PUSHBUTTON      "èƒŒæ™¯è‰²",IDC_FILLC,306,218,31,12
     CONTROL         "",IDC_COLTBL,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,7,264,181,44
     CONTROL         "Slider1",IDC_RED,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,195,265,81,12
     CONTROL         "Slider1",IDC_GREEN,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,195,279,81,12
@@ -197,56 +196,56 @@ BEGIN
     COMBOBOX        IDC_SORT,58,325,79,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_CMBPLT,58,340,140,57,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_FZERO,57,357,133,52,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "ƒ[ƒ‰»F(&C)",IDC_FZCOLOR,4,377,56,12
+    PUSHBUTTON      "ã‚¼ãƒ­åŒ–è‰²(&C)",IDC_FZCOLOR,4,377,56,12
     EDITTEXT        IDC_FZ_X,98,376,32,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_FZ_Y,141,376,32,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "ƒpƒŒƒbƒg‘½•ª•z‘IF",IDC_SELCOL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,361,72,11
-    CONTROL         "‘SŒÅ’èƒpƒŒƒbƒg",IDC_PAL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,374,52,11
-    CONTROL         "0”Ô‚ðŽg‚í‚È‚¢",IDC_CHKZERO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,386,160,11
-    PUSHBUTTON      "ƒpƒŒƒbƒg“Ç‚Ýž‚Ý(&P)",IDC_LOADPLT,312,265,76,19
-    PUSHBUTTON      "ƒpƒŒƒbƒg•Û‘¶",IDC_SAVEPLT,312,284,76,19
-    PUSHBUTTON      "‘S‚Ä“¯‚¶‹–‰Â(&A)",IDC_ENREVS,313,314,75,19
-    PUSHBUTTON      "MSX1F",IDC_MSX1COLOR,313,333,75,19
-    PUSHBUTTON      "MSX2ƒfƒtƒHƒ‹ƒgF",IDC_MSX2COLOR,313,352,75,19
-    PUSHBUTTON      "ƒtƒ@ƒCƒ‹‚É•Û‘¶(&S)...",IDC_SAVEAS,256,8,77,14
-    PUSHBUTTON      "ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚Þ(&L)...",IDC_LOAD,256,25,77,14
+    CONTROL         "ãƒ‘ãƒ¬ãƒƒãƒˆå¤šåˆ†å¸ƒé¸è‰²",IDC_SELCOL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,361,72,11
+    CONTROL         "å…¨å›ºå®šãƒ‘ãƒ¬ãƒƒãƒˆ",IDC_PAL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,374,52,11
+    CONTROL         "0ç•ªã‚’ä½¿ã‚ãªã„",IDC_CHKZERO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,237,386,160,11
+    PUSHBUTTON      "ãƒ‘ãƒ¬ãƒƒãƒˆèª­ã¿è¾¼ã¿(&P)",IDC_LOADPLT,312,265,76,19
+    PUSHBUTTON      "ãƒ‘ãƒ¬ãƒƒãƒˆä¿å­˜",IDC_SAVEPLT,312,284,76,19
+    PUSHBUTTON      "å…¨ã¦åŒã˜è¨±å¯(&A)",IDC_ENREVS,313,314,75,19
+    PUSHBUTTON      "MSX1è‰²",IDC_MSX1COLOR,313,333,75,19
+    PUSHBUTTON      "MSX2ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆè‰²",IDC_MSX2COLOR,313,352,75,19
+    PUSHBUTTON      "ãƒ•ã‚¡ã‚¤ãƒ«ã«ä¿å­˜(&S)...",IDC_SAVEAS,256,8,77,14
+    PUSHBUTTON      "ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã‚€(&L)...",IDC_LOAD,256,25,77,14
     DEFPUSHBUTTON   "OK",IDOK,342,8,80,14
-    PUSHBUTTON      "ƒLƒƒƒ“ƒZƒ‹",IDCANCEL,342,25,80,14
-    PUSHBUTTON      "ƒfƒtƒHƒ‹ƒgÝ’è‚ÖƒRƒs[",IDC_DEFAULT,342,40,80,14
-    CONTROL         "í‚ÉÄ•ÏŠ·‚ðƒfƒtƒHƒ‹ƒg‰»",IDC_CHKDEF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,336,58,91,12
-    LTEXT           "•ÏŠ·ŽžÝ’è",IDC_LBLSSET,294,74,39,13,SS_CENTERIMAGE
-    LTEXT           "ƒŠƒTƒ“ƒvƒ‹•ûŽ®",IDC_STATIC,9,221,56,9
-    LTEXT           "ƒTƒCƒY",IDC_STATIC,151,220,31,8
+    PUSHBUTTON      "ã‚­ãƒ£ãƒ³ã‚»ãƒ«",IDCANCEL,342,25,80,14
+    PUSHBUTTON      "ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆè¨­å®šã¸ã‚³ãƒ”ãƒ¼",IDC_DEFAULT,342,40,80,14
+    CONTROL         "å¸¸ã«å†å¤‰æ›ã‚’ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆåŒ–",IDC_CHKDEF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,336,58,91,12
+    LTEXT           "å¤‰æ›æ™‚è¨­å®š",IDC_LBLSSET,294,74,39,13,SS_CENTERIMAGE
+    LTEXT           "ãƒªã‚µãƒ³ãƒ—ãƒ«æ–¹å¼",IDC_STATIC,9,221,56,9
+    LTEXT           "ã‚µã‚¤ã‚º",IDC_STATIC,151,220,31,8
     CONTROL         "",IDC_FILLCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,338,218,32,12
     CTEXT           "R=0",IDC_NRED,279,266,22,10
     CTEXT           "G=0",IDC_NGREEN,279,280,22,10
     CTEXT           "B=0",IDC_NBLUE,279,294,22,10
     LTEXT           "COLOR=0",IDC_COL,4,312,32,11
-    LTEXT           "ƒ\[ƒg",IDC_STATIC,4,328,18,10
-    LTEXT           "ƒpƒŒƒbƒgo—Í",IDC_STATIC,4,342,50,9
-    LTEXT           "ƒ[ƒ‰»",IDC_STATIC,3,358,21,9
+    LTEXT           "ã‚½ãƒ¼ãƒˆ",IDC_STATIC,4,328,18,10
+    LTEXT           "ãƒ‘ãƒ¬ãƒƒãƒˆå‡ºåŠ›",IDC_STATIC,4,342,50,9
+    LTEXT           "ã‚¼ãƒ­åŒ–",IDC_STATIC,3,358,21,9
     CONTROL         "",IDC_FZC,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,64,377,25,11
     CTEXT           ",",IDC_STATIC,130,381,8,8,0,WS_EX_TRANSPARENT
-    RTEXT           "‹­‚³",IDC_STATIC,18,142,34,9
+    RTEXT           "å¼·ã•",IDC_STATIC,18,142,34,9
     LTEXT           "0.5",IDC_GOSAVALS,157,142,20,8
-    RTEXT           "ØŽÌè‡’l",IDC_STATIC,19,152,32,9
+    RTEXT           "åˆ‡æ¨é–¾å€¤",IDC_STATIC,19,152,32,9
     LTEXT           "20",IDC_GOSAERRS,157,152,17,8
-    RTEXT           "X:Y”ä",IDC_STATIC,19,164,32,9
+    RTEXT           "X:Yæ¯”",IDC_STATIC,19,164,32,9
     LTEXT           "0% : 0%",IDC_GOSARATIOS,157,164,49,8
-    GROUPBOX        "o—Íƒ‚[ƒh",IDC_STATIC,5,5,243,76
-    GROUPBOX        "•ÏŠ·Ý’è",IDC_STATIC,0,86,427,94
-    GROUPBOX        "ƒpƒŒƒbƒgÝ’è",IDC_STATIC,0,255,429,142
-    LTEXT           "ƒfƒBƒUƒpƒ^[ƒ“",IDC_STATIC,14,100,73,10
-    LTEXT           "MSX‘¤ƒ‚[ƒh",IDC_STATIC,10,20,43,10
-    LTEXT           "o—Íæ",IDC_STATIC,11,35,43,9
-    LTEXT           "ƒfƒBƒU‰ÁŽZ•û–@",IDC_STATIC,14,114,73,10
-    GROUPBOX        "ƒTƒCƒY’²®   ",IDC_STATIC,0,186,429,59
+    GROUPBOX        "å‡ºåŠ›ãƒ¢ãƒ¼ãƒ‰",IDC_STATIC,5,5,243,76
+    GROUPBOX        "å¤‰æ›è¨­å®š",IDC_STATIC,0,86,427,94
+    GROUPBOX        "ãƒ‘ãƒ¬ãƒƒãƒˆè¨­å®š",IDC_STATIC,0,255,429,142
+    LTEXT           "ãƒ‡ã‚£ã‚¶ãƒ‘ã‚¿ãƒ¼ãƒ³",IDC_STATIC,14,100,73,10
+    LTEXT           "MSXå´ãƒ¢ãƒ¼ãƒ‰",IDC_STATIC,10,20,43,10
+    LTEXT           "å‡ºåŠ›å…ˆ",IDC_STATIC,11,35,43,9
+    LTEXT           "ãƒ‡ã‚£ã‚¶åŠ ç®—æ–¹æ³•",IDC_STATIC,14,114,73,10
+    GROUPBOX        "ã‚µã‚¤ã‚ºèª¿æ•´   ",IDC_STATIC,0,186,429,59
 END
 
 IDD_PROGRESS DIALOG 0, 0, 223, 43
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "‚µ‚Î‚ç‚­‚¨‘Ò‚¿‚­‚¾‚³‚¢"
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN"
+CAPTION "ã—ã°ã‚‰ããŠå¾…ã¡ãã ã•ã„"
+FONT 12, "ï¼­ï¼³ ï¼°ã‚´ã‚·ãƒƒã‚¯"
 BEGIN
     CONTROL         "",IDC_FILENAME,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | SS_CENTERIMAGE | SS_SUNKEN | WS_GROUP,7,7,209,10
     CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH,7,22,209,14
@@ -254,15 +253,15 @@ END
 
 IDD_DOTVIEW DIALOG 0, 0, 211, 145
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ƒXƒ|ƒCƒg"
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN"
+CAPTION "ã‚¹ãƒã‚¤ãƒˆ"
+FONT 12, "ï¼­ï¼³ ï¼°ã‚´ã‚·ãƒƒã‚¯"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,153,7,50,14
-    LTEXT           "FƒR[ƒh",IDC_STATIC,102,27,42,9
-    LTEXT           "@Ô",IDC_STATIC,102,40,42,9
-    LTEXT           "@—Î",IDC_STATIC,102,52,42,9
-    LTEXT           "@Â",IDC_STATIC,102,63,42,9
-    LTEXT           "À•W",IDC_STATIC,102,76,41,10
+    LTEXT           "è‰²ã‚³ãƒ¼ãƒ‰",IDC_STATIC,102,27,42,9
+    LTEXT           "ã€€èµ¤",IDC_STATIC,102,40,42,9
+    LTEXT           "ã€€ç·‘",IDC_STATIC,102,52,42,9
+    LTEXT           "ã€€é’",IDC_STATIC,102,63,42,9
+    LTEXT           "åº§æ¨™",IDC_STATIC,102,76,41,10
     RTEXT           "00000000H",IDC_COLORCODE,146,27,57,10,SS_SUNKEN
     RTEXT           "0",IDC_RED,146,39,57,10,SS_SUNKEN
     RTEXT           "0",IDC_GREEN,146,52,57,10,SS_SUNKEN
@@ -270,34 +269,22 @@ BEGIN
     CTEXT           "(0,0)",IDC_ZAHYO,146,76,57,10,SS_SUNKEN
     CONTROL         "",IDC_COLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,7,88,78
     CONTROL         "",IDC_MSXCOLOR,"Static",SS_BLACKFRAME | SS_SUNKEN,7,94,88,47
-    LTEXT           "@Ô",IDC_STATIC,102,107,42,9
-    LTEXT           "@—Î",IDC_STATIC,102,119,42,9
-    LTEXT           "@Â",IDC_STATIC,102,130,42,9
+    LTEXT           "ã€€èµ¤",IDC_STATIC,102,107,42,9
+    LTEXT           "ã€€ç·‘",IDC_STATIC,102,119,42,9
+    LTEXT           "ã€€é’",IDC_STATIC,102,130,42,9
     RTEXT           "0",IDC_MSXRED,146,106,57,10,SS_SUNKEN
     RTEXT           "0",IDC_MSXGREEN,146,119,57,10,SS_SUNKEN
     RTEXT           "0",IDC_MSXBLUE,146,131,57,10,SS_SUNKEN
-    LTEXT           "MSXƒpƒŒƒbƒgŽQl’l",IDC_STATIC,100,95,96,9
+    LTEXT           "MSXãƒ‘ãƒ¬ãƒƒãƒˆå‚è€ƒå€¤",IDC_STATIC,100,95,96,9
 END
 
 IDD_SCRIPT DIALOGEX 0, 0, 246, 217
 STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "ƒXƒNƒŠƒvƒgƒEƒBƒ“ƒhƒE"
+CAPTION "ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦"
 MENU IDR_MENUSCRIPT
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN", 0, 0, 0x1
+FONT 12, "ï¼­ï¼³ ï¼°ã‚´ã‚·ãƒƒã‚¯", 0, 0, 0x1
 BEGIN
     EDITTEXT        IDC_SCRIPT,19,19,190,148,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL,WS_EX_ACCEPTFILES
-END
-
-IDD_PLUGIN DIALOG 0, 0, 283, 45
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Plug In"
-FONT 12, "‚l‚r ‚oƒSƒVƒbƒN"
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,229,6,50,14
-    PUSHBUTTON      "ƒLƒƒƒ“ƒZƒ‹",IDCANCEL,229,23,50,14
-    LTEXT           "SUSIE plugin ƒtƒHƒ‹ƒ_",IDC_STATIC,6,17,70,11
-    EDITTEXT        IDC_PATH,78,14,116,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_FOLDER,195,14,20,12
 END
 
 IDD_CALIBRATION DIALOGEX 0, 0, 663, 461
@@ -306,15 +293,15 @@ CAPTION "Color Calibration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,554,440,50,14
-    PUSHBUTTON      "ƒLƒƒƒ“ƒZƒ‹",IDCANCEL,606,440,50,14
+    PUSHBUTTON      "ã‚­ãƒ£ãƒ³ã‚»ãƒ«",IDCANCEL,606,440,50,14
     COMBOBOX        IDC_CMB_SCREEN_MODE,91,7,132,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "SCREEN MODE",IDC_STATIC,7,10,73,11
     CONTROL         "",IDC_COLORBAR,"Static",SS_BLACKFRAME | SS_NOTIFY | SS_SUNKEN,7,24,649,411
-    PUSHBUTTON      "‰Šú’l‚É–ß‚·",IDC_BTN_LOAD_DEFAULT,14,439,60,15
+    PUSHBUTTON      "åˆæœŸå€¤ã«æˆ»ã™",IDC_BTN_LOAD_DEFAULT,14,439,60,15
     COMBOBOX        IDC_CMB_ELEMENT,137,442,96,82,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_ADJUSTER,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,238,439,212,15
     CTEXT           "0",IDC_VALUE,455,440,77,14,SS_SUNKEN
-    PUSHBUTTON      "Œ³‚É–ß‚·",IDC_BTN_UNDO,75,439,60,15
+    PUSHBUTTON      "å…ƒã«æˆ»ã™",IDC_BTN_UNDO,75,439,60,15
 END
 
 
@@ -362,14 +349,6 @@ BEGIN
         RIGHTMARGIN, 239
         TOPMARGIN, 7
         BOTTOMMARGIN, 210
-    END
-
-    IDD_PLUGIN, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 276
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 38
     END
 
     IDD_CALIBRATION, DIALOG
@@ -444,7 +423,7 @@ BEGIN
     0
 END
 
-#endif    // “ú–{Œê (“ú–{) resources
+#endif    // æ—¥æœ¬èªž (æ—¥æœ¬) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

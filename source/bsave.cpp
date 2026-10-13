@@ -206,7 +206,7 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 // -------------------------------------------------------------
 void bsvSavePLFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 	FU_FILE	*hf;
-	byte	Buf[32];
+	byte	Buf[32] = {0};
 	int		i;
 
 	// ファイルを開く
@@ -363,7 +363,7 @@ static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outa
 // -------------------------------------------------------------
 static int _SaveBodyS2( FU_FILE *hf, const byte* ptr, int *outadr ) {
 	int		i;
-	byte	sPGen[ 768 ];
+	byte	sPGen[ 768 ] = {0};
 
 	//	パターンジェネレータテーブル
 	if( !fu_write( hf, ptr, 0x1800 ) ) return BSV_ERR_WRITE;
@@ -394,7 +394,7 @@ static int _SaveBodyS2( FU_FILE *hf, const byte* ptr, int *outadr ) {
 // -------------------------------------------------------------
 static int _SaveBodyS3( FU_FILE *hf, const byte* ptr, int *outadr ) {
 	int		i, j, k;
-	byte	sPGen[ 768 ];
+	byte	sPGen[ 768 ] = {0};
 
 	//	パターンジェネレータテーブル
 	if( !fu_write( hf, ptr, 0x800 ) ) return BSV_ERR_WRITE;
@@ -549,9 +549,9 @@ static void _GetOutFilename( char* szOutFile, const char* szInFile, int nScrMode
 // -------------------------------------------------------------
 static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 	FU_FILE	*hf;
-	byte	Buf[2];
+	byte	Buf[2] = {0};
 	int		i;
-	char	szBuf[32];
+	char	szBuf[32] = {0};
 	int		palnum;
 
 	// ファイルを開く
@@ -585,7 +585,7 @@ static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 //		なし
 // -------------------------------------------------------------
 static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
-	char s_basic_name[ MAX_PATH + 3 ];
+	char s_basic_name[ MAX_PATH + 3 ] = {0};
 	char *s_file_name = s_basic_name;
 	char *p, *pp;
 	FU_FILE *hf;

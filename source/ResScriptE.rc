@@ -1,4 +1,5 @@
-// Microsoft Visual C++ generated resource script.
+ï»¿// Microsoft Visual C++ generated resource script.
+#pragma code_page(65001)
 //
 #include "resource.h"
 
@@ -13,11 +14,10 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// “ú–{Œê (“ú–{) resources
+// æ—¥æœ¬èªž (æ—¥æœ¬) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
-#pragma code_page(932)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -110,7 +110,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "load &Default",               IDM_DEFSET
         MENUITEM SEPARATOR
-        MENUITEM "PlugIn setting",              IDM_PLUGIN
         MENUITEM "Color calibration",           IDM_COLOR_CALIBRATION
     END
     POPUP "&Help"
@@ -288,18 +287,6 @@ BEGIN
     EDITTEXT        IDC_SCRIPT,19,19,190,148,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL,WS_EX_ACCEPTFILES
 END
 
-IDD_PLUGIN DIALOG 0, 0, 283, 45
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Plug In"
-FONT 12, "MS Gothic"
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,229,6,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,229,23,50,14
-    LTEXT           "PlugIn folder",IDC_STATIC,6,17,70,11
-    EDITTEXT        IDC_PATH,78,14,116,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_FOLDER,195,14,20,12
-END
-
 IDD_CALIBRATION DIALOGEX 0, 0, 663, 461
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Color Calibration"
@@ -362,14 +349,6 @@ BEGIN
         RIGHTMARGIN, 239
         TOPMARGIN, 7
         BOTTOMMARGIN, 210
-    END
-
-    IDD_PLUGIN, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 276
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 38
     END
 
     IDD_CALIBRATION, DIALOG
@@ -444,7 +423,7 @@ BEGIN
     0
 END
 
-#endif    // “ú–{Œê (“ú–{) resources
+#endif    // æ—¥æœ¬èªž (æ—¥æœ¬) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

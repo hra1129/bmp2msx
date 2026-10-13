@@ -30,9 +30,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PlugProc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PreView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,9 +43,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SpitProc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="splug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SubProc.cpp">
@@ -72,6 +66,12 @@
     <ClCompile Include="winConvert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="winImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="logic\script_engine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bsave.h">
@@ -92,9 +92,6 @@
     <ClInclude Include="Globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PlugProc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PreView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -111,9 +108,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SpitProc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="splug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SubProc.h">
@@ -141,6 +135,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="winConvert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="winImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\script_engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

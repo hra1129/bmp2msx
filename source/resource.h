@@ -1,6 +1,6 @@
-//{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ Ç≈ê∂ê¨Ç≥ÇÍÇΩÉCÉìÉNÉãÅ[Éh ÉtÉ@ÉCÉãÅB
-// ResScriptE.rc Ç≈égóp
+Ôªø//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ „ÅßÁîüÊàê„Åï„Çå„Åü„Ç§„É≥„ÇØ„É´„Éº„Éâ „Éï„Ç°„Ç§„É´„ÄÇ
+// ResScriptE.rc „Åß‰ΩøÁî®
 //
 #define IDS_COLORCODE                   1
 #define IDC_SAVEAS                      3
@@ -24,7 +24,6 @@
 #define IDI_ICONSCRIPT                  113
 #define IDD_DIALOG1                     114
 #define IDC_CHGPAL                      115
-#define IDD_PLUGIN                      118
 #define IDI_HOLD                        119
 #define IDI_NOUSE                       120
 #define IDD_CALIBRATION                 121
@@ -90,8 +89,6 @@
 #define IDC_CHKDEF                      1048
 #define IDC_CMBCNV                      1049
 #define IDC_LBLSSET                     1051
-#define IDC_PATH                        1052
-#define IDC_FOLDER                      1053
 #define IDC_COMBO1                      1056
 #define IDC_SIZEMODE                    1056
 #define IDC_CMB_SCREEN_MODE             1056
@@ -133,7 +130,6 @@
 #define IDM_ZOOMUP                      40026
 #define IDM_ZOOMDOWN                    40027
 #define IDM_BMPSAVE                     40028
-#define IDM_PLUGIN                      40029
 #define IDM_HELP                        40030
 #define IDM_COLOR_CALIBRATION           40031
 

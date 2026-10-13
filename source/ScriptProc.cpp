@@ -58,7 +58,7 @@ enum {
 	SW_GOSAVAL,			// 誤差拡散係数
 	SW_SELCOL,			// 選色モード
 	SW_DTHADD,			// ディザ加算方法
-	SW_ALGOMODE,		// 自然が生成アルゴリズム
+	SW_ALGOMODE,			// 自然が生成アルゴリズム
 };
 
 // -------------------------------------------------------------
@@ -100,7 +100,7 @@ bool scrDthAdd( const char *szText,int *ptr );
 bool scrAlgoMode( const char *szText,int *ptr );
 
 // 関数配列
-static SCRFUNC scrfunc[]={
+static SCRFUNC scrfunc[] = {
 	scrLoadSetting,				// SW_LOADSETTING
 	scrConvert,					// SW_CONVERT
 	scrSetFileName,				// SW_SETFILENAME
@@ -136,7 +136,7 @@ static SETTING	scrset;					// 変換設定
 static char szTarget[ MAX_PATH ];		// 変換対象のファイル名
 
 // 命令語
-static SCRWORD scrword[]={
+static SCRWORD scrword[] = {
 	{"LOADSETTING"	, SW_LOADSETTING		},
 	{"設定読込"		, SW_LOADSETTING		},
 	{"CONVERT"		, SW_CONVERT			},
@@ -169,15 +169,15 @@ static SCRWORD scrword[]={
 };
 
 // フラグ名
-static SCRWORD flgword[]={
+static SCRWORD flgword[] = {
 	{"誤差拡散"			,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
 	{"GOSA"				,OFFSET( SETTING, diffusion_error_enable	)},		// 誤差拡散 する:true / しない:false
 	{"インターレース"	,OFFSET( SETTING, interlace					)},		// インターレース する:true / しない:false
 	{"INTERACE"			,OFFSET( SETTING, interlace					)},		// インターレース する:true / しない:false
 	{"固定パレット"		,OFFSET( SETTING, fixed_palette				)},		// 固定パレット する:true / しない:false
 	{"PALNOCHG"			,OFFSET( SETTING, fixed_palette				)},		// 固定パレット する:true / しない:false
-	{"サイズ調節"		,OFFSET( SETTING, resize_enable					)},		// サイズ調節
-	{"RESIZE"			,OFFSET( SETTING, resize_enable					)},		// サイズ調節
+	{"サイズ調節"		,OFFSET( SETTING, resize_enable				)},		// サイズ調節
+	{"RESIZE"			,OFFSET( SETTING, resize_enable				)},		// サイズ調節
 	{"自動ファイル名"	,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
 	{"AUTONAME"			,OFFSET( SETTING, AutoName					)},		// 自動ファイル名決定
 	{"色差再計算"		,OFFSET( SETTING, JKrc						)},		// 色差情報の再計算
@@ -189,7 +189,7 @@ static SCRWORD flgword[]={
 };
 
 // フラグ値
-static SCRWORD flgbool[]={
+static SCRWORD flgbool[] = {
 	{"TRUE"			,1	},
 	{"FALSE"		,0	},
 	{"ON"			,1	},
@@ -197,7 +197,7 @@ static SCRWORD flgbool[]={
 };
 
 // パレットモード
-static SCRWORD flgpmode[]={
+static SCRWORD flgpmode[] = {
 	{"NOUSE"		,PALEN_NONE },
 	{"AUTO"			,PALEN_AUTO },
 	{"CUSTOM"		,PALEN_USE  },
@@ -207,7 +207,7 @@ static SCRWORD flgpmode[]={
 };
 
 // 選色モード
-static SCRWORD flgselmode[]={
+static SCRWORD flgselmode[] = {
 	{"SCATTER"		,SELCOL_BUNSAN	},	// 分散選択
 	{"MAX"			,SELCOL_TABUNPU },	// 多分布選択
 	{"分散"			,SELCOL_BUNSAN	},	// 分散選択
@@ -215,7 +215,7 @@ static SCRWORD flgselmode[]={
 };
 
 // ディザ加算モード
-static SCRWORD flgdthadd[]={
+static SCRWORD flgdthadd[] = {
 	{"ROTATE"		,EADD_ROTATE	},	// 回転
 	{"NONE"			,EADD_NONE		},	// 同位相
 	{"X"			,EADD_X			},	// Ｘずらし
@@ -227,7 +227,7 @@ static SCRWORD flgdthadd[]={
 };
 
 // 自然画生成アルゴリズム
-static SCRWORD flgalgo[]={
+static SCRWORD flgalgo[] = {
 	{"無し"			,ALGO_NONE		},	// 無し
 	{"再計算"		,ALGO_RECALC	},	// 逆算による誤差訂正
 	{"パワフル"		,ALGO_POWERFUL	},	// パワフル活用法のレイトレーシング法に使われていた式
@@ -254,15 +254,13 @@ static SCRWORD flgalgo[]={
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-WINPROC( ScriptProc )
-{
-	switch( msg )
-	{
+WINPROC( ScriptProc ) {
+	switch( msg ) {
 		ONEVENT( WM_CLOSE				, onScriptClose		);	// 閉じる
 		ONEVENT( WM_COMMAND				, onScriptCommand	);	// コマンド分岐
 		ONEVENT( WM_INITDIALOG			, onScriptInitDlg	);	// ダイアログ初期化
 		ONEVENT( WM_PAINT				, onScriptPaint		);	// 再描画
-		ONEVENT( WM_WINDOWPOSCHANGING	, onScriptWinChg	);	// ウィンドウサイズ変更直前
+		ONEVENT( WM_WINDOWPOSCHANGING	, onScriptWinChg		);	// ウィンドウサイズ変更直前
 		ONEVENT( WM_DROPFILES			, onScriptDropFiles	);	// ファイルドロップ
 	}
 	return FALSE;
@@ -283,8 +281,7 @@ WINPROC( ScriptProc )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptClose )
-{
+EVENT( onScriptClose ) {
 	if( hFont != NULL ) DeleteObject( hFont );
 	if( hIcon != NULL ) DeleteObject( hIcon );
 	hIcon = NULL;
@@ -305,13 +302,11 @@ EVENT( onScriptClose )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptCommand )
-{
-	switch( LOWORD( wp ) )
-	{
+EVENT( onScriptCommand ) {
+	switch( LOWORD( wp ) ) {
 	// メニューイベント
 	ONEVENT( IDM_EXIT		, onScriptClose		);		// 閉じる
-	ONEVENT( IDM_NEW		, onScriptNew		);		// 新規作成
+	ONEVENT( IDM_NEW			, onScriptNew		);		// 新規作成
 	ONEVENT( IDM_OPEN		, onScriptOpen		);		// 開く
 	ONEVENT( IDM_SAVE		, onScriptSave		);		// 保存
 	ONEVENT( IDM_RUN		, onScriptRun		);		// 実行
@@ -331,8 +326,8 @@ EVENT( onScriptCommand )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptInitDlg )
-{
+EVENT( onScriptInitDlg ) {
+
 	::hWnd = hWnd;
 	// アイコンをセットする
 	hIcon = LoadIcon( hIns,MAKEINTRESOURCE( IDI_ICONSCRIPT ) );
@@ -359,8 +354,7 @@ EVENT( onScriptInitDlg )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptPaint )
-{
+EVENT( onScriptPaint ) {
 	HDC			hDC;
 	PAINTSTRUCT	ps;
 
@@ -381,8 +375,7 @@ EVENT( onScriptPaint )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptWinChg )
-{
+EVENT( onScriptWinChg ) {
 	RECT r;
 	// ウィンドウサイズを変更
 	GetClientRect( hWnd,&r );
@@ -402,8 +395,7 @@ EVENT( onScriptWinChg )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptNew )
-{
+EVENT( onScriptNew ) {
 	int i;
 	i = Edit_GetTextLength( hText );
 	// 確認メッセージ
@@ -428,9 +420,8 @@ EVENT( onScriptNew )
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
-EVENT( onScriptOpen )
-{
-	char			szFileName[ MAX_PATH ];
+EVENT( onScriptOpen ) {
+	char			szFileName[ MAX_PATH ] = {0};
 	char			szBuf[ TXT_SIZE ], c;
 	FU_FILE			*hFile;
 	int				i = 0;

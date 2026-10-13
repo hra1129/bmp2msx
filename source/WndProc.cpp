@@ -21,11 +21,9 @@
 #include "SubProc.h"
 #include "ScriptProc.h"
 #include "winuty.h"
-#include "splug.h"
 #include "PreView.h"
 #include "ProgProc.h"
 #include "globals.h"
-#include "PlugProc.h"
 #include "CalibrationProc.h"
 
 // -----------------------------------------------------
@@ -109,7 +107,6 @@ EVENT( onScript				);
 // 設定メニューイベント
 EVENT( onDefault			);
 EVENT( onSetting			);
-EVENT( onPlugIn				);
 EVENT( onColorCalibration	);
 
 // ヘルプメニューイベント
@@ -228,7 +225,6 @@ EVENT( onCommand )
 	// 設定メニュー
 	ONEVENT( IDM_DEFSET				,onDefault			);	// 設定の初期化
 	ONEVENT( IDM_SETTING			,onSetting			);	// 設定
-	ONEVENT( IDM_PLUGIN				,onPlugIn			);	// プラグイン設定
 	ONEVENT( IDM_COLOR_CALIBRATION, onColorCalibration	);
 	// ヘルプメニュー
 	ONEVENT( IDM_HELP				,onHelp				);	// ヘルプの表示
@@ -262,9 +258,7 @@ EVENT( onCreate )
 	::hWnd = hWnd;
 	// モード設定をクリアする
 	bSave = !GetCfgFile( &NowMode, CfgFile );
-	bSave = !GetPathFile( PathFile, g_sPlug, sizeof( g_sPlug ) ) || bSave;
 	bSave = !GetCustomFile( CustomFile ) || bSave;
-	spi_initialize( g_sPlug );
 	LastMode.screen_mode = -1;
 	// 仮想画面を作成する
 	hDC = GetDC( hWnd );
@@ -353,7 +347,6 @@ EVENT( onDestroy )
 	DestroyWindow( hOrgWnd );
 	if( bSave ) {
 		SaveCfgFile( &NowMode, CfgFile );
-		SavePathFile( PathFile, g_sPlug, sizeof( g_sPlug ) );
 		SaveCustomFile( CustomFile );
 	}
 	bSave = false;
@@ -558,18 +551,15 @@ EVENT( onOpen )
 	char	szFileName[ MAX_PATH ] = "";
 	char	szBuf[ MAX_PATH ];
 #ifdef _ENGLISH
-	char	szFilter[ 64 + SPI_MAXLEN ]	= "All Files(*.*)\0*.*\0BMP file(*.BMP)\0*.BMP\0";
-	const	int	nextidx = sizeof( "All Files(*.*)\0*.*\0BMP file(*.BMP)\0*.BMP\0" );
+	char	szFilter[]	= "All Files(*.*)\0*.*\0Image files (*.BMP;*.JPG;*.JPEG;*.PNG)\0*.BMP;*.JPG;*.JPEG;*.PNG\0";
 #else
-	char	szFilter[ 64 + SPI_MAXLEN ]	= "すべてのﾌｧｲﾙ(*.*)\0*.*\0BMP ﾌｧｲﾙ(*.BMP)\0*.BMP\0";
-	const	int	nextidx = sizeof( "すべてのﾌｧｲﾙ(*.*)\0*.*\0BMP ﾌｧｲﾙ(*.BMP)\0*.BMP\0" );
+	char	szFilter[]	= "すべてのファイル(*.*)\0*.*\0画像ファイル (*.BMP;*.JPG;*.JPEG;*.PNG)\0*.BMP;*.JPG;*.JPEG;*.PNG\0";
 #endif
 	OPENFILENAME	ofn;
 	int n;
 	SETTING	tmp;
 
 	//	フィルタの作成
-	memcpy( &szFilter[ nextidx - 1 ], spi_get_filter(), SPI_MAXLEN );
 	
 	// ファイル名を入力
 	szFileName[0]='\0';
@@ -1134,38 +1124,6 @@ EVENT( onSetting ) {
 	return 0;
 }
 
-// -----------------------------------------------------
-//	1.	日本語名
-//		メニュー：プラグイン設定
-//	2.	引数
-//		hWnd	...	(I)	ウィンドウハンドル
-//		wp		...	(I)	Ｗパラメータ
-//		lp		...	(I)	Ｌパラメータ
-//	3.	返値
-//		0
-//	4.	備考
-//		なし
-// -----------------------------------------------------
-EVENT( onPlugIn ) {
-	if( piShow( hWnd, g_sPlug, sizeof( g_sPlug ) ) == 0 ) {
-		//	プラグインリストを更新する
-		spi_initialize( g_sPlug );
-		bSave = true;
-	}
-	return 0;
-}
-
-// -----------------------------------------------------
-//	1.	日本語名
-//		メニュー：カラーキャリブレーション
-//	2.	引数
-//		hWnd	...	(I)	ウィンドウハンドル
-//		wp		...	(I)	Ｗパラメータ
-//		lp		...	(I)	Ｌパラメータ
-//	3.	返値
-//		0
-//	4.	備考
-//		なし
 // -----------------------------------------------------
 EVENT( onColorCalibration )	{
 

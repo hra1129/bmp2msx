@@ -268,6 +268,13 @@ int convert_rgb_to_palette( const int *p_convert_table, int n, int v ){
 //	4.	備考
 //		なし
 // -------------------------------------------------------------
+static inline C_COLOR _create_bit_depth_mask( int seido )
+{
+	C_COLOR mask = ~(( 1 << seido ) - 1 );
+	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	return mask;
+}
+
 bool cnvCopy( C_COLOR *in ,int inwidth ,int inheight ,
 			  C_COLOR *out,int outwidth,int outheight, PROGRESS prog, int seido )
 {
@@ -276,8 +283,7 @@ bool cnvCopy( C_COLOR *in ,int inwidth ,int inheight ,
 	C_COLOR mask;
 
 	// 精度制限用マスク作成
-	mask = ~((1<<seido)-1);
-	mask = mask & ((mask<<8) | 0xFF) & ((mask<<16) | 0xFFFF);
+	mask = _create_bit_depth_mask( seido );
 	// 出力先全ピクセルを舐める
 	w = outwidth;
 	if( w>inwidth ) w=inwidth;
@@ -327,8 +333,7 @@ bool cnvCopyInter( C_COLOR *in ,int inwidth ,int inheight ,
 	if( outwidth  < inwidth  ) ww = outwidth;  else ww = inwidth / 2;
 
 	// 精度制限用マスク作成
-	mask = ~(( 1 << seido ) - 1 );
-	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	mask = _create_bit_depth_mask( seido );
 	
 	// 出力先全ピクセルを舐める
 	for( y = 0; y < hh; ++y ){
@@ -374,8 +379,7 @@ bool cnvNormResize( C_COLOR *in , int inwidth , int inheight ,
 	C_COLOR	mask;
 
 	// 精度制限用マスク作成
-	mask = ~(( 1 << seido ) - 1 );
-	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	mask = _create_bit_depth_mask( seido );
 
 	// 入力と出力が同じサイズならそのまま複製
 	if( (inwidth == outwidth) && (inheight == outheight) &&
@@ -435,8 +439,7 @@ bool cnvAntiResize( C_COLOR *in , int inwidth , int inheight ,
 	ax = 0;
 
 	// 精度制限用マスク作成
-	mask = ~(( 1 << seido ) - 1 );
-	mask = mask & (( mask << 8 ) | 0xFF ) & (( mask << 16 ) | 0xFFFF );
+	mask = _create_bit_depth_mask( seido );
 
 	// 入力と出力が同じサイズならそのまま複製
 	if( (inwidth == outwidth) && (inheight == outheight) &&
@@ -906,8 +909,7 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 	}
 
 	// 精度制限用マスク作成
-	bit_depth_mask = ~(( 1 << CnvMode->Seido ) - 1 );
-	bit_depth_mask = bit_depth_mask & (( bit_depth_mask << 8 ) | 0xFF ) & (( bit_depth_mask << 16 ) | 0xFFFF );
+	bit_depth_mask = _create_bit_depth_mask( CnvMode->Seido );
 
 	// パレット数
 	switch( CnvMode->screen_mode ){

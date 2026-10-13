@@ -1,4 +1,4 @@
-// -------------------------------------------------------------
+ï»¿// -------------------------------------------------------------
 // BMP to MSX
 //											(C)2000/5/6 HRA!
 // -------------------------------------------------------------
@@ -9,13 +9,13 @@
 #include <windows.h>
 #include <cstdint>
 
-typedef bool ( *PROGRESS )( int );		// Œo‰ß•\¦—pƒR[ƒ‹ƒoƒbƒNŠÖ”Œ^
+typedef bool ( *PROGRESS )( int );		// çµŒéè¡¨ç¤ºç”¨ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°å‹
 
 extern const int screen_mode[];
 
 struct C_SCREEN_SIZE {
-	int		w;			// •
-	int		h;			// ‚‚³
+	int		w;			// å¹…
+	int		h;			// é«˜ã•
 };
 
 extern const C_SCREEN_SIZE screen_size[];
@@ -28,19 +28,19 @@ typedef uint32_t C_COLOR;
 #define GET_RGB( r, g, b )		( (uint32_t)(r) | ((uint32_t)(g) << 8) | ((uint32_t)(b) << 16) )
 
 struct C_PALETTE {
-	int		green;		// —Î
-	int		red;		// Ô
-	int		blue;		// Â
+	int		green;		// ç·‘
+	int		red;		// èµ¤
+	int		blue;		// é’
 };
 
 struct C_TILE_PATTERN {
-	C_COLOR	c;		// F
-	int			p[2];	// ƒ^ƒCƒ‹‚Ég‚í‚ê‚éƒpƒŒƒbƒg‚Ì”Ô†
+	C_COLOR	c;		// è‰²
+	int			p[2];	// ã‚¿ã‚¤ãƒ«ã«ä½¿ã‚ã‚Œã‚‹ãƒ‘ãƒ¬ãƒƒãƒˆã®ç•ªå·
 };
 
-#define TAILMAX	1575	// ƒ^ƒCƒ‹¶¬Å‘å”
+#define TAILMAX	1575	// ã‚¿ã‚¤ãƒ«ç”Ÿæˆæœ€å¤§æ•°
 
-// ‰æ–Êƒ‚[ƒh
+// ç”»é¢ãƒ¢ãƒ¼ãƒ‰
 enum{
 	MD_SC2,				// SCREEN 2
 	MD_SC3,				// SCREEN 3
@@ -59,223 +59,223 @@ enum{
 	MD_MAX,
 };
 
-// ƒpƒŒƒbƒgŒˆ’èƒAƒ‹ƒSƒŠƒYƒ€
+// ãƒ‘ãƒ¬ãƒƒãƒˆæ±ºå®šã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ 
 enum{
-	SELCOL_BUNSAN = 0,	// •ªU‘I‘ğ
-	SELCOL_TABUNPU,		// ‘½•ª•z‘I‘ğ
+	SELCOL_BUNSAN = 0,	// åˆ†æ•£é¸æŠ
+	SELCOL_TABUNPU,		// å¤šåˆ†å¸ƒé¸æŠ
 	SELCOL_MAX,
 };
 
-// ƒpƒŒƒbƒgo—Íƒ‚[ƒh
+// ãƒ‘ãƒ¬ãƒƒãƒˆå‡ºåŠ›ãƒ¢ãƒ¼ãƒ‰
 enum{
-	PLT_NONE = 0,			// o—Í‚µ‚È‚¢
-	PLT_BSAVE,			// ‰æ‘œ‚É“à‘ 
-	PLT_PL,				// *.PL? Œ`®
-	PLT_CSV,			// CSVŒ`®
-	PLT_COUNT,			// o—Íƒ‚[ƒh‚Ìí—Ş”
+	PLT_NONE = 0,			// å‡ºåŠ›ã—ãªã„
+	PLT_BSAVE,			// ç”»åƒã«å†…è”µ
+	PLT_PL,				// *.PL? å½¢å¼
+	PLT_CSV,			// CSVå½¢å¼
+	PLT_COUNT,			// å‡ºåŠ›ãƒ¢ãƒ¼ãƒ‰ã®ç¨®é¡æ•°
 	PLT_MAX,
 };
 
-// ©‘R‰æ¶¬ƒAƒ‹ƒSƒŠƒYƒ€
+// è‡ªç„¶ç”»ç”Ÿæˆã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ 
 enum{
-	ALGO_NONE,			// –³‚µ
-	ALGO_RECALC,		// ‹tZ‚É‚æ‚éŒë·’ù³i‹P“xÄŒ»—Dæj
-	ALGO_POWERFUL,		// ƒpƒƒtƒ‹Šˆ—p–@‚ÌƒŒƒCƒgƒŒ[ƒVƒ“ƒO–@‚Ég‚í‚ê‚Ä‚¢‚½®
-	ALGO_NTSC2,			// NTSC•û®‰ü—Ç”Å
-	ALGO_RECALC2,		// ‹tZ‚É‚æ‚éŒë·’ù³iF‡‚¢ÄŒ»—Dæj
+	ALGO_NONE,			// ç„¡ã—
+	ALGO_RECALC,		// é€†ç®—ã«ã‚ˆã‚‹èª¤å·®è¨‚æ­£ï¼ˆè¼åº¦å†ç¾å„ªå…ˆï¼‰
+	ALGO_POWERFUL,		// ãƒ‘ãƒ¯ãƒ•ãƒ«æ´»ç”¨æ³•ã®ãƒ¬ã‚¤ãƒˆãƒ¬ãƒ¼ã‚·ãƒ³ã‚°æ³•ã«ä½¿ã‚ã‚Œã¦ã„ãŸå¼
+	ALGO_NTSC2,			// NTSCæ–¹å¼æ”¹è‰¯ç‰ˆ
+	ALGO_RECALC2,		// é€†ç®—ã«ã‚ˆã‚‹èª¤å·®è¨‚æ­£ï¼ˆè‰²åˆã„å†ç¾å„ªå…ˆï¼‰
 	ALGO_MAX,
 };
 
-// ƒfƒBƒU
+// ãƒ‡ã‚£ã‚¶
 enum{
-	EALGO_NONE,			// –³‚µ
-	EALGO_DITH1,		// ƒfƒBƒU‚P
-	EALGO_DITH2,		// ƒfƒBƒU‚Q
-	EALGO_DITH3,		// ƒfƒBƒU‚R
-	EALGO_DITH4,		// ƒfƒBƒU‚S
-	EALGO_DITH5,		// ƒfƒBƒU‚T
-	EALGO_DITH6,		// ƒfƒBƒU‚U
-	EALGO_DITH7,		// ƒfƒBƒU‚V
-	EALGO_DITH8,		// ƒfƒBƒU‚W
+	EALGO_NONE,			// ç„¡ã—
+	EALGO_DITH1,		// ãƒ‡ã‚£ã‚¶ï¼‘
+	EALGO_DITH2,		// ãƒ‡ã‚£ã‚¶ï¼’
+	EALGO_DITH3,		// ãƒ‡ã‚£ã‚¶ï¼“
+	EALGO_DITH4,		// ãƒ‡ã‚£ã‚¶ï¼”
+	EALGO_DITH5,		// ãƒ‡ã‚£ã‚¶ï¼•
+	EALGO_DITH6,		// ãƒ‡ã‚£ã‚¶ï¼–
+	EALGO_DITH7,		// ãƒ‡ã‚£ã‚¶ï¼—
+	EALGO_DITH8,		// ãƒ‡ã‚£ã‚¶ï¼˜
 	EALGO_MAX,
 };
 
-// ƒfƒBƒU‰ÁZ•û–@
+// ãƒ‡ã‚£ã‚¶åŠ ç®—æ–¹æ³•
 enum{
-	EADD_ROTATE,		// ‰ñ“]
-	EADD_NONE,			// “¯ˆÊ‘Š
-	EADD_X,				// ‚w‚¸‚ç‚µ
-	EADD_Y,				// ‚x‚¸‚ç‚µ
+	EADD_ROTATE,		// å›è»¢
+	EADD_NONE,			// åŒä½ç›¸
+	EADD_X,				// ï¼¸ãšã‚‰ã—
+	EADD_Y,				// ï¼¹ãšã‚‰ã—
 	EADD_MAX,
 };
 
-// FÄŒ»¸“x
+// è‰²å†ç¾ç²¾åº¦
 enum{
-	SEIDO_24,			// 24bit(0bitÌ‚Ä)
-	SEIDO_21,			// 21bit(1bitÌ‚Ä)
-	SEIDO_18,			// 18bit(2bitÌ‚Ä)
-	SEIDO_15,			// 15bit(3bitÌ‚Ä)
-	SEIDO_12,			// 12bit(4bitÌ‚Ä)
+	SEIDO_24,			// 24bit(0bitæ¨ã¦)
+	SEIDO_21,			// 21bit(1bitæ¨ã¦)
+	SEIDO_18,			// 18bit(2bitæ¨ã¦)
+	SEIDO_15,			// 15bit(3bitæ¨ã¦)
+	SEIDO_12,			// 12bit(4bitæ¨ã¦)
 	SEIDO_MAX,
 };
 
-// ƒpƒŒƒbƒgg—p‹–‰Â
+// ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨è¨±å¯
 enum{
-	PALEN_AUTO,			// ƒpƒŒƒbƒgg—p‹–‰Âi©“®j
-	PALEN_NONE,			// ƒpƒŒƒbƒgg—p–³‹–‰Â
-	PALEN_USE,			// ƒpƒŒƒbƒgg—p‹–‰ÂiŒÅ’èj
+	PALEN_AUTO,			// ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨è¨±å¯ï¼ˆè‡ªå‹•ï¼‰
+	PALEN_NONE,			// ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨ç„¡è¨±å¯
+	PALEN_USE,			// ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨è¨±å¯ï¼ˆå›ºå®šï¼‰
 	PALEN_MAX,
 };
 
-// ‹­§ƒ[ƒ‰»
+// å¼·åˆ¶ã‚¼ãƒ­åŒ–
 enum{
-	FZ_NONE,			// g‚í‚È‚¢
-	FZ_COLOR,			// w’èF
-	FZ_MATRIX,			// w’èÀ•W‚ÌF
+	FZ_NONE,			// ä½¿ã‚ãªã„
+	FZ_COLOR,			// æŒ‡å®šè‰²
+	FZ_MATRIX,			// æŒ‡å®šåº§æ¨™ã®è‰²
 	FZ_MAX,
 };
 
-//	ƒ\[ƒg
+//	ã‚½ãƒ¼ãƒˆ
 enum{
-	SM_IGNORE,			//	ƒ\[ƒg‚µ‚È‚¢
-	SM_INCAUTO,			//	©“®Œˆ’è‚Ì‚İ¸‡
-	SM_DECAUTO,			//	©“®Œˆ’è‚Ì‚İ~‡
-	SM_INC,				//	¸‡
-	SM_DEC,				//	~‡
+	SM_IGNORE,			//	ã‚½ãƒ¼ãƒˆã—ãªã„
+	SM_INCAUTO,			//	è‡ªå‹•æ±ºå®šã®ã¿æ˜‡é †
+	SM_DECAUTO,			//	è‡ªå‹•æ±ºå®šã®ã¿é™é †
+	SM_INC,				//	æ˜‡é †
+	SM_DEC,				//	é™é †
 };
 
-//	•ÏŠ·İ’è
+//	å¤‰æ›è¨­å®š
 enum{
-	CM_DEFAULT,			//	ƒfƒtƒHƒ‹ƒgİ’è
-	CM_LAST,			//	ÅI•ÏŠ·‚Ìİ’è
-	CM_IMAGE,			//	•\¦‰æ‘œ‚Ì•ÏŠ·İ’è
+	CM_DEFAULT,			//	ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆè¨­å®š
+	CM_LAST,			//	æœ€çµ‚å¤‰æ›ã®è¨­å®š
+	CM_IMAGE,			//	è¡¨ç¤ºç”»åƒã®å¤‰æ›è¨­å®š
 };
 
-//	ƒTƒCƒY’²ß
+//	ã‚µã‚¤ã‚ºèª¿ç¯€
 enum{
-	RS_NORMAL,			//	’Pƒ’²ß
-	RS_ANTIALIAS,		//	ƒAƒ“ƒ`ƒGƒCƒŠƒAƒX•t‚«’²ß
+	RS_NORMAL,			//	å˜ç´”èª¿ç¯€
+	RS_ANTIALIAS,		//	ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹ä»˜ãèª¿ç¯€
 };
 
-//	ƒAƒXƒyƒNƒg”ä
+//	ã‚¢ã‚¹ãƒšã‚¯ãƒˆæ¯”
 enum{
-	RM_FORCE,			//	‹­§“I‚Éo—ÍƒTƒCƒY
-	RM_MSX,				//	‚l‚r‚wÀ‹@•\¦‚Åc‰¡”ä‚ª•ö‚ê‚È‚¢‚æ‚¤‚É’²®
+	RM_FORCE,			//	å¼·åˆ¶çš„ã«å‡ºåŠ›ã‚µã‚¤ã‚º
+	RM_MSX,				//	ï¼­ï¼³ï¼¸å®Ÿæ©Ÿè¡¨ç¤ºã§ç¸¦æ¨ªæ¯”ãŒå´©ã‚Œãªã„ã‚ˆã†ã«èª¿æ•´
 };
 
 struct SETTING {
-	uint32_t		screen_mode;				// •ÏŠ·æƒ‚[ƒh MD_SC??
-	uint32_t		err;						// ‚±‚Ì’l‚æ‚è¬‚³‚¢Œë·‚Í–³‹‚·‚é
-	bool			diffusion_error_enable;		// Œë·ŠgU ‚·‚é:true / ‚µ‚È‚¢:false
-	bool			interlace;					// ƒCƒ“ƒ^[ƒŒ[ƒX ‚·‚é:true / ‚µ‚È‚¢:false
-	uint32_t		SelCol;						// F‘I‘ğƒ‚[ƒh 0:•ªU‘I‘ğ / 1:‘½•ª•z‘I‘ğ
-	float			diffusion_error_coef;		// Œë·ŠgUŒW” ( 0.000`0.500 )
-	bool			fixed_palette;				// ŒÅ’èƒpƒŒƒbƒg ‚·‚é:true / ‚µ‚È‚¢:false
-	bool			resize_enable;				// ƒTƒCƒY’²ß
-	C_PALETTE		color_palette[16];			// SC5/SC7 ‚É‚¨‚¯‚é‚l‚r‚w‘¤ƒpƒŒƒbƒgw’è
-	uint32_t		PltMode;					// ƒpƒŒƒbƒgo—Íƒ‚[ƒh
-	bool			AutoName;					// ©“®ƒtƒ@ƒCƒ‹–¼Œˆ’è
-	uint32_t		AlgoMode;					// ©‘R‰æ¶¬ƒAƒ‹ƒSƒŠƒYƒ€”Ô†
-	bool			JKrc;						// F·î•ñ‚ÌÄŒvZ
-	uint32_t		ErrAlgo;					// ƒfƒBƒUƒpƒ^[ƒ“
-	uint32_t		PreView;					// 1 ƒtƒ@ƒCƒ‹‚Ì‚İo—Í,2 ƒvƒŒƒrƒ…[‚Ì‚İo—Í,3 ƒtƒ@ƒCƒ‹‚ÆƒvƒŒƒrƒ…[o—Í
-	uint8_t			PalEn[16];					// 2 ƒpƒŒƒbƒgg—p‹–‰Â(ŒÅ’è) / 1 ƒpƒŒƒbƒgg—p–¢‹–‰Â / 0 ƒpƒŒƒbƒgg—p‹–‰Â(©“®)
-	uint32_t		Seido;						// FÄŒ»¸“x
-	uint32_t		ErrAdd;						// ƒfƒBƒU‰ÁZ•û–@
-	bool			NonZero;					// ‚O”Ô‚ÌF‚ğg‚í‚È‚¢
-	uint32_t		FourceZero;					// ‹­§ƒ[ƒ‰»
-	C_COLOR			FZColor;					// ‹­§ƒ[ƒ‰»‚·‚éF
-	uint32_t		FZX;						// ‹­§ƒ[ƒ‰»‚wÀ•W
-	uint32_t		FZY;						// ‹­§ƒ[ƒ‰»‚xÀ•W
-	bool			Tile;						// –Ô‚ª‚¯ƒ^ƒCƒ‹‚ğg‚¤
-	int				SortMode;					// ÊßÚ¯Ä‚Ì¿°Ä•û–@
-	bool			bDefault;					// í‚ÉÄ•ÏŠ·‚ğÃŞÌ«‰»
-	int				CnvMode;					// •ÏŠ·İ’è
-	bool			b192;						// 192ƒ‰ƒCƒ“ƒ‚[ƒh
-	int				Resample;					// »²½Ş’²®Ø»İÌßÙ
-	int				SizeMode;					// »²½Ş’²®Ó°ÄŞ
-	C_COLOR			FCColor;					// ”wŒiF
-	float			diffusion_error_x_weight;	// Œë·ŠgU X-Y”ä
-	bool			output_basic_enable;		// BASo—Í
+	uint32_t		screen_mode;				// å¤‰æ›å…ˆãƒ¢ãƒ¼ãƒ‰ MD_SC??
+	uint32_t		err;						// ã“ã®å€¤ã‚ˆã‚Šå°ã•ã„èª¤å·®ã¯ç„¡è¦–ã™ã‚‹
+	bool			diffusion_error_enable;		// èª¤å·®æ‹¡æ•£ ã™ã‚‹:true / ã—ãªã„:false
+	bool			interlace;					// ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ¬ãƒ¼ã‚¹ ã™ã‚‹:true / ã—ãªã„:false
+	uint32_t		SelCol;						// è‰²é¸æŠãƒ¢ãƒ¼ãƒ‰ 0:åˆ†æ•£é¸æŠ / 1:å¤šåˆ†å¸ƒé¸æŠ
+	float			diffusion_error_coef;		// èª¤å·®æ‹¡æ•£ä¿‚æ•° ( 0.000ï½0.500 )
+	bool			fixed_palette;				// å›ºå®šãƒ‘ãƒ¬ãƒƒãƒˆ ã™ã‚‹:true / ã—ãªã„:false
+	bool			resize_enable;				// ã‚µã‚¤ã‚ºèª¿ç¯€
+	C_PALETTE		color_palette[16];			// SC5/SC7 ã«ãŠã‘ã‚‹ï¼­ï¼³ï¼¸å´ãƒ‘ãƒ¬ãƒƒãƒˆæŒ‡å®š
+	uint32_t		PltMode;					// ãƒ‘ãƒ¬ãƒƒãƒˆå‡ºåŠ›ãƒ¢ãƒ¼ãƒ‰
+	bool			AutoName;					// è‡ªå‹•ãƒ•ã‚¡ã‚¤ãƒ«åæ±ºå®š
+	uint32_t		AlgoMode;					// è‡ªç„¶ç”»ç”Ÿæˆã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ç•ªå·
+	bool			JKrc;						// è‰²å·®æƒ…å ±ã®å†è¨ˆç®—
+	uint32_t		ErrAlgo;					// ãƒ‡ã‚£ã‚¶ãƒ‘ã‚¿ãƒ¼ãƒ³
+	uint32_t		PreView;					// 1 ãƒ•ã‚¡ã‚¤ãƒ«ã®ã¿å‡ºåŠ›,2 ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®ã¿å‡ºåŠ›,3 ãƒ•ã‚¡ã‚¤ãƒ«ã¨ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼å‡ºåŠ›
+	uint8_t			PalEn[16];					// 2 ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨è¨±å¯(å›ºå®š) / 1 ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨æœªè¨±å¯ / 0 ãƒ‘ãƒ¬ãƒƒãƒˆä½¿ç”¨è¨±å¯(è‡ªå‹•)
+	uint32_t		Seido;						// è‰²å†ç¾ç²¾åº¦
+	uint32_t		ErrAdd;						// ãƒ‡ã‚£ã‚¶åŠ ç®—æ–¹æ³•
+	bool			NonZero;					// ï¼ç•ªã®è‰²ã‚’ä½¿ã‚ãªã„
+	uint32_t		FourceZero;					// å¼·åˆ¶ã‚¼ãƒ­åŒ–
+	C_COLOR			FZColor;					// å¼·åˆ¶ã‚¼ãƒ­åŒ–ã™ã‚‹è‰²
+	uint32_t		FZX;						// å¼·åˆ¶ã‚¼ãƒ­åŒ–ï¼¸åº§æ¨™
+	uint32_t		FZY;						// å¼·åˆ¶ã‚¼ãƒ­åŒ–ï¼¹åº§æ¨™
+	bool			Tile;						// ç¶²ãŒã‘ã‚¿ã‚¤ãƒ«ã‚’ä½¿ã†
+	int				SortMode;					// ï¾Šï¾Ÿï¾šï½¯ï¾„ã®ï½¿ï½°ï¾„æ–¹æ³•
+	bool			bDefault;					// å¸¸ã«å†å¤‰æ›ã‚’ï¾ƒï¾ï¾Œï½«åŒ–
+	int				CnvMode;					// å¤‰æ›è¨­å®š
+	bool			b192;						// 192ãƒ©ã‚¤ãƒ³ãƒ¢ãƒ¼ãƒ‰
+	int				Resample;					// ï½»ï½²ï½½ï¾èª¿æ•´ï¾˜ï½»ï¾ï¾Œï¾Ÿï¾™
+	int				SizeMode;					// ï½»ï½²ï½½ï¾èª¿æ•´ï¾“ï½°ï¾„ï¾
+	C_COLOR			FCColor;					// èƒŒæ™¯è‰²
+	float			diffusion_error_x_weight;	// èª¤å·®æ‹¡æ•£ X-Yæ¯”
+	bool			output_basic_enable;		// BASå‡ºåŠ›
 };
 
-//	’l‚ÌãŒÀ‰ºŒÀ‚É]‚Á‚Ä’l‚ğƒNƒŠƒbƒv‚·‚é
+//	å€¤ã®ä¸Šé™ä¸‹é™ã«å¾“ã£ã¦å€¤ã‚’ã‚¯ãƒªãƒƒãƒ—ã™ã‚‹
 int range_limiter( int n, int min, int max );
 
-//	RGB’l‚©‚çƒe[ƒuƒ‹ƒCƒ“ƒfƒbƒNƒX‚É•ÏŠ·
+//	RGBå€¤ã‹ã‚‰ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã«å¤‰æ›
 int convert_rgb_to_palette( const int *p_convert_table, int n, int v );
 
-//	k¬ˆ—
+//	ç¸®å°å‡¦ç†
 bool cnvNormResize( C_COLOR *in , int inwidth , int inheight ,
 			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
 bool cnvAntiResize( C_COLOR *in , int inwidth , int inheight ,
 			    C_COLOR *out, int outwidth, int outheight, int wwidth, int wheight, PROGRESS prog, int seido );
 
-//	•¡»ˆ—
+//	è¤‡è£½å‡¦ç†
 bool cnvCopy( C_COLOR *in ,int inwidth ,int inheight ,
 			  C_COLOR *out,int outwidth,int outheight,PROGRESS prog,int seido );
 bool cnvCopyInter(	C_COLOR *in ,int inwidth ,int inheight ,
 					C_COLOR *out,int outwidth,int outheight,PROGRESS prog,int seido );
 
-//	Œ¸Fˆ—
+//	æ¸›è‰²å‡¦ç†
 bool cnvRecolor( C_COLOR *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog,
 				 C_COLOR *pal,C_TILE_PATTERN *tail,int tailcnt );
 
-//	Œ¸Fˆ—i©‘R‰æƒRƒ“ƒo[ƒ^j
+//	æ¸›è‰²å‡¦ç†ï¼ˆè‡ªç„¶ç”»ã‚³ãƒ³ãƒãƒ¼ã‚¿ï¼‰
 bool cnvNtcolor( C_COLOR *in,int width,int height,unsigned char *out,SETTING *CnvMode,PROGRESS prog );
 
-//	F”äŠr
+//	è‰²æ¯”è¼ƒ
 int cnvColorTblCompare( const void *tbl1,const void *tbl2 );
 
-//	Fæ“¾
+//	è‰²å–å¾—
 bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int pp,
 				    bool FourceZero,C_COLOR FZColor );
 bool cnvGetPaletteS8( C_COLOR *pal );
 
-//	ƒ^ƒCƒ‹ƒpƒ^[ƒ“æ“¾(SC5/SC7ê—p)
+//	ã‚¿ã‚¤ãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³å–å¾—(SC5/SC7å°‚ç”¨)
 int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int screen_mode );
 
-//	ƒvƒŒƒrƒ…[ì¬i‹t•ÏŠ·j
+//	ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ä½œæˆï¼ˆé€†å¤‰æ›ï¼‰
 void draw_screen( const unsigned char *bmp,HDC hDC,const SETTING *Mode );
 
-//	ƒpƒŒƒbƒg‚Ìƒ\[ƒg
+//	ãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚½ãƒ¼ãƒˆ
 void cnvSortPalette( SETTING* Mode, C_COLOR* Pal );
 
-//	ƒvƒŒƒrƒ…[‚Ì‚a‚l‚o•Û‘¶
+//	ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®ï¼¢ï¼­ï¼°ä¿å­˜
 bool cnvSaveBmpFile( const char *szInFileName, LPBYTE bmp, int width, int height, SETTING *Mode );
 
 
-// MSXŠK’² ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern const int init_convert7to255_r[ 8 ];
 extern const int init_convert7to255_g[ 8 ];
 extern const int init_convert7to255_b[ 8 ];
 
-// MSXŠK’² SCREEN8 ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ SCREEN8 â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern const int init_convert7to255_s8r[ 8 ];
 extern const int init_convert7to255_s8g[ 8 ];
 extern const int init_convert3to255_s8b[ 4 ];
 
-// MSXŠK’² SCREEN12 ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ SCREEN12 â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern const int init_convert31to255_s12r[ 32 ];
 extern const int init_convert31to255_s12g[ 32 ];
 extern const int init_convert31to255_s12b[ 32 ];
 
-// MSXŠK’² ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern int convert7to255_r[ 8 ];
 extern int convert7to255_g[ 8 ];
 extern int convert7to255_b[ 8 ];
 
-// MSXŠK’² SCREEN8 ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ SCREEN8 â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern int convert7to255_s8r[ 8 ];
 extern int convert7to255_s8g[ 8 ];
 extern int convert3to255_s8b[ 4 ];
 
-// MSXŠK’² SCREEN12 ¨ WinŠK’² ( 0`255 ) •ÏŠ·ƒe[ƒuƒ‹
+// MSXéšèª¿ SCREEN12 â†’ Winéšèª¿ ( 0ï½255 ) å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ«
 extern int convert31to255_s12r[ 32 ];
 extern int convert31to255_s12g[ 32 ];
 extern int convert31to255_s12b[ 32 ];
 
-//	SCREEN2 ‚ÌƒJƒ‰[ƒe[ƒuƒ‹ƒAƒhƒŒƒX
+//	SCREEN2 ã®ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
 #define	SC2COLOR	0x2000
 
 #endif	// ndef _CONVERTER_H_

@@ -1,5 +1,5 @@
-// -------------------------------------------------------------
-//	TITLE	:	BMP to MSX �v���r���[�Ǘ��֘A
+﻿// -------------------------------------------------------------
+//	TITLE	:	BMP to MSX プレビュー管理関連
 //	INPUT	:	HRA!
 // -------------------------------------------------------------
 
@@ -9,27 +9,27 @@
 #include <windows.h>
 
 // =============================================================
-//	�^
+//	型
 
-// �I���W�i���摜
+// オリジナル画像
 typedef struct {
-	char*	image;					// �摜�t�@�C���C���[�W
-	char	sFileName[ MAX_PATH ];	// �ϊ����̃t�@�C�����i�N���b�v�{�[�h�̏ꍇ�� "" �������j
-	int		n;						// �Q�ƃJ�E���^
+	char*	image;					// 画像ファイルイメージ
+	char	sFileName[ MAX_PATH ];	// 変換元のファイル名（クリップボードの場合は "" をさす）
+	int		n;						// 参照カウンタ
 } BMPDATA;
 
-// �v���r���[
+// プレビュー
 typedef struct {
-	HBITMAP		hBmp;					// �v���r���[�摜�i�f�B�X�e�B�l�[�V�����j
-	HBITMAP		hBmpSrc;				// �v���r���[�摜�i�\�[�X�j
-	int			nSrc;					// �I���W�i���摜�̃C���f�b�N�X
-	int			nTime;					// �o�^�A�ԁi�Â��̌����j
-	SETTING		tMode;					// �v���r���[�摜�������̐ݒ�
-	unsigned char*	bmp;				// �ϊ����ʂ̂u�q�`�l�C���[�W
+	HBITMAP		hBmp;					// プレビュー画像（ディスティネーション）
+	HBITMAP		hBmpSrc;				// プレビュー画像（ソース）
+	int			nSrc;					// オリジナル画像のインデックス
+	int			nTime;					// 登録連番（古さの決定基準）
+	SETTING		tMode;					// プレビュー画像生成時の設定
+	unsigned char*	bmp;				// 変換結果のＶＲＡＭイメージ
 } PVDATA;
 
 // =============================================================
-//	���J�֐�
+//	公開関数
 
 void pvInitialize( void );
 int pvBlankIndex( void );
@@ -48,11 +48,11 @@ int bdAddFile( const char *cszFileName );
 int bdAddImage( char *bmp );
 
 // =============================================================
-//	���J�ϐ�
+//	公開変数
 
-extern BMPDATA	tBmpview[ PV_MAX ];		// �a�l�o�t�@�C�����
-extern PVDATA	tPreview[ PV_MAX ];		// �v���r���[���
-extern int		pvIndex;				// ���ݕ\�����̃v���r���[
-extern int		nTime;					// �v���r���[�o�^�����i�Â��̌����j
+extern BMPDATA	tBmpview[ PV_MAX ];		// ＢＭＰファイル情報
+extern PVDATA	tPreview[ PV_MAX ];		// プレビュー情報
+extern int		pvIndex;				// 現在表示中のプレビュー
+extern int		nTime;					// プレビュー登録時刻（古さの決定基準）
 
 #endif	//	_PREVIEW_H_

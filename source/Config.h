@@ -1,4 +1,4 @@
-// -------------------------------------------------------------
+ï»¿// -------------------------------------------------------------
 // BMP to MSX
 //											(C)2000 HRA!
 // -------------------------------------------------------------
@@ -7,29 +7,29 @@
 #define _CONFIG_H_
 
 // -------------------------------------------------------------
-// İ’è
+// è¨­å®š
 // -------------------------------------------------------------
-#define	CFG_VERSION		"ver 2023_05_26 (C)2000-2023 HRA!"	//	ƒo[ƒWƒ‡ƒ“”Ô†
+#define	CFG_VERSION		"ver 2026_10_13 (C)2000-2026 HRA!"	//	ãƒãƒ¼ã‚¸ãƒ§ãƒ³ç•ªå·
 
-#define	COLCUR1			GET_RGB(255,255,240)				//	ƒJƒ‰[ƒe[ƒuƒ‹Œ»İˆÊ’uƒJ[ƒ\ƒ‹F‚Pi“à‘¤j
-#define	COLCUR2			GET_RGB(15,15,0)					//	ƒJƒ‰[ƒe[ƒuƒ‹Œ»İˆÊ’uƒJ[ƒ\ƒ‹F‚QiŠO‘¤j
-#define PV_MAX			50								//	ƒvƒŒƒrƒ…[‹L‰¯Å‘å”
-#define cnDataBk1		GET_RGB(0,0,120)					//	İ’è•\¦‚Ì”wŒiiİ’èA•ÏŠ·Œ‹‰Ê‰æ‘œj
-#define cnDataBk2		GET_RGB(120,0,0)					//	İ’è•\¦‚Ì”wŒii•ÏŠ·Œ³‰æ‘œj
-#define cnDataText		GET_RGB(255,255,255)				//	İ’è•\¦‚Ì”wŒi
-#define	cnWidth			512								//	•
-#define	cnHeight		424								//	‚‚³
-#define	cnZoomMax		4								//	Šg‘å—¦Å‘å
+#define	COLCUR1			GET_RGB(255,255,240)				//	ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ç¾åœ¨ä½ç½®ã‚«ãƒ¼ã‚½ãƒ«è‰²ï¼‘ï¼ˆå†…å´ï¼‰
+#define	COLCUR2			GET_RGB(15,15,0)					//	ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ç¾åœ¨ä½ç½®ã‚«ãƒ¼ã‚½ãƒ«è‰²ï¼’ï¼ˆå¤–å´ï¼‰
+#define PV_MAX			50								//	ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼è¨˜æ†¶æœ€å¤§æ•°
+#define cnDataBk1		GET_RGB(0,0,120)					//	è¨­å®šè¡¨ç¤ºã®èƒŒæ™¯ï¼ˆè¨­å®šã€å¤‰æ›çµæœç”»åƒï¼‰
+#define cnDataBk2		GET_RGB(120,0,0)					//	è¨­å®šè¡¨ç¤ºã®èƒŒæ™¯ï¼ˆå¤‰æ›å…ƒç”»åƒï¼‰
+#define cnDataText		GET_RGB(255,255,255)				//	è¨­å®šè¡¨ç¤ºã®èƒŒæ™¯
+#define	cnWidth			512								//	å¹…
+#define	cnHeight		424								//	é«˜ã•
+#define	cnZoomMax		4								//	æ‹¡å¤§ç‡æœ€å¤§
 
-//	ƒƒSƒCƒ[ƒW‚ÌƒTƒCƒY
+//	ãƒ­ã‚´ã‚¤ãƒ¡ãƒ¼ã‚¸ã®ã‚µã‚¤ã‚º
 #define cnBGWidth		256
 #define cnBGHeight		212
 
-//	Å‘å‰æ‘œƒTƒCƒY
+//	æœ€å¤§ç”»åƒã‚µã‚¤ã‚º
 #define	cnMAXWidth		512
 #define	cnMAXHeight		424
 
-//	ƒwƒ‹ƒvƒtƒ@ƒCƒ‹–¼
+//	ãƒ˜ãƒ«ãƒ—ãƒ•ã‚¡ã‚¤ãƒ«å
 #define	cszHelpName		"bmp2msx.chm"
 
 #ifdef _ENGLISH
@@ -42,13 +42,12 @@
 #define	CSZTITLESUB		"Original File"
 
 #define	BgColor			GET_RGB(10,0,127)
-#define	FrColor			GET_RGB(255,255,255)				//	•¶š‚ÌF
-#define CustomFile		"BMP2MSX_CUSTOM.BIN"			//	İ’èƒtƒ@ƒCƒ‹
-#define CfgFile			"BMP2MSX.B2M"					//	İ’èƒtƒ@ƒCƒ‹
-#define PathFile		"BMP2MSX.CFG"					//	İ’èƒtƒ@ƒCƒ‹
-#define	CfgExt			"B2M"							//	İ’èƒtƒ@ƒCƒ‹‚ÌƒfƒtƒHƒ‹ƒgŠg’£q
-#define	CfgBmp			"BMP"							//	BMPƒtƒ@ƒCƒ‹‚ÌŠg’£q
-#define	CfgCsv			"CSV"							//	CSVƒtƒ@ƒCƒ‹‚ÌŠg’£q
+#define	FrColor			GET_RGB(255,255,255)				//	æ–‡å­—ã®è‰²
+#define CustomFile		"BMP2MSX_CUSTOM.BIN"			//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«
+#define CfgFile			"BMP2MSX.B2M"					//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«
+#define	CfgExt			"B2M"							//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆæ‹¡å¼µå­
+#define	CfgBmp			"BMP"							//	BMPãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­
+#define	CfgCsv			"CSV"							//	CSVãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­
 #define PLSave			"Save As(*.PL?)"
 #define	PLLoad			"Load Palette File"
 #define ScrptLoad		"Load Script File"
@@ -58,7 +57,6 @@
 #define	cszDefPLL		"MSX Palette/BSAVE Files(*.PL?/*.Sxx)\0*.PL?;*.S??\0"
 #define	cszDefCSV		"CSV Files(*.CSV/*.TXT)\0*.CSV;*.TXT\0"
 #define cszDefScrpt		"Script Files(*.TXT)\0*.TXT\0"
-#define cszDefPlug		"PlugIn(*.SPI)\0*.SPI\0"
 #define cszDefCfg		"BMPtoMSX Setting Files(*.B2M)\0*.B2M\0"
 #define	cszCSVHead		";MSX PALETTE DATA(&Hrb,&H0g)\x0D\x0A"
 #define cszClipName		"Clip board"
@@ -66,18 +64,18 @@
 #define	cszBmpSave		"Save As(*.BMP)"
 #define	cszBmpFilter	 "BMP Files(*.BMP)\0*.BMP\0"
 
-#define cszSetting		"Default"						// İ’èƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
-#define cszRedo			"Reconvert"						// Ä•ÏŠ·ƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
-#define cszScrSetting	"Setting(Script mode)"			// ƒXƒNƒŠƒvƒg–½—ß‚É‚æ‚éİ’èƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
+#define cszSetting		"Default"						// è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define cszRedo			"Reconvert"						// å†å¤‰æ›ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define cszScrSetting	"Setting(Script mode)"			// ã‚¹ã‚¯ãƒªãƒ—ãƒˆå‘½ä»¤ã«ã‚ˆã‚‹è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
 
 // -------------------------------------------------------------
-// ƒGƒ‰[/ŒxƒƒbƒZ[ƒW
+// ã‚¨ãƒ©ãƒ¼/è­¦å‘Šãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
 // -------------------------------------------------------------
-#define MsgCap			"Error"							// ƒGƒ‰[ƒƒbƒZ[ƒW‚Ìƒ^ƒCƒgƒ‹
-#define WriteErr		"Write error"					// ƒtƒ@ƒCƒ‹‘‚«‚İƒGƒ‰[
-#define cszNotEnoughMem	"Not enough memory"				// ƒƒ‚ƒŠ•s‘«
-#define cszPalCnt		"Cannot create palette.\nNeed two palettes or more."	// ƒpƒŒƒbƒg•s‘«
-#define MsgCapWrn		"Warning"						// ŒxiŠm”FjƒƒbƒZ[ƒW‚Ìƒ^ƒCƒgƒ‹
+#define MsgCap			"Error"							// ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define WriteErr		"Write error"					// ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ã‚¨ãƒ©ãƒ¼
+#define cszNotEnoughMem	"Not enough memory"				// ãƒ¡ãƒ¢ãƒªä¸è¶³
+#define cszPalCnt		"Cannot create palette.\nNeed two palettes or more."	// ãƒ‘ãƒ¬ãƒƒãƒˆä¸è¶³
+#define MsgCapWrn		"Warning"						// è­¦å‘Šï¼ˆç¢ºèªï¼‰ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ã‚¿ã‚¤ãƒˆãƒ«
 #define cszDel			"Delete now preview.\nOk?"
 #define cszAllDel		"Delete all preview.\nOk?"
 #define cszCannotAddPV	"Cannot create preview."
@@ -89,8 +87,9 @@
 #define cszNoText		"Unkown file."
 #define cszMainClk		"Do not open an image yet. (Please choose setting among a menu)"
 
-// ƒXƒNƒŠƒvƒgƒGƒ‰[/Œx
+// ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚¨ãƒ©ãƒ¼/è­¦å‘Š
 #define cszSyntax		"Syntax error."
+#define cszNotImplemented	"Script command is not implemented."
 #define cszNoString		"Cannot find string."
 #define cszNoDelim		"Cannot find string tarminater \". "
 #define cszNoCfg		"Read error ( Setting file )."
@@ -113,73 +112,71 @@
 #define	CSZCLASSNAME	"BMP2MSX"
 #define	CSZCLASSNAMESUB	"BMP2MSXSUB"
 #define	CSZTITLE		"BMP to MSX"
-#define	CSZTITLESUB		"µØ¼ŞÅÙ‰æ‘œ"
+#define	CSZTITLESUB		"ï½µï¾˜ï½¼ï¾ï¾…ï¾™ç”»åƒ"
 
 #define	BgColor			RGB(10,0,127)
-#define	FrColor			RGB(255,255,255)			//	•¶š‚ÌF
-#define CustomFile		"BMP2MSX_CUSTOM.BIN"		//	İ’èƒtƒ@ƒCƒ‹
-#define CfgFile			"BMP2MSX.B2M"				//	İ’èƒtƒ@ƒCƒ‹
-#define PathFile		"BMP2MSX.CFG"				//	İ’èƒtƒ@ƒCƒ‹
-#define	CfgExt			"B2M"						//	İ’èƒtƒ@ƒCƒ‹‚ÌƒfƒtƒHƒ‹ƒgŠg’£q
-#define	CfgBmp			"BMP"						//	BMPƒtƒ@ƒCƒ‹‚ÌŠg’£q
-#define	CfgCsv			"CSV"						//	CSVƒtƒ@ƒCƒ‹‚ÌŠg’£q
-#define	CfgSpi			"SPI"						//	ƒvƒ‰ƒOƒCƒ“‚ÌŠg’£q
-#define PLSave			"–¼‘O‚ğ•t‚¯‚Ä•Û‘¶(*.PL?Œ`®)"
-#define	PLLoad			"ÊßÚ¯ÄÌ§²Ù“Ç‚İ‚İ"
-#define ScrptLoad		"½¸ØÌßÄÌ§²Ù“Ç‚İ‚İ"
-#define	CSVSave			"–¼‘O‚ğ•t‚¯‚Ä•Û‘¶(CSVŒ`®)"
-#define cszDefExp		"MSX‰æ‘œÌ§²Ù(*.SC?/*.SR?)\0*.SC?;*.SR?\0‚·‚×‚Ä‚ÌÌ§²Ù(*.*)\0*.*\0"
-#define	cszDefPL		"MSXÊßÚ¯ÄÌ§²Ù(*.PL?)\0*.PL?\0"
-#define	cszDefPLL		"MSXÊßÚ¯ÄÌ§²Ù(*.PL?/*.Sxx)\0*.PL?;*.S??\0"
-#define	cszDefCSV		"CSVÌ§²Ù(*.CSV/*.TXT)\0*.CSV;*.TXT\0"
-#define cszDefScrpt		"½¸ØÌßÄÌ§²Ù(*.TXT)\0*.TXT\0"
-#define cszDefPlug		"SPIÌß×¸Ş²İ(*.SPI)\0*.SPI\0"
-#define cszDefCfg		"BMPtoMSXİ’èÌ§²Ù(*.B2M)\0*.B2M\0"
+#define	FrColor			RGB(255,255,255)			//	æ–‡å­—ã®è‰²
+#define CustomFile		"BMP2MSX_CUSTOM.BIN"		//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«
+#define CfgFile			"BMP2MSX.B2M"				//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«
+#define	CfgExt			"B2M"						//	è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆæ‹¡å¼µå­
+#define	CfgBmp			"BMP"						//	BMPãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­
+#define	CfgCsv			"CSV"						//	CSVãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­
+#define PLSave			"åå‰ã‚’ä»˜ã‘ã¦ä¿å­˜(*.PL?å½¢å¼)"
+#define	PLLoad			"ï¾Šï¾Ÿï¾šï½¯ï¾„ï¾Œï½§ï½²ï¾™èª­ã¿è¾¼ã¿"
+#define ScrptLoad		"ï½½ï½¸ï¾˜ï¾Œï¾Ÿï¾„ï¾Œï½§ï½²ï¾™èª­ã¿è¾¼ã¿"
+#define	CSVSave			"åå‰ã‚’ä»˜ã‘ã¦ä¿å­˜(CSVå½¢å¼)"
+#define cszDefExp		"MSXç”»åƒï¾Œï½§ï½²ï¾™(*.SC?/*.SR?)\0*.SC?;*.SR?\0ã™ã¹ã¦ã®ï¾Œï½§ï½²ï¾™(*.*)\0*.*\0"
+#define	cszDefPL		"MSXï¾Šï¾Ÿï¾šï½¯ï¾„ï¾Œï½§ï½²ï¾™(*.PL?)\0*.PL?\0"
+#define	cszDefPLL		"MSXï¾Šï¾Ÿï¾šï½¯ï¾„ï¾Œï½§ï½²ï¾™(*.PL?/*.Sxx)\0*.PL?;*.S??\0"
+#define	cszDefCSV		"CSVï¾Œï½§ï½²ï¾™(*.CSV/*.TXT)\0*.CSV;*.TXT\0"
+#define cszDefScrpt		"ï½½ï½¸ï¾˜ï¾Œï¾Ÿï¾„ï¾Œï½§ï½²ï¾™(*.TXT)\0*.TXT\0"
+#define cszDefCfg		"BMPtoMSXè¨­å®šï¾Œï½§ï½²ï¾™(*.B2M)\0*.B2M\0"
 #define	cszCSVHead		";MSX PALETTE DATA(&Hrb,&H0g)\x0D\x0A"
-#define cszClipName		"ƒNƒŠƒbƒvƒ{[ƒh“à‰æ‘œ"
+#define cszClipName		"ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰å†…ç”»åƒ"
 #define cszClipFile		"bmpmsx.bmp"
-#define	cszBmpSave		"BMP‚Å•Û‘¶"
-#define	cszBmpFilter	"BMPÌ§²Ù(*.BMP)\0*.BMP\0"
+#define	cszBmpSave		"BMPã§ä¿å­˜"
+#define	cszBmpFilter	"BMPï¾Œï½§ï½²ï¾™(*.BMP)\0*.BMP\0"
 
-#define cszSetting		"ÃŞÌ«ÙÄİ’è"			// İ’èƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
-#define cszRedo			"Ä•ÏŠ·"				// Ä•ÏŠ·ƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
-#define cszScrSetting	"•ÏŠ·İ’è(½¸ØÌßÄÓ°ÄŞ)"	// ƒXƒNƒŠƒvƒg–½—ß‚É‚æ‚éİ’èƒ_ƒCƒAƒƒO‚Ìƒ^ƒCƒgƒ‹
+#define cszSetting		"ï¾ƒï¾ï¾Œï½«ï¾™ï¾„è¨­å®š"			// è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define cszRedo			"å†å¤‰æ›"				// å†å¤‰æ›ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define cszScrSetting	"å¤‰æ›è¨­å®š(ï½½ï½¸ï¾˜ï¾Œï¾Ÿï¾„ï¾“ï½°ï¾„ï¾)"	// ã‚¹ã‚¯ãƒªãƒ—ãƒˆå‘½ä»¤ã«ã‚ˆã‚‹è¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¿ã‚¤ãƒˆãƒ«
 
 // -------------------------------------------------------------
-// ƒGƒ‰[/ŒxƒƒbƒZ[ƒW
+// ã‚¨ãƒ©ãƒ¼/è­¦å‘Šãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
 // -------------------------------------------------------------
-#define MsgCap			"Error"						// ƒGƒ‰[ƒƒbƒZ[ƒW‚Ìƒ^ƒCƒgƒ‹
-#define WriteErr			"‘‚«‚İ‚É¸”s‚µ‚Ü‚µ‚½B"	// ƒtƒ@ƒCƒ‹‘‚«‚İƒGƒ‰[
-#define cszNotEnoughMem	"ƒƒ‚ƒŠ•s‘«‚Å‚·B"		// ƒƒ‚ƒŠ•s‘«
-#define cszPalCnt		"‰æ‘œ‚ğ¶¬‚Å‚«‚Ü‚¹‚ñB\nƒpƒŒƒbƒg‚Í‚Q‚ÂˆÈãg—p‰Â”\‚É‚µ‚Ä‚­‚¾‚³‚¢B"	// ƒpƒŒƒbƒg•s‘«
-#define MsgCapWrn		"Warning"					// ŒxiŠm”FjƒƒbƒZ[ƒW‚Ìƒ^ƒCƒgƒ‹
-#define cszDel			"•\¦’†‚ÌƒvƒŒƒrƒ…[‚ğíœ‚µ‚Ü‚·B\n‚æ‚ë‚µ‚¢‚Å‚·‚©H"
-#define cszAllDel		"‹L‰¯‚µ‚Ä‚¢‚éƒvƒŒƒrƒ…[‚ğ‚·‚×‚Äíœ‚µ‚Ü‚·B\n‚æ‚ë‚µ‚¢‚Å‚·‚©H"
-#define cszCannotAddPV	"‚±‚êˆÈãƒvƒŒƒrƒ…[‚ğ‹L‰¯‚Å‚«‚Ü‚¹‚ñB"
-#define cszClipErr		"ƒNƒŠƒbƒvƒ{[ƒh‚©‚ç¶¬‚µ‚½‰æ‘œ‚ÍÄ•ÏŠ·‚Å‚«‚Ü‚¹‚ñB"
-#define cszBDErr		"w’è‚³‚ê‚½ƒtƒ@ƒCƒ‹‚ª“Ç‚İ‚ß‚È‚¢‚©A‚±‚êˆÈã‰æ‘œ‚ğ‹L‰¯‚Å‚«‚Ü‚¹‚ñB"
-#define cszNoSupp		"“Ç‚İ‚ß‚Ü‚¹‚ñB”ñ‘Î‰‚ÌŒ`®‚Å‚·B"
-#define cszSmall		"‰æ‘œ‚ª¬‚³‚·‚¬‚Ü‚·B"
-#define cszOpenErr		"ƒtƒ@ƒCƒ‹‚ªŠJ‚¯‚Ü‚¹‚ñB"
-#define cszNoText		"ˆÙí‚Èƒtƒ@ƒCƒ‹‚Å‚·B“Ç‚İ‚ß‚Ü‚¹‚ñB"
-#define cszMainClk		"‚Ü‚¾‰æ‘œ‚ğŠJ‚¢‚Ä‚¢‚Ü‚¹‚ñiİ’è‚Íƒƒjƒ…[‚©‚ç‘I‘ğ‚µ‚Ä‚­‚¾‚³‚¢j"
+#define MsgCap			"Error"						// ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define WriteErr			"æ›¸ãè¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚"	// ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ã‚¨ãƒ©ãƒ¼
+#define cszNotEnoughMem	"ãƒ¡ãƒ¢ãƒªä¸è¶³ã§ã™ã€‚"		// ãƒ¡ãƒ¢ãƒªä¸è¶³
+#define cszPalCnt		"ç”»åƒã‚’ç”Ÿæˆã§ãã¾ã›ã‚“ã€‚\nãƒ‘ãƒ¬ãƒƒãƒˆã¯ï¼’ã¤ä»¥ä¸Šä½¿ç”¨å¯èƒ½ã«ã—ã¦ãã ã•ã„ã€‚"	// ãƒ‘ãƒ¬ãƒƒãƒˆä¸è¶³
+#define MsgCapWrn		"Warning"					// è­¦å‘Šï¼ˆç¢ºèªï¼‰ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ã‚¿ã‚¤ãƒˆãƒ«
+#define cszDel			"è¡¨ç¤ºä¸­ã®ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™ã€‚\nã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ"
+#define cszAllDel		"è¨˜æ†¶ã—ã¦ã„ã‚‹ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’ã™ã¹ã¦å‰Šé™¤ã—ã¾ã™ã€‚\nã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ"
+#define cszCannotAddPV	"ã“ã‚Œä»¥ä¸Šãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’è¨˜æ†¶ã§ãã¾ã›ã‚“ã€‚"
+#define cszClipErr		"ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‹ã‚‰ç”Ÿæˆã—ãŸç”»åƒã¯å†å¤‰æ›ã§ãã¾ã›ã‚“ã€‚"
+#define cszBDErr		"æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ãŒèª­ã¿è¾¼ã‚ãªã„ã‹ã€ã“ã‚Œä»¥ä¸Šç”»åƒã‚’è¨˜æ†¶ã§ãã¾ã›ã‚“ã€‚"
+#define cszNoSupp		"èª­ã¿è¾¼ã‚ã¾ã›ã‚“ã€‚éå¯¾å¿œã®å½¢å¼ã§ã™ã€‚"
+#define cszSmall		"ç”»åƒãŒå°ã•ã™ãã¾ã™ã€‚"
+#define cszOpenErr		"ãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‘ã¾ã›ã‚“ã€‚"
+#define cszNoText		"ç•°å¸¸ãªãƒ•ã‚¡ã‚¤ãƒ«ã§ã™ã€‚èª­ã¿è¾¼ã‚ã¾ã›ã‚“ã€‚"
+#define cszMainClk		"ã¾ã ç”»åƒã‚’é–‹ã„ã¦ã„ã¾ã›ã‚“ï¼ˆè¨­å®šã¯ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‹ã‚‰é¸æŠã—ã¦ãã ã•ã„ï¼‰"
 
-// ƒXƒNƒŠƒvƒgƒGƒ‰[/Œx
-#define cszSyntax		"•¶–@‚ª•s³‚Å‚·B"
-#define cszNoString		"•¶š—ñ‚Ì‚ ‚é‚×‚«‚Æ‚±‚ë‚É•¶š—ñ‚ª‚ ‚è‚Ü‚¹‚ñB"
-#define cszNoDelim		"•¶š—ñ‚ÌI’[‚ğ¦‚· \" ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñB"
-#define cszNoCfg		"İ’èƒtƒ@ƒCƒ‹‚Ì“Ç‚İ‚İ‚É¸”s‚µ‚Ü‚µ‚½B"
-#define cszNoFile		"ƒtƒ@ƒCƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
-#define cszExit			"ƒXƒNƒŠƒvƒg‚ğI—¹‚µ‚Ü‚µ‚½B"
-#define cszScrMode		"‰æ–Êƒ‚[ƒh‚Ìw’è‚ªˆÙí‚Å‚·B"
-#define cszNoFlag		"ƒtƒ‰ƒO–¼‚Ìw’è‚ªˆÙí‚Å‚·B"
-#define	cszNoBool		"ƒtƒ‰ƒO’l‚Ìw’è‚ªˆÙí‚Å‚·B"
-#define cszWrnClear		"•ÒW’†‚ÌƒXƒNƒŠƒvƒg‚ªƒNƒŠƒA‚³‚ê‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H"
-#define cszPal			"ƒpƒŒƒbƒgİ’è‚ªˆÙí‚Å‚·B"
-#define cszPMode		"ƒpƒŒƒbƒg‚Ì“®ìƒ‚[ƒhw’è‚ªˆÙí‚Å‚·B"
-#define cszCutErr		"Ø‚èÌ‚ÄŒë·‚Ì’lw’è‚ªˆÙí‚Å‚·B"
-#define cszGosaVal		"Œë·ŠgUŒW”‚Ìw’è’l‚ªˆÙí‚Å‚·B"
-#define cszSelMode		"‘IFƒ‚[ƒh‚Ìw’è’l‚ªˆÙí‚Å‚·B"
+// ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚¨ãƒ©ãƒ¼/è­¦å‘Š
+#define cszSyntax		"æ–‡æ³•ãŒä¸æ­£ã§ã™ã€‚"
+#define cszNotImplemented	"æœªå®Ÿè£…ã®ã‚¹ã‚¯ãƒªãƒ—ãƒˆå‘½ä»¤ã§ã™ã€‚"
+#define cszNoString		"æ–‡å­—åˆ—ã®ã‚ã‚‹ã¹ãã¨ã“ã‚ã«æ–‡å­—åˆ—ãŒã‚ã‚Šã¾ã›ã‚“ã€‚"
+#define cszNoDelim		"æ–‡å­—åˆ—ã®çµ‚ç«¯ã‚’ç¤ºã™ \" ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚"
+#define cszNoCfg		"è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚"
+#define cszNoFile		"ãƒ•ã‚¡ã‚¤ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚"
+#define cszExit			"ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚’çµ‚äº†ã—ã¾ã—ãŸã€‚"
+#define cszScrMode		"ç”»é¢ãƒ¢ãƒ¼ãƒ‰ã®æŒ‡å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define cszNoFlag		"ãƒ•ãƒ©ã‚°åã®æŒ‡å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define	cszNoBool		"ãƒ•ãƒ©ã‚°å€¤ã®æŒ‡å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define cszWrnClear		"ç·¨é›†ä¸­ã®ã‚¹ã‚¯ãƒªãƒ—ãƒˆãŒã‚¯ãƒªã‚¢ã•ã‚Œã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ"
+#define cszPal			"ãƒ‘ãƒ¬ãƒƒãƒˆè¨­å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define cszPMode		"ãƒ‘ãƒ¬ãƒƒãƒˆã®å‹•ä½œãƒ¢ãƒ¼ãƒ‰æŒ‡å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define cszCutErr		"åˆ‡ã‚Šæ¨ã¦èª¤å·®ã®å€¤æŒ‡å®šãŒç•°å¸¸ã§ã™ã€‚"
+#define cszGosaVal		"èª¤å·®æ‹¡æ•£ä¿‚æ•°ã®æŒ‡å®šå€¤ãŒç•°å¸¸ã§ã™ã€‚"
+#define cszSelMode		"é¸è‰²ãƒ¢ãƒ¼ãƒ‰ã®æŒ‡å®šå€¤ãŒç•°å¸¸ã§ã™ã€‚"
 
 #endif
 

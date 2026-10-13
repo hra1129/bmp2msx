@@ -1,6 +1,6 @@
-// -------------------------------------------------------------
+Ôªø// -------------------------------------------------------------
 // BMP to MSX
-// ÉXÉ|ÉCÉgÉ_ÉCÉAÉçÉO
+// „Çπ„Éù„Ç§„Éà„ÉÄ„Ç§„Ç¢„É≠„Ç∞
 //											(C)2000 HRA!
 // -------------------------------------------------------------
 
@@ -11,7 +11,7 @@
 #include <windowsx.h>
 #include "Convert.h"
 
-// å^
+// Âûã
 typedef struct {
 	C_COLOR		colorcode;
 	int			red;
@@ -21,7 +21,7 @@ typedef struct {
 	int			y;
 } SPOITDATA;
 
-// ï\é¶ä÷êî
+// Ë°®Á§∫Èñ¢Êï∞
 void spShow( HWND hWnd,SPOITDATA *pdata );
 
 #endif	// _SPITPROC_H_

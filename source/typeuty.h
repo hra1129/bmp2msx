@@ -1,19 +1,19 @@
-// -------------------------------------------------------------
+ï»¿// -------------------------------------------------------------
 //	TITLE		:	Data Type Utility
 //	FILE		:	typeuty.cpp
 //	COPYRIGHT	:	(C)2001 t.hara
-//	COMENT		:	ƒf[ƒ^Œ^ˆ—ƒ}ƒNƒŒQ
-//	HISTORY		:	2001/02/09	v0.00	»ìŠJn
+//	COMENT		:	ãƒ‡ãƒ¼ã‚¿å‹å‡¦ç†ãƒã‚¯ãƒ­ç¾¤
+//	HISTORY		:	2001/02/09	v0.00	è£½ä½œé–‹å§‹
 // -------------------------------------------------------------
 
 #ifndef	_typeuty_h_
 #define	_typeuty_h_
 
 // =============================================================
-//	ƒCƒ“ƒNƒ‹[ƒh
+//	ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰
 
 // =============================================================
-//	Œ^’è‹`
+//	å‹å®šç¾©
 
 typedef unsigned long	uint32;									// 32bit unsigned integer
 typedef unsigned short	uint16;									// 32bit unsigned integer
@@ -28,53 +28,53 @@ typedef uint16			word;									// word
 typedef uint8			byte;									// byte
 
 // =============================================================
-//	ƒf[ƒ^ˆ—ƒ}ƒNƒ
+//	ãƒ‡ãƒ¼ã‚¿å‡¦ç†ãƒã‚¯ãƒ­
 
-//	â‘Î’l
+//	çµ¶å¯¾å€¤
 template <class typ> inline typ tu_abs( typ a ){
 	return( a < 0 ? -a : a );
 }
 
-//	•„†
+//	ç¬¦å·
 template <class typ> inline typ tu_sign( typ a ){
 	if( a < 0 ) return -1; else if( a > 0 ) return 1;
 	return 0;
 }
 
-//	‘å•¶š
+//	å¤§æ–‡å­—
 inline char tu_to_upper( char c ){
 	if( c >= 'a' && c <= 'z' ) return( c - 'a' + 'A' );
 	return c;
 }
 
-//	¬•¶š
+//	å°æ–‡å­—
 inline char tu_to_lower( char c ){
 	if( c >= 'A' && c <= 'Z' ) return( c - 'A' + 'a' );
 	return c;
 }
 
-//	‚P‚Oi”•¶š”»’è
+//	ï¼‘ï¼é€²æ•°æ–‡å­—åˆ¤å®š
 inline bool tu_is_digit( char c ){
 	return( c >= '0' && c <= '9' );
 }
 
-//	‚P‚Ui”•¶š”»’è
+//	ï¼‘ï¼–é€²æ•°æ–‡å­—åˆ¤å®š
 inline bool tu_is_xdigit( char c ){
 	return( tu_is_digit(c) || ( tu_to_upper(c) >= 'A' && tu_to_upper(c) <= 'F' ) );
 }
 
-//	ƒzƒƒCƒgƒXƒy[ƒX”»’è
+//	ãƒ›ãƒ¯ã‚¤ãƒˆã‚¹ãƒšãƒ¼ã‚¹åˆ¤å®š
 inline bool tu_is_space( char c ){
 	return( c == ' ' || c == '\t' );
 }
 
-//	ƒzƒƒCƒgƒXƒy[ƒX‚ÌŸ‚ÌƒAƒhƒŒƒX
+//	ãƒ›ãƒ¯ã‚¤ãƒˆã‚¹ãƒšãƒ¼ã‚¹ã®æ¬¡ã®ã‚¢ãƒ‰ãƒ¬ã‚¹
 inline char* tu_skip_space( char* p ){
 	while( tu_is_space( *p ) ) ++p;
 	return p;
 }
 
-//	”z—ñ•Ï”‚Ì—v‘f”‚ğ‹‚ß‚éiƒRƒ“ƒpƒCƒ‹‚É—v‘f”‚ªŠm’è‚·‚é”z—ñ‚Ì‚İj
+//	é…åˆ—å¤‰æ•°ã®è¦ç´ æ•°ã‚’æ±‚ã‚ã‚‹ï¼ˆã‚³ãƒ³ãƒ‘ã‚¤ãƒ«æ™‚ã«è¦ç´ æ•°ãŒç¢ºå®šã™ã‚‹é…åˆ—ã®ã¿ï¼‰
 #define	tu_elm_count( a )	( sizeof( a )/ sizeof( (a)[0] ) )
  
 #endif	//	_typeuty_h_

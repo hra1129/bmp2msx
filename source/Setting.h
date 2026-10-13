@@ -1,4 +1,4 @@
-// -------------------------------------------------------------
+Ôªø// -------------------------------------------------------------
 // BMP to MSX
 //										(C)2000/5/6 HRA!
 // -------------------------------------------------------------
@@ -9,10 +9,10 @@
 #include "winEvent.h"
 #include "Convert.h"
 
-// ÉGÉNÉXÉ|Å[Ég
+// „Ç®„ÇØ„Çπ„Éù„Éº„Éà
 WINPROC( SetProc );
-extern SETTING EdtMode;		// ê›íË
-extern char szCaption[];	// É^ÉCÉgÉã
+extern SETTING EdtMode;		// Ë®≠ÂÆö
+extern char szCaption[];	// „Çø„Ç§„Éà„É´
 
 extern const char *ScrModeName[];
 extern const char *PltMode[];

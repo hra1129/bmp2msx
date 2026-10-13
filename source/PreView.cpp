@@ -12,15 +12,13 @@
 #include "config.h"
 #include "convert.h"
 #include "PreView.h"
-#include "ProgProc.h"
-#include "splug.h"
 #include "fileuty.h"
+#include "winImage.h"
 
 // =============================================================
 //	関数プロトタイプ
 
 static int _bdAddFile( const char *cszFileName );
-static int WINAPI ProgressCallback( int nNum, int nDenom, long lData );
 
 // =============================================================
 //	変数
@@ -365,6 +363,7 @@ static int _bdAddFile( const char *cszFileName ) {
 
 	// ヘッダを確認する
 	if( bfh.bfType != 'MB' ) goto exit;
+	if( bfh.bfOffBits != sizeof( BITMAPFILEHEADER ) + sizeof( BITMAPINFOHEADER ) ) goto exit;
 
 	// メモリを確保する
 	tBmpview[ nIndex ].image = (char*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,nSize );
@@ -395,38 +394,32 @@ exit:
 // -----------------------------------------------------
 int bdAddFile( const char *cszFileName )
 {
-	int		nIndex;
-	bool	bProg = false;
-	char	szBuf[ MAX_PATH ];
+	int nIndex;
 
-	//	BMPファイルとして読み込んでみる
+	// Keep the existing decoder for uncompressed 24-bit BMP files.
 	nIndex = _bdAddFile( cszFileName );
-	if( nIndex > -1 ) return nIndex;
+	if( nIndex > -1 ) {
+		BITMAPINFOHEADER header;
+		memcpy( &header, tBmpview[ nIndex ].image, sizeof( header ) );
+		if( header.biSize == sizeof( BITMAPINFOHEADER ) &&
+			header.biBitCount == 24 && header.biCompression == BI_RGB ) {
+			return nIndex;
+		}
+		bdDelete( nIndex );
+	}
 
-	// 画像ファイルイメージの空きを検索
+	// Use Windows Imaging Component for other supported image formats.
 	nIndex = bdBlankIndex();
 	if( nIndex == -1 ) return -1;
 
-	//	経過表示用ダイアログ表示
-	GetFileTitle( cszFileName, szBuf, sizeof( szBuf ) );
-	prShow( szBuf );
-
-	//	プラグインに読み込ませる
-	tBmpview[ nIndex ].image = spi_load_image( cszFileName, (FARPROC)ProgressCallback );
-
-	//	経過表示用ダイアログ消去
-	prDestroy();
-
-	//	エラーチェック
+	tBmpview[ nIndex ].image = winimg_load_dib( cszFileName );
 	if( tBmpview[ nIndex ].image == NULL ) return -1;
 
-	// 終了
 	tBmpview[ nIndex ].n = 1;
-	lstrcpy( tBmpview[ nIndex ].sFileName , cszFileName );
+	lstrcpy( tBmpview[ nIndex ].sFileName, cszFileName );
 
 	return nIndex;
 }
-
 // -----------------------------------------------------
 //	1.	日本語名
 //		BMPファイルイメージを画像ファイルイメージに追加する
@@ -450,27 +443,4 @@ int bdAddImage( char *bmp )
 	tBmpview[ nIndex ].n = 1;
 	tBmpview[ nIndex ].sFileName[0]='\0';
 	return nIndex;
-}
-
-// =====================================================
-//	コールバック
-
-// -----------------------------------------------------
-//	1.	日本語名
-//		Susie PlugIn 用の経過表示関数
-//	2.	引数
-//		nNum	...	(I)	経過
-//		nDenom	...	(I)	nNum の終着値
-//		lData	...	(I)	アプリ定義の値（未使用）
-//	3.	返値
-//		0	...	続行
-//		!0	...	中止
-//	4.	備考
-//		prProg を呼び出す I/F 矯正関数
-// -----------------------------------------------------
-static int WINAPI ProgressCallback( int nNum, int nDenom, long lData )
-{
-	if( nDenom == 0 ) return 0;
-	prProg( nNum * 100 / nDenom );
-	return 0;
 }

@@ -60,14 +60,12 @@
     - added "MSX1" button on setting dialog.
   v1.10502
     - bug fix.
-    - supported Susie PlugIn in "plugin" folder.
   v1.10502+
     - added 192line mode.
     - added "Palette Save" button.
   v1.10503
     - bug fix.
   v1.10504
-    - added progressbar for Susie PlugIn.
     - deleted palette 4-15 on screen6.
     - fix create palette routine.
   v1.10506
@@ -129,7 +127,7 @@
     - Windows BMP File 24bits
     - Windows BMP File 32bits
     - Clipboard BMP picture.
-    And Susie PlugIn supported file.
+    JPEG and PNG images and non-24bit BMP files are loaded with Windows Imaging Component.
 
 3) Output file ( Picture )
     - SCREEN2(256x192x16colors)

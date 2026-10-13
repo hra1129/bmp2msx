@@ -24,8 +24,6 @@ void set_msx2_palette( C_PALETTE *pal );
 void GetDefCustom( void );
 bool GetCfgFile( SETTING *Mode,const char *sCfgFile );
 void SaveCfgFile( SETTING *Mode,const char *sCfgFile );
-bool GetPathFile( const char *sPathFile, char *sPath, int len );
-void SavePathFile( const char *sPathFile, char *sPath, int len );
 bool GetCustomFile( const char *sCustomFile );
 void SaveCustomFile( const char *sCustomFile );
 
