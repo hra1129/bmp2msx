@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
-#include <htmlhelp.h>		//	HTMLhelp workshop に付属
 #include "Config.h"
 #include "winEvent.h"
 #include "Resource.h"
@@ -109,8 +108,7 @@ EVENT( onDefault			);
 EVENT( onSetting			);
 EVENT( onColorCalibration	);
 
-// ヘルプメニューイベント
-EVENT( onHelp				);
+// バージョン情報イベント
 EVENT( onVer				);
 // 編集メニューイベント
 EVENT( onPaste				);
@@ -226,8 +224,7 @@ EVENT( onCommand )
 	ONEVENT( IDM_DEFSET				,onDefault			);	// 設定の初期化
 	ONEVENT( IDM_SETTING			,onSetting			);	// 設定
 	ONEVENT( IDM_COLOR_CALIBRATION, onColorCalibration	);
-	// ヘルプメニュー
-	ONEVENT( IDM_HELP				,onHelp				);	// ヘルプの表示
+	// バージョン情報
 	ONEVENT( IDM_VER				,onVer				);	// バージョン情報
 	}
 	return DEFPROC();
@@ -1134,32 +1131,7 @@ EVENT( onColorCalibration )	{
 }
 
 // =====================================================
-// [ヘルプ]メニューイベント
-
-// -----------------------------------------------------
-//	1.	日本語名
-//		メニュー：ヘルプ
-//	2.	引数
-//		hWnd	...	(I)	ウィンドウハンドル
-//		wp		...	(I)	Ｗパラメータ
-//		lp		...	(I)	Ｌパラメータ
-//	3.	返値
-//		0
-//	4.	備考
-//		なし
-// -----------------------------------------------------
-EVENT( onHelp ) {
-	char szHelpName[ MAX_PATH ], *ptr;
-
-	strcpy( szHelpName, __argv[0] );
-	ptr = strrchr( szHelpName, '\\' );
-	if( ptr != NULL ) {
-		strcpy( ptr+1, cszHelpName );
-	}
-
-	HtmlHelp( hWnd, szHelpName, HH_DISPLAY_TOPIC, 0 );
-	return 0;
-}
+// [バージョン情報]メニューイベント
 
 // -----------------------------------------------------
 //	1.	日本語名
@@ -1338,7 +1310,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	// 変換する(COLORREF配列→ＭＳＸ画像)
-	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC10_256L) ) {	// Screen10/12 以外
+	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC10_256L) || Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L ) {	// Screen10/12 以外
 		cnvRecolor( out, owidth, oheight, bmp, Mode, prProg, Pal, tail, tailcnt );
 	}else{							// Screen10/12
 		cnvNtcolor( out, owidth, oheight, bmp, Mode, prProg );
@@ -1472,6 +1444,25 @@ static bool CreatePal( int &n, SETTING *Mode, C_COLOR *in, int w, int h, C_COLOR
 			Pal[i] = GET_RGB(	convert7to255_r[ Mode->color_palette[i].red   ],
 							convert7to255_g[ Mode->color_palette[i].green ],
 							convert7to255_b[ Mode->color_palette[i].blue  ] );
+		}
+	}else if( Mode->screen_mode==MD_SC8P || Mode->screen_mode==MD_SC8P_256L ){	// Screen8 (V9968 EPAL)
+		int pal_count = 0;
+		t = (C_COLOR*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,sizeof( C_COLOR)*w*h );	// 作業領域の確保
+		if( t==NULL ){
+			MessageBox( hWnd, cszNotEnoughMem, MsgCap, MB_OK | MB_ICONWARNING );
+			return false;
+		}
+		CopyMemory( t, in, w * h * sizeof( C_COLOR ) );
+		cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		LocalFree( t );
+		for( i = pal_count; i < 256; ++i ){
+			Pal[ i ] = 0;
+		}
+		// 採用したパレットを EPAL 用 (RGB各5bit) にも反映する
+		for( i = 0; i < 256; ++i ){
+			Mode->color_palette_epal[ i ].red	= ( GET_RED(   Pal[ i ] ) * 31 + 127 ) / 255;
+			Mode->color_palette_epal[ i ].green	= ( GET_GREEN( Pal[ i ] ) * 31 + 127 ) / 255;
+			Mode->color_palette_epal[ i ].blue	= ( GET_BLUE(  Pal[ i ] ) * 31 + 127 ) / 255;
 		}
 	}else if( Mode->screen_mode==MD_SC8 || Mode->screen_mode==MD_SC8_256L ){	// Screen8
 		cnvGetPaletteS8( Pal );

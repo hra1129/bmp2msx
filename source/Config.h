@@ -29,9 +29,6 @@
 #define	cnMAXWidth		512
 #define	cnMAXHeight		424
 
-//	ヘルプファイル名
-#define	cszHelpName		"bmp2msx.chm"
-
 #ifdef _ENGLISH
 
 #define CNWS			(WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER)

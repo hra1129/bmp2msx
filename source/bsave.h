@@ -35,6 +35,8 @@ static const int PalTblAdr[]={
 	0,				// screen 8 (256 lines)
 	0,				// screen 10/11 (256 lines)
 	0,				// screen 12 (256 lines)
+	0,				// screen 8 (V9968 EPAL palette)
+	0,				// screen 8 (V9968 EPAL palette) (256 lines)
 };
 
 enum {

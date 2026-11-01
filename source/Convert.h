@@ -56,6 +56,8 @@ enum{
 	MD_SC8_256L,		// SCREEN 8 (256 lines)
 	MD_SC10_256L,		// SCREEN 10 (256 lines)
 	MD_SC12_256L,		// SCREEN 12 (256 lines)
+	MD_SC8P,			// SCREEN 8 (V9968 EPAL palette)
+	MD_SC8P_256L,		// SCREEN 8 (V9968 EPAL palette) (256 lines)
 	MD_MAX,
 };
 
@@ -197,6 +199,7 @@ struct SETTING {
 	C_COLOR			FCColor;					// 背景色
 	float			diffusion_error_x_weight;	// 誤差拡散 X-Y比
 	bool			output_basic_enable;		// BAS出力
+	C_PALETTE		color_palette_epal[256];	// SCREEN8 EPAL用 256色パレット (RGB各5bit) ※旧設定ファイルとの互換のため構造体の末尾に追加
 };
 
 //	値の上限下限に従って値をクリップする
@@ -231,6 +234,10 @@ int cnvColorTblCompare( const void *tbl1,const void *tbl2 );
 bool cnvGetPalette( C_COLOR *in,int width,int height,C_COLOR *pal,int screen_mode,int cnt,int pp,
 				    bool FourceZero,C_COLOR FZColor );
 bool cnvGetPaletteS8( C_COLOR *pal );
+
+//	減色用パレット（256色・RGB各5bit）を求める (SCREEN8 EPAL用)
+bool cnvGetPalette256( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+					   bool FourceZero, C_COLOR FZColor );
 
 //	タイルパターン取得(SC5/SC7専用)
 int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int screen_mode );

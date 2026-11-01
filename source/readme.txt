@@ -200,11 +200,6 @@
 　ホームページURL:  http://www5d.biglobe.ne.jp/~hra/
 　E-Mail :          hra@mvj.biglobe.ne.jp
 
-■ヘルプファイル
-　bmp2msx.chm ファイル（BMPtoMSXと同じ場所で公開しています）を持っている場合は
-　BMP2MSX.EXE と同じフォルダに入れてください。ヘルプメニューから開けるようにな
-　ります。
-
 ■Special Thanks!
 　次の方々にいろいろな意見・バグ情報などを頂きました。ありがとうございます。
 　　nf_ban さん

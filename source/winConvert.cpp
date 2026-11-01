@@ -271,6 +271,39 @@ static void _draw_screen8( const unsigned char *bmp, HDC hDC, const SETTING *Mod
 
 // -------------------------------------------------------------
 //	1.	日本語名
+//		ＶＲＡＭイメージからプレビュ(SCREEN8 V9968 EPAL)の作成
+//	2.	引数
+//		bmp	...	(I)	ＶＲＡＭイメージ
+//		hDC	...	(I)	プレビュー出力デバイス
+//	3.	返値
+//		なし
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+static void _draw_screen8p( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
+{
+	int r,g,b;
+	int x,y,adr,t,h;
+
+	h = _get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < 512; x += 2 ){
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 256 + x / 2;
+			r = Mode->color_palette_epal[ bmp[ adr ] ].red   * 255 / 31;
+			g = Mode->color_palette_epal[ bmp[ adr ] ].green * 255 / 31;
+			b = Mode->color_palette_epal[ bmp[ adr ] ].blue  * 255 / 31;
+			SetPixel( hDC, x + 0, y+t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 1, y+t, GET_RGB( r, g, b ) );
+		}
+	}
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
 //		ＶＲＡＭイメージからプレビュ(SCREEN10/12)の作成
 //	2.	引数
 //		bmp		...	(I)	ＶＲＡＭイメージ
@@ -351,6 +384,9 @@ void draw_screen( const unsigned char *bmp, HDC hDC, const SETTING *Mode ){
 	case MD_SC8:
 	case MD_SC8_256L:
 		_draw_screen8( bmp, hDC, Mode );	return;
+	case MD_SC8P:
+	case MD_SC8P_256L:
+		_draw_screen8p( bmp, hDC, Mode );	return;
 	case MD_SC10:
 	case MD_SC12:
 	case MD_SC10_256L:

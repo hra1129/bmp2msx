@@ -130,7 +130,6 @@
 #define IDM_ZOOMUP                      40026
 #define IDM_ZOOMDOWN                    40027
 #define IDM_BMPSAVE                     40028
-#define IDM_HELP                        40030
 #define IDM_COLOR_CALIBRATION           40031
 
 // Next default values for new objects

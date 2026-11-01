@@ -18,6 +18,6 @@
   winImage.cpp
   コード生成しています。
   Previous IPDB not found, fall back to full compilation.
-  All 383 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 390 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   コード生成が終了しました。
   BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\ReleaseE\BMP2MSXE.exe

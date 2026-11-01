@@ -12,7 +12,7 @@
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-static const char* smode="235678AC5678AC";			// ファイル名の最後につける記号
+static const char* smode="235678AC5678ACPP";			// ファイル名の最後につける記号
 
 // -------------------------------------------------------------
 // 保存用クラス
@@ -36,6 +36,21 @@ static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outa
 static void _GetOutFilename( char* szOutFile, const char* szInFile, int nScrMode, int nInter, bool pal );
 static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode );
 static bool _save_basic_file( SETTING *Mode, const char *szFileName );
+
+// 256ラインモードかどうかを判定する
+static bool _is_256_lines_mode( uint32_t screen_mode ) {
+	switch( screen_mode ) {
+	case MD_SC5_256L:
+	case MD_SC6_256L:
+	case MD_SC7_256L:
+	case MD_SC8_256L:
+	case MD_SC10_256L:
+	case MD_SC12_256L:
+	case MD_SC8P_256L:
+		return true;
+	}
+	return false;
+}
 
 // -------------------------------------------------------------
 //	1.	日本語名
@@ -467,7 +482,7 @@ static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int
 		bsh.end	= 0x37FF;
 		break;
 	default:
-		if( screen_mode >= MD_SC5_256L ) {
+		if( _is_256_lines_mode( screen_mode ) ) {
 			bsh.end = width * height - 1;
 		}
 		else {
@@ -591,6 +606,7 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	FU_FILE *hf;
 	int line_no = 100;
 	int i;
+	bool epal = ( Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L );
 
 	strcpy( s_basic_name, szFileName );
 	p = strrchr( s_basic_name, '.' );
@@ -608,7 +624,7 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	fu_printf( hf, "\r\n" );
 	line_no += 10;
 
-	if( Mode->screen_mode >= MD_SC5_256L ){
+	if( _is_256_lines_mode( Mode->screen_mode ) ){
 		//	256ラインモードの場合は、スプライトを表示禁止にする
 		fu_printf( hf, "%d VDP(9)=VDP(9)OR2\r\n", line_no );
 		line_no += 10;
@@ -654,7 +670,16 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 		line_no += 10;
 	}
 
-	if( Mode->PltMode == PLT_BSAVE ) {
+	if( epal ) {
+		//	V9968 EPAL 用: EPAL を有効にし、256色パレットを Port#2 へ流し込む (DATA 文は末尾)
+		fu_printf( hf, "%d OUT &H99,16:OUT &H99,&H94\r\n", line_no );	// R#20 = 16 (EPAL = 1)
+		line_no += 10;
+		fu_printf( hf, "%d OUT &H99,0:OUT &H99,&H90\r\n", line_no );	// R#16 = 0
+		line_no += 10;
+		fu_printf( hf, "%d RESTORE 60000:FOR I=0 TO 255:READ R,G,B:OUT &H9A,R:OUT &H9A,G:OUT &H9A,B:NEXT\r\n", line_no );
+		line_no += 10;
+	}
+	else if( Mode->PltMode == PLT_BSAVE ) {
 		if( screen_mode[ Mode->screen_mode ] < 4 ){
 			fu_printf( hf, "%d IF PEEK(&H2D) > 1 THEN COLOR=RESTORE\r\n", line_no );
 			line_no += 10;
@@ -694,7 +719,7 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 			//	パレット無しのモード ( SCREEN 8, 12 )
 		}
 	}
-	if( Mode->screen_mode >= MD_SC5_256L ) {
+	if( _is_256_lines_mode( Mode->screen_mode ) ) {
 		fu_printf( hf, "%d A$=INKEY$:if A$<>" "THEN VDP(24)=(VDP(24)+1)AND255:FORI=0TO100:NEXT:GOTO %d\r\n", line_no, line_no );
 		line_no += 10;
 	}
@@ -706,6 +731,23 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	if( Mode->interlace ) {
 		fu_printf( hf, "%d SCREEN,,,,,0\r\n", line_no );
 		line_no += 10;
+	}
+
+	if( epal ) {
+		//	EPAL 用パレットデータ (R,G,B 各5bit、Port#2 への書き込み順)
+		int data_line = 60000;
+		int j;
+		for( i = 0; i < 256; i += 4 ){
+			fu_printf( hf, "%d DATA ", data_line );
+			for( j = 0; j < 4; ++j ){
+				fu_printf( hf, "%d,%d,%d%s",
+					Mode->color_palette_epal[ i + j ].red   & 31,
+					Mode->color_palette_epal[ i + j ].green & 31,
+					Mode->color_palette_epal[ i + j ].blue  & 31,
+					( j < 3 ) ? "," : "\r\n" );
+			}
+			data_line += 10;
+		}
 	}
 
 	// 終了

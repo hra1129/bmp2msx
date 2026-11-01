@@ -112,11 +112,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "カラーキャリブレーション",                IDM_COLOR_CALIBRATION
     END
-    POPUP "ヘルプ(&H)"
-    BEGIN
-        MENUITEM "ヘルプ(&H)...",                  IDM_HELP
-        MENUITEM "バージョン表示(&V)...",              IDM_VER
-    END
+    MENUITEM "バージョン情報(&V)...",              IDM_VER
 END
 
 IDR_MENUSUB MENU
@@ -387,7 +383,6 @@ BEGIN
     "V",            IDM_PASTE,              VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      IDM_CLEAR,              VIRTKEY, NOINVERT
     VK_DOWN,        IDM_NEXT,               VIRTKEY, NOINVERT
-    VK_F1,          IDM_HELP,               VIRTKEY, NOINVERT
     VK_F7,          IDM_ZOOMUP,             VIRTKEY, NOINVERT
     VK_F8,          IDM_ZOOMDOWN,           VIRTKEY, NOINVERT
     VK_LEFT,        IDM_PREV,               VIRTKEY, NOINVERT

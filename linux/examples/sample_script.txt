@@ -1,0 +1,9 @@
+; bmp2msx-cli sample script — the same script language as the GUI
+; script window.  Convert one image to SCREEN5 and SCREEN8 EPAL.
+SETFILENAME "photo.bmp"
+SCREEN 5
+CONVERT
+SCREEN 8P
+SETFLAG GOSA=ON
+CONVERT
+MSG "done"

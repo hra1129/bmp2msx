@@ -35,6 +35,8 @@ const char *ScrModeName[]={
 	"SCREEN8(256lines)",
 	"SCREEN10/11(256lines)",
 	"SCREEN12(256lines)",
+	"SCREEN8 EPAL(V9968)",
+	"SCREEN8 EPAL(V9968)(256lines)",
 };
 
 //	ツールチップ定義
@@ -342,6 +344,8 @@ static const BOOL nCtrlEnbl[][ ELMCNT(nCtrlCode) ]={
 	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN8 (256 lines)
 	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN10/11 (256 lines)
 	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN12 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN8 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE },   // SCREEN8 EPAL(V9968) (256 lines)
 };
 
 SETTING EdtMode;
@@ -2048,7 +2052,7 @@ static void SetCtlEnable( HWND hWnd )
 		EnableWindow( GetDlgItem( hWnd,nCtrlCode[ i ] ), nCtrlEnbl[ EdtMode.screen_mode ][ i ] );
 	}
 	// 強制ｾﾞﾛ化
-	if( EdtMode.screen_mode < MD_SC10 || (EdtMode.screen_mode >= MD_SC5_256L && EdtMode.screen_mode < MD_SC10_256L) ) {
+	if( EdtMode.screen_mode < MD_SC10 || (EdtMode.screen_mode >= MD_SC5_256L && EdtMode.screen_mode < MD_SC10_256L) || EdtMode.screen_mode == MD_SC8P || EdtMode.screen_mode == MD_SC8P_256L ) {
 		EnableWindow( GetDlgItem( hWnd, IDC_FZERO ), TRUE );
 		switch( EdtMode.FourceZero ){
 		case FZ_NONE:
