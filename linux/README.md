@@ -1,13 +1,16 @@
-# bmp2msx-cli — BMP2MSX for Linux
+# BMP2MSX for Linux (CLI + wxWidgets GUI)
 
-A headless (command-line) Linux build of BMP2MSX. It runs the same
-conversion core as the Windows application — `../source/Convert.cpp`,
-`bsave.cpp`, `utils.cpp` and `calc.cpp` are compiled **unmodified** —
-so, given the same settings and the same input pixels, the output files
-are byte-identical to the Windows version's.
+A Linux build of BMP2MSX: a headless command-line front end
+(`bmp2msx-cli`) and a wxWidgets GUI (`bmp2msx-wx`, see "GUI" below).
+Both run the same conversion core as the Windows application —
+`../source/Convert.cpp`, `bsave.cpp`, `utils.cpp` and `calc.cpp` are
+compiled **unmodified** — so, given the same settings and the same
+input pixels, the output files are byte-identical to the Windows
+version's.
 
-The Windows GUI is not ported; this directory adds only the Linux
-support code:
+This directory adds only the Linux support code, plus a wxWidgets GUI
+(`wx/`, see "GUI" below) that is written portably so it can also serve
+as the basis of a future Windows GUI:
 
 | Path | Contents |
 |---|---|
@@ -19,6 +22,7 @@ support code:
 | `src/platform_linux.cpp` | stubs for the Win32 calls the core references |
 | `winshim/windows.h` | minimal `<windows.h>` replacement for the core |
 | `third_party/stb_image.h` | PNG/JPEG decoder (vendored, see below) |
+| `wx/` | wxWidgets front end (`bmp2msx-wx`, see below) |
 
 ## Build
 
@@ -95,9 +99,94 @@ written in on Windows) and is converted automatically.
   decoders, so JPEG results can differ from the Windows (WIC) build by
   rounding in a few pixels.
 
-## What is intentionally not included
+## GUI (wxWidgets)
 
-These GUI-only features have no headless counterpart and are excluded:
+`wx/` contains a wxWidgets front end over the same conversion core,
+the Linux counterpart of the Windows GUI:
+
+```sh
+make gui        # builds ./bmp2msx-wx (the CLI target is unaffected)
+./bmp2msx-wx
+```
+
+Requirements: a C++17 compiler plus the wxWidgets development files
+(`wx-config` must be on the PATH).  On Ubuntu 24.04:
+
+```sh
+sudo apt install libwxgtk3.2-dev    # wxWidgets 3.2.4 (wxGTK)
+```
+
+(packages installed with apt do not survive a VM/image reset; the CLI
+needs none of this.)
+
+Coverage, mirroring the Windows GUI:
+
+- Main window with the preview list (up to 50 previews): open an image
+  and it is converted with the current default settings; Right/Left
+  navigate, Space toggles source/result, F7/F8 zoom, Delete clears,
+  Ctrl+A clears all; "Show original" (Ctrl+O) opens the original-image
+  window with the eyedropper; the settings text under the preview can
+  be toggled from the Settings menu; clicking the preview re-opens the
+  settings for re-conversion.
+- File output identical to the CLI (same core, same save functions):
+  save / save-as, save as BMP (24-bit), automatic file names, the
+  PL/CSV palette-file prompts.
+- Settings dialog with every conversion setting (screen mode incl.
+  the SCREEN8 EPAL modes, output target, palette editor with
+  load/save, dither/error diffusion, resize, force-zero, ...), usable
+  both as the default settings and for re-conversion; settings files
+  (BMP2MSX.B2M) load/save through the core functions; the defaults are
+  read at startup and saved on exit, next to the executable, like the
+  Windows app.  The calibration file BMP2MSX_CUSTOM.BIN is honored
+  exactly as in the CLI.
+- Script window: edit and run scripts in the existing script language;
+  output goes to the log pane.
+- Clipboard: Edit > Convert clipboard image pastes an image and
+  converts it.
+
+Differences from the Windows GUI (deliberate, small):
+
+- The color-calibration *editor* dialog is not implemented; the
+  calibration data file is still loaded and applied.
+- In the script window, the `SETTING` command prints the settings to
+  the log instead of opening a dialog, and `MSG` prints to the log.
+- "Save as BMP" renders through the portable preview renderer (the
+  core's `cnvSaveBmpFile()` needs GDI); the source view is scaled onto
+  the standard 512x424 preview canvas.
+
+Test hooks (used by the automated checks):
+
+```sh
+./bmp2msx-wx --smoke-convert <image> <outdir>   # headless EPAL conversion
+./bmp2msx-wx --snapshot <image> <out.png>       # main-window screenshot
+./bmp2msx-wx --snapshot-settings <out.png>      # settings-dialog screenshot
+```
+
+### Portability / future Windows build
+
+The GUI sources in `wx/` deliberately use only portable wxWidgets and
+standard C++: no GTK-, X11- or POSIX-specific calls, no Linux path or
+encoding assumptions (file dialogs, the executable-directory settings
+file and the clipboard all go through wx).  The single platform seam
+is `wx/capture_log.cpp` (redirecting stdout/stderr into the script
+log), which is clearly marked and already sketches the `_WIN32`
+branch.
+
+A future Windows build of this same GUI would need:
+
+- wxWidgets binaries for Windows (MSVC), with `wx-config` replaced by
+  the corresponding include/library settings;
+- linking the same conversion core from `../source` — on Windows the
+  core builds natively, so `linux/winshim/`, `src/fileuty_stdio.cpp`
+  and `src/platform_linux.cpp` are replaced by the Win32 layer, while
+  `src/convert_run.cpp`, `src/script.cpp` (the script engine is
+  platform-independent) and the `wx/` sources are reused as-is;
+  `src/image_load.cpp` would use WIC again instead of stb_image.
+
+## What is intentionally not included (CLI)
+
+These GUI-only features have no headless counterpart and are excluded
+from the CLI:
 
 - preview display and preview BMP export, drag & drop, clipboard input
 - the setting/calibration/spit (eyedropper) dialogs — calibration

@@ -9,7 +9,10 @@
 # and parallel builds (make -j) work as expected.
 #
 #   make            build ./bmp2msx-cli
-#   make clean      remove obj/ and the binary
+#   make gui        build ./bmp2msx-wx (wxWidgets GUI; needs wx-config,
+#                   i.e. the wxWidgets development package -- the CLI
+#                   above does not)
+#   make clean      remove obj/ and the binaries
 
 CXX      ?= g++
 CXXFLAGS ?= -O2 -std=c++17 -Wall -D_ENGLISH
@@ -63,9 +66,40 @@ $(OBJDIR)/stb_image_impl.o: third_party/stb_image_impl.cpp
 	@mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -w $(INCLUDES) -MMD -MP -c $< -o $@
 
+# ---------------------------------------------------------------------------
+# wxWidgets GUI (bmp2msx-wx).  Shares the conversion core and the Linux
+# support objects with the CLI; only the front end in wx/ is new, and
+# only this target needs the wxWidgets development files.
+# ---------------------------------------------------------------------------
+WX_CONFIG   ?= wx-config
+WX_CXXFLAGS := $(shell $(WX_CONFIG) --cxxflags 2>/dev/null)
+WX_LIBS     := $(shell $(WX_CONFIG) --libs 2>/dev/null)
+
+WX_SRCS := wx/main_wx.cpp wx/settings_dlg.cpp wx/script_dlg.cpp \
+           wx/original_wnd.cpp wx/gui_convert.cpp wx/preview_render.cpp \
+           wx/capture_log.cpp
+WX_OBJS := $(addprefix $(OBJDIR)/wx_, $(notdir $(WX_SRCS:.cpp=.o)))
+# Linux support objects shared with the CLI (everything but main_cli.o)
+GUI_SUPPORT_OBJS := $(filter-out $(OBJDIR)/main_cli.o,$(CLI_OBJS))
+
+TARGET_WX := bmp2msx-wx
+
+gui: $(TARGET_WX)
+
+$(TARGET_WX): $(CORE_OBJS) $(GUI_SUPPORT_OBJS) $(WX_OBJS)
+	@if [ -z "$(WX_CXXFLAGS)" ]; then \
+		echo "wx-config not found: install the wxWidgets development package (see README.md)"; \
+		exit 1; \
+	fi
+	$(CXX) $(CXXFLAGS) -o $@ $(CORE_OBJS) $(GUI_SUPPORT_OBJS) $(WX_OBJS) $(WX_LIBS)
+
+$(OBJDIR)/wx_%.o: wx/%.cpp $(INCDIR)/.stamp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS) $(INCLUDES) -Iwx -MMD -MP -c $< -o $@
+
 clean:
-	rm -rf $(OBJDIR) $(TARGET)
+	rm -rf $(OBJDIR) $(TARGET) $(TARGET_WX)
 
--include $(OBJS:.o=.d)
+-include $(OBJS:.o=.d) $(WX_OBJS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all clean gui
