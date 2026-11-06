@@ -21,7 +21,7 @@ struct C_COLOR_TABLE {
 // 設定
 // -------------------------------------------------------------
 
-const int screen_mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12, 8, 8 };	// 画面モード番号
+const int screen_mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12 };	// 画面モード番号
 
 // 画面サイズ
 const C_SCREEN_SIZE screen_size[] = {
@@ -39,8 +39,6 @@ const C_SCREEN_SIZE screen_size[] = {
 	{ 256, 256 },	// screen 8 (256 lines)
 	{ 256, 256 },	// screen 10/11 (256 lines)
 	{ 256, 256 },	// screen 12 (256 lines)
-	{ 256, 212 },	// screen 8 (V9968 EPAL palette)
-	{ 256, 256 },	// screen 8 (V9968 EPAL palette) (256 lines)
 };
 
 
@@ -208,16 +206,12 @@ static inline int _abs( int a );
 static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode, int ErrAdd, int x, int y, C_COLOR c );
 static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
 static inline int _distance_itp( int r1, int g1, int b1, int r2, int g2, int b2 );
-static void _rgb_to_itp( double *p_i, double *p_ct, double *p_cp, int r, int g, int b );
 
 static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
 							  bool FourceZero,C_COLOR FZColor );
 static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 );
 
 static bool cnvRecolor8( C_COLOR *in,int width,int height,
-						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
-						C_TILE_PATTERN *tail,int tailcnt );
-static bool cnvRecolor8P( C_COLOR *in,int width,int height,
 						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 						C_TILE_PATTERN *tail,int tailcnt );
 static bool cnvRecolor5( C_COLOR *in,int width,int height,
@@ -670,10 +664,7 @@ bool cnvRecolor( C_COLOR *in,int width,int height,
 {
 	bool	bRet;
 
-	if( CnvMode->screen_mode == MD_SC8P || CnvMode->screen_mode == MD_SC8P_256L ) {
-		//	256色パレットビットマップへ変換する (V9968 EPAL)
-		return cnvRecolor8P( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
-	} else if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
+	if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
 		//	256色ビットマップへ変換する
 		return cnvRecolor8( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 	} else {
@@ -854,154 +845,6 @@ static bool cnvRecolor8( C_COLOR *in,int width,int height,
 			// 結果を出力する
 			if( CnvMode->FourceZero && cc == fource_zero_color ) n = 0;	// 強制ゼロ化
 			out[ ptr ] = n;
-			// 次の出力先
-			++ptr;
-		}	// x
-	}	// y
-	ret = true;
-l_exit:
-	if( p_diffusion_error[0] != nullptr ) free( p_diffusion_error[0] );
-	if( p_diffusion_error[1] != nullptr ) free( p_diffusion_error[1] );
-	return ret;
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		減色ルーチン（SCREEN8 V9968 EPAL パレット用）
-//	2.	引数
-//		in		...	画像入力メモリ（内容は破壊されます）
-//		width	...	画像幅
-//		height	...	画像高さ
-//		out		...	画像出力メモリ（1ドット1バイトのパレット番号）
-//		CnvMode	...	現在の設定
-//		prog	...	経過表示関数
-//		pal		...	パレット（256色）
-//	3.	返値
-//		false	...	失敗
-//		true	...	成功
-//	4.	備考
-//		cnvRecolor5 の256色版。タイルモードには対応しない。
-// -------------------------------------------------------------
-static bool cnvRecolor8P( C_COLOR *in,int width,int height,
-					unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
-					C_TILE_PATTERN *tail,int tailcnt ) {
-	int x, y, z, ptr;
-	int cr, cg, cb;		// 元画素のＲＧＢ
-	int pr, pg, pb;		// 画素値
-	int er, eg, eb;		// 誤差（正数へ丸める）
-	int n;
-	double nr, r;
-	double pi, pt, pp;	// 画素の ICtCp 値
-	double pal_i[ 256 ], pal_t[ 256 ], pal_p[ 256 ];	// パレットの ICtCp 値
-	C_COLOR c, cc, *pin;
-	C_COLOR fource_zero_color = -1;
-	signed short *p_diffusion_error[2] = { nullptr, nullptr };
-	signed short *p_x_diffusion_error, *p_y_diffusion_error;
-	int diffusion_error_coef = 0;
-	int x_diffusion_error_coef = 0;
-	int y_diffusion_error_coef = 0;
-	C_COLOR bit_depth_mask;
-	bool ret = false;
-
-	(void)tail;		// タイルモード未対応
-	(void)tailcnt;
-
-	// 誤差拡散係数
-	if( CnvMode->diffusion_error_enable ){
-		diffusion_error_coef = int( CnvMode->diffusion_error_coef * 1024 );
-		x_diffusion_error_coef = int( CnvMode->diffusion_error_x_weight * 256. );
-		y_diffusion_error_coef = 256 - x_diffusion_error_coef;
-	}
-
-	// 誤差蓄積用バッファの作成
-	for( x = 0; x < 2; ++x ) {
-		p_diffusion_error[ x ] = (signed short*) malloc( ( width + 5 ) * 4 * sizeof( signed short ) );
-		if( p_diffusion_error[ x ]==NULL ) goto l_exit;
-		memset( p_diffusion_error[ x ], 0, ( width + 5 ) * 4 * sizeof( signed short ) );
-	}
-
-	// 精度制限用マスク作成
-	bit_depth_mask = _create_bit_depth_mask( CnvMode->Seido );
-	fource_zero_color = CnvMode->FourceZero ? CnvMode->FZColor & bit_depth_mask : -1;
-
-	// パレットの ICtCp 値を先に求めておく（距離計算の高速化）
-	for( z = 0; z < 256; ++z ){
-		_rgb_to_itp( &pal_i[ z ], &pal_t[ z ], &pal_p[ z ], GET_RED( pal[ z ] ), GET_GREEN( pal[ z ] ), GET_BLUE( pal[ z ] ) );
-	}
-
-	// 全ピクセルを舐める
-	ptr = 0;
-	pin = in;
-	n = 0;
-
-	for( y = 0; y < height; ++y ){
-		if( !prog( y * 100 / height ) ) goto l_exit;
-		p_x_diffusion_error = p_diffusion_error[ y & 1 ];
-		p_y_diffusion_error = p_diffusion_error[ 1 - ( y & 1 ) ];
-
-		for( x = 0; x < width; ++x ){
-			cc = c = *pin;
-			pin++;
-
-			// ディザ処理
-			_put_dither_pattern( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
-
-			if( diffusion_error_coef ) {
-				// 誤差を計算に入れる
-				cr += p_x_diffusion_error[ x * 4 + 0 ];
-				cg += p_x_diffusion_error[ x * 4 + 1 ];
-				cb += p_x_diffusion_error[ x * 4 + 2 ];
-			}
-
-			// 比較する色は実際に表示できる色で無ければならないため、範囲外をクリップする
-			pr = range_limiter( cr, 0, 255 );
-			pg = range_limiter( cg, 0, 255 );
-			pb = range_limiter( cb, 0, 255 );
-
-			// 最も近い色を見つける（_distance_itp の二乗に相当。大小関係は変わらない）
-			_rgb_to_itp( &pi, &pt, &pp, pr, pg, pb );
-			nr = 1.0e30;
-			if( CnvMode->NonZero ) {
-				z = 1;
-			}
-			else {
-				z = 0;
-			}
-			for( ; z < 256; ++z ){
-				double di = pi - pal_i[ z ];
-				double dt = pt - pal_t[ z ];
-				double dp = pp - pal_p[ z ];
-				r = di * di + dt * dt + dp * dp;
-				if( r < nr ){
-					nr = r;
-					n  = z;
-					cc = pal[ z ];
-					if( r == 0 ) break;	// 完全一致なら抜ける
-				}
-			}	// z
-
-			if( diffusion_error_coef ) {
-				// 誤差を周囲のピクセルへ拡散させる
-				er = range_limiter( ( cr - GET_RED(   cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eg = range_limiter( ( cg - GET_GREEN( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				eb = range_limiter( ( cb - GET_BLUE(  cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
-				// 微細な誤差は消滅させる
-				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
-				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
-				if( _abs( eb ) < (signed)CnvMode->err ) eb = 0;
-				// 右に拡散
-				p_x_diffusion_error[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * x_diffusion_error_coef ) >> 8 );
-				p_x_diffusion_error[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * x_diffusion_error_coef ) >> 8 );
-				p_x_diffusion_error[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * x_diffusion_error_coef ) >> 8 );
-				// 下に拡散
-				p_y_diffusion_error[ x * 4 + 0 ] = (signed short)( ( er * y_diffusion_error_coef ) >> 8 );
-				p_y_diffusion_error[ x * 4 + 1 ] = (signed short)( ( eg * y_diffusion_error_coef ) >> 8 );
-				p_y_diffusion_error[ x * 4 + 2 ] = (signed short)( ( eb * y_diffusion_error_coef ) >> 8 );
-			}
-
-			// 結果を出力する
-			if( CnvMode->FourceZero && cc == fource_zero_color ) n = 0;	// 強制ゼロ化
-			out[ ptr ] = (unsigned char)n;
 			// 次の出力先
 			++ptr;
 		}	// x
@@ -1763,228 +1606,9 @@ bool cnvGetPaletteS8( C_COLOR *pal ){
 		// 着目色（選択色を使用の色）を取得
 		r = convert7to255_r[ ( i >> 2 ) & 7 ];
 		g = convert7to255_g[ ( i >> 5 ) & 7 ];
-		b = convert7to255_b[ i & 3 ];
+		b = convert3to255_s8b[ i & 3 ];
 		pal[ i ] = GET_RGB( r, g, b );
 	}
-	return true;
-}
-
-// -------------------------------------------------------------
-//	RGB各5bit 色空間のユーティリティ (SCREEN8 EPAL用)
-
-// 5bit値 → 8bit値 変換テーブル ( v * 255 / 31 )
-static const int epal_convert31to255[ 32 ] = {
-	 0,  8, 16, 24, 32, 41, 49, 57, 65, 74, 82, 90, 98,106,115,123,
-	131,139,148,156,164,172,180,189,197,205,213,222,230,238,246,255
-};
-
-// 8bit値 → 最も近い 5bit値
-static int epal_quantize31( int v )
-{
-	return convert_rgb_to_palette( epal_convert31to255, 32, v );
-}
-
-// メディアンカット用の色ビン
-struct C_EPAL_BIN {
-	int		r, g, b;		// RGB各5bit
-	int		n;				// その数
-};
-
-// メディアンカット用のボックス
-struct C_EPAL_BOX {
-	int		lo;				// ビン配列の開始位置
-	int		hi;				// ビン配列の終了位置（この値の手前まで）
-	long	pop;			// 総画素数
-	int		rmin, rmax, gmin, gmax, bmin, bmax;
-};
-
-static void _epal_box_update( C_EPAL_BOX *box, C_EPAL_BIN *bins )
-{
-	int i;
-
-	box->pop = 0;
-	box->rmin = box->gmin = box->bmin = 31;
-	box->rmax = box->gmax = box->bmax = 0;
-	for( i = box->lo; i < box->hi; ++i ){
-		box->pop += bins[ i ].n;
-		if( bins[ i ].r < box->rmin ) box->rmin = bins[ i ].r;
-		if( bins[ i ].r > box->rmax ) box->rmax = bins[ i ].r;
-		if( bins[ i ].g < box->gmin ) box->gmin = bins[ i ].g;
-		if( bins[ i ].g > box->gmax ) box->gmax = bins[ i ].g;
-		if( bins[ i ].b < box->bmin ) box->bmin = bins[ i ].b;
-		if( bins[ i ].b > box->bmax ) box->bmax = bins[ i ].b;
-	}
-}
-
-static int _epal_bin_key( const C_EPAL_BIN *bin, int channel )
-{
-	switch( channel ){
-	case 0:		return bin->r;
-	case 1:		return bin->g;
-	default:	return bin->b;
-	}
-}
-
-static int epal_sort_channel;	// ソート中のチャンネル（_epal_bin_compare 用）
-
-static int _epal_bin_compare( const void *a, const void *b )
-{
-	return _epal_bin_key( (const C_EPAL_BIN*)a, epal_sort_channel ) - _epal_bin_key( (const C_EPAL_BIN*)b, epal_sort_channel );
-}
-
-// -------------------------------------------------------------
-//	1.	日本語名
-//		減色用パレット（256色・RGB各5bit）を求める (SCREEN8 EPAL用)
-//	2.	引数
-//		in			...	(I)	画像
-//		width		...	(I)	幅
-//		height		...	(I)	高さ
-//		pal			...	(O)	パレット（256個）のアドレス
-//		p_pal_count	...	(O)	採用したパレット数を格納するアドレス
-//		FourceZero	...	(I)	強制ゼロ化の色がある true / ない false
-//		FZColor		...	(I)	強制ゼロ化の色
-//	3.	返値
-//		成功 true / 失敗 false
-//	4.	備考
-//		色空間は RGB各5bit (32768色)。使われている色が256色
-//		以下の場合は多い順にそのまま採用し、多い場合はメディ
-//		アンカット法で256色へ減色する。
-// -------------------------------------------------------------
-bool cnvGetPalette256( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
-					   bool FourceZero, C_COLOR FZColor )
-{
-	uint32_t *hist = nullptr;
-	C_EPAL_BIN *bins = nullptr;
-	C_EPAL_BOX boxes[ 256 ];
-	int i, j, nbin, nbox;
-	C_COLOR c;
-
-	*p_pal_count = 0;
-	ZeroMemory( pal, sizeof( C_COLOR ) * 256 );
-
-	// ヒストグラムの作成 (RGB各5bit)
-	hist = (uint32_t*) malloc( sizeof( uint32_t ) * 32768 );
-	if( hist == NULL ) return false;
-	memset( hist, 0, sizeof( uint32_t ) * 32768 );
-	for( i = 0; i < width * height; ++i ){
-		c = in[ i ];
-		if( FourceZero && c == FZColor ) continue;
-		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ]++;
-	}
-	nbin = 0;
-	for( i = 0; i < 32768; ++i ){
-		if( hist[ i ] ) ++nbin;
-	}
-	if( nbin == 0 ){
-		free( hist );
-		return false;
-	}
-	bins = (C_EPAL_BIN*) malloc( sizeof( C_EPAL_BIN ) * nbin );
-	if( bins == NULL ){
-		free( hist );
-		return false;
-	}
-	nbin = 0;
-	for( i = 0; i < 32768; ++i ){
-		if( hist[ i ] == 0 ) continue;
-		bins[ nbin ].r = ( i >> 10 ) & 31;
-		bins[ nbin ].g = ( i >>  5 ) & 31;
-		bins[ nbin ].b =   i        & 31;
-		bins[ nbin ].n = (int)hist[ i ];
-		++nbin;
-	}
-	free( hist );
-	hist = nullptr;
-
-	if( nbin <= 256 ){
-		// 使われている色が256色以下なら、多い順にそのまま採用する
-		C_COLOR_TABLE *tbl = (C_COLOR_TABLE*) malloc( sizeof( C_COLOR_TABLE ) * nbin );
-		if( tbl == NULL ){
-			free( bins );
-			return false;
-		}
-		for( i = 0; i < nbin; ++i ){
-			tbl[ i ].c = GET_RGB( epal_convert31to255[ bins[ i ].r ], epal_convert31to255[ bins[ i ].g ], epal_convert31to255[ bins[ i ].b ] );
-			tbl[ i ].n = bins[ i ].n;
-		}
-		qsort( tbl, nbin, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
-		for( i = 0; i < nbin; ++i ){
-			pal[ i ] = tbl[ i ].c;
-		}
-		*p_pal_count = nbin;
-		free( tbl );
-		free( bins );
-		return true;
-	}
-
-	// メディアンカット法で256個のボックスへ分割する
-	boxes[ 0 ].lo = 0;
-	boxes[ 0 ].hi = nbin;
-	_epal_box_update( &boxes[ 0 ], bins );
-	nbox = 1;
-	while( nbox < 256 ){
-		// 分割するボックスを選ぶ（画素数が最大で、色の広がりがあるもの）
-		int target = -1;
-		long target_pop = -1;
-		int range, channel, split;
-		long acc, half;
-		C_EPAL_BOX *box;
-
-		for( i = 0; i < nbox; ++i ){
-			if( boxes[ i ].hi - boxes[ i ].lo < 2 ) continue;
-			range = boxes[ i ].rmax - boxes[ i ].rmin;
-			if( boxes[ i ].gmax - boxes[ i ].gmin > range ) range = boxes[ i ].gmax - boxes[ i ].gmin;
-			if( boxes[ i ].bmax - boxes[ i ].bmin > range ) range = boxes[ i ].bmax - boxes[ i ].bmin;
-			if( range == 0 ) continue;
-			if( boxes[ i ].pop > target_pop ){
-				target_pop = boxes[ i ].pop;
-				target = i;
-			}
-		}
-		if( target < 0 ) break;		// これ以上分割できない
-
-		// 最も広がりの大きいチャンネルで、画素数の中央値のところで分割する
-		box = &boxes[ target ];
-		channel = 0;
-		range = box->rmax - box->rmin;
-		if( box->gmax - box->gmin > range ){ channel = 1; range = box->gmax - box->gmin; }
-		if( box->bmax - box->bmin > range ){ channel = 2; range = box->bmax - box->bmin; }
-		epal_sort_channel = channel;
-		qsort( bins + box->lo, box->hi - box->lo, sizeof( C_EPAL_BIN ), _epal_bin_compare );
-		half = box->pop / 2;
-		acc = 0;
-		split = box->hi - 1;
-		for( i = box->lo; i < box->hi - 1; ++i ){
-			acc += bins[ i ].n;
-			if( acc >= half ){
-				split = i + 1;
-				break;
-			}
-		}
-		boxes[ nbox ].lo = split;
-		boxes[ nbox ].hi = box->hi;
-		box->hi = split;
-		_epal_box_update( box, bins );
-		_epal_box_update( &boxes[ nbox ], bins );
-		++nbox;
-	}
-
-	// 各ボックスの平均色をパレットにする
-	for( i = 0; i < nbox; ++i ){
-		long rsum = 0, gsum = 0, bsum = 0;
-		int r5, g5, b5;
-		for( j = boxes[ i ].lo; j < boxes[ i ].hi; ++j ){
-			rsum += (long)bins[ j ].r * bins[ j ].n;
-			gsum += (long)bins[ j ].g * bins[ j ].n;
-			bsum += (long)bins[ j ].b * bins[ j ].n;
-		}
-		r5 = (int)( ( rsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
-		g5 = (int)( ( gsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
-		b5 = (int)( ( bsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
-		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
-	}
-	*p_pal_count = nbox;
-	free( bins );
 	return true;
 }
 

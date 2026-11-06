@@ -9,17 +9,17 @@
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-#define	CFG_VERSION		"ver 2026_10_13 (C)2000-2026 HRA!"	//	バージョン番号
+#define	CFG_VERSION		"ver 2026_11_07 (C)2000-2026 HRA!"	//	バージョン番号
 
 #define	COLCUR1			GET_RGB(255,255,240)				//	カラーテーブル現在位置カーソル色１（内側）
 #define	COLCUR2			GET_RGB(15,15,0)					//	カラーテーブル現在位置カーソル色２（外側）
-#define PV_MAX			50								//	プレビュー記憶最大数
+#define PV_MAX			50									//	プレビュー記憶最大数
 #define cnDataBk1		GET_RGB(0,0,120)					//	設定表示の背景（設定、変換結果画像）
 #define cnDataBk2		GET_RGB(120,0,0)					//	設定表示の背景（変換元画像）
 #define cnDataText		GET_RGB(255,255,255)				//	設定表示の背景
-#define	cnWidth			512								//	幅
-#define	cnHeight		424								//	高さ
-#define	cnZoomMax		4								//	拡大率最大
+#define	cnWidth			512									//	幅
+#define	cnHeight		424									//	高さ
+#define	cnZoomMax		4									//	拡大率最大
 
 //	ロゴイメージのサイズ
 #define cnBGWidth		256

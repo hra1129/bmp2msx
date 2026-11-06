@@ -1,2 +1,1 @@
 C:\Users\hra\Documents\github\bmp2msx\source\DebugE\BMP2MSXE.exe
-C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\DebugE\BMP2MSXE.exe

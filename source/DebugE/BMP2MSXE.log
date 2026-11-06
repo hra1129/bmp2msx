@@ -18,4 +18,5 @@
   WndProc.cpp
   コードを生成中...
 bsave.obj : warning LNK4075: /EDITANDCONTINUE は /INCREMENTAL:NO の指定によって無視されます。
-  BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\DebugE\BMP2MSXE.exe
+WndProc.obj : error LNK2019: 未解決の外部シンボル "bool __cdecl cnvGetPalette256(unsigned int *,int,int,unsigned int *,int *,bool,unsigned int)" (?cnvGetPalette256@@YA_NPAIHH0PAH_NI@Z) が関数 "bool __cdecl CreatePal(int &,struct SETTING *,unsigned int *,int,int,unsigned int *)" (?CreatePal@@YA_NAAHPAUSETTING@@PAIHH2@Z) で参照されました
+DebugE\BMP2MSXE.exe : fatal error LNK1120: 1 件の未解決の外部参照

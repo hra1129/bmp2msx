@@ -18,8 +18,5 @@
 C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\logic\script_engine.cpp(1,1): warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
   winConvert.cpp
   winImage.cpp
-  コード生成しています。
-  Previous IPDB not found, fall back to full compilation.
-  All 526 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  コード生成が終了しました。
-  BMP2MSX.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\Release\BMP2MSX.exe
+WndProc.obj : error LNK2001: 外部シンボル "bool __cdecl cnvGetPalette256(unsigned int *,int,int,unsigned int *,int *,bool,unsigned int)" (?cnvGetPalette256@@YA_NPAIHH0PAH_NI@Z) は未解決です
+Release\BMP2MSX.exe : fatal error LNK1120: 1 件の未解決の外部参照

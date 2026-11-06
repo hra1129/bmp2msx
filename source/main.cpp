@@ -29,7 +29,7 @@ WINPROC( SubProc );							// SubProc.cpp
 // グローバル変数
 
 HACCEL hKey			= NULL;
-static HWND hWnd		= NULL;
+static HWND hWnd	= NULL;
 HMENU hMenuSub		= NULL;
 
 // -------------------------------------------------------------
