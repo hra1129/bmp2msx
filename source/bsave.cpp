@@ -12,7 +12,7 @@
 // -------------------------------------------------------------
 // 設定
 // -------------------------------------------------------------
-static const char* smode="235678AC5678ACPP";			// ファイル名の最後につける記号
+static const char* smode="235678AC5678ACPPBDFGHFGH";			// ファイル名の最後につける記号
 
 // -------------------------------------------------------------
 // 保存用クラス
@@ -33,6 +33,7 @@ static int _SaveBodyS3( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SaveBodyAL( FU_FILE *hf, const byte* ptr, int width, int height, int pitch, int *outadr );
 static int _SaveColorS2( FU_FILE *hf, const byte* ptr, int *outadr );
 static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outadr );
+static int _SavePaletteTableEpal( FU_FILE *hf, int paltbl, C_PALETTE *pal, int palnum, int *outadr );
 static void _GetOutFilename( char* szOutFile, const char* szInFile, int nScrMode, int nInter, bool pal );
 static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode );
 static bool _save_basic_file( SETTING *Mode, const char *szFileName );
@@ -47,6 +48,9 @@ static bool _is_256_lines_mode( uint32_t screen_mode ) {
 	case MD_SC10_256L:
 	case MD_SC12_256L:
 	case MD_SC8P_256L:
+	case MD_SC5P_256L:
+	case MD_SC6P_256L:
+	case MD_SC7P_256L:
 		return true;
 	}
 	return false;
@@ -92,16 +96,22 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 	switch( Mode->screen_mode ){
 	case MD_SC5:
 	case MD_SC7:
+	case MD_SC5P:
+	case MD_SC7P:
 		save_width = width >> 1;
 		break;
 	case MD_SC5_256L:
 	case MD_SC7_256L:
+	case MD_SC5P_256L:
+	case MD_SC7P_256L:
 		save_width = width >> 1;
 		break;
 	case MD_SC6:
+	case MD_SC6P:
 		save_width = width >> 2;
 		break;
 	case MD_SC6_256L:
+	case MD_SC6P_256L:
 		save_width = width >> 1;
 		break;
 	default:
@@ -153,9 +163,11 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		// ピクセルの保存
 		switch( Mode->screen_mode ) {
 		case MD_SC2:	//	SCREEN 2
+		case MD_SC2P:	//	SCREEN 2 EPAL
 			ecode = _SaveBodyS2( hf, ptr, &outadr );
 			break;
 		case MD_SC3:	//	SCREEN 3
+		case MD_SC3P:	//	SCREEN 3 EPAL
 			ecode = _SaveBodyS3( hf, ptr, &outadr );
 			break;
 		default:		//	SCREEN 5 以降
@@ -164,13 +176,22 @@ int bsvSaveBmp( HWND hWnd, const char *szInFileName, byte* bmp, int width, int h
 		if( ecode != BSV_NOERR ) break;
 		
 		// パレットテーブルが有れば保存する
-		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE && Mode->screen_mode < MD_SC5_256L ){
-			ecode = _SavePaletteTable( hf, paltbl, Mode->color_palette, &outadr );
-			if( ecode != BSV_NOERR ) break;
+		if( paltbl != 0 && Mode->PltMode == PLT_BSAVE ){
+			if( cnvIsEpalMode( Mode->screen_mode ) ){
+				// EPAL形式 (色数×3バイト)。256ラインモードはベースモードと同様に埋め込まない
+				if( !_is_256_lines_mode( Mode->screen_mode ) ){
+					ecode = _SavePaletteTableEpal( hf, paltbl, Mode->color_palette_epal, cnvEpalColorCount( Mode->screen_mode ), &outadr );
+					if( ecode != BSV_NOERR ) break;
+				}
+			}
+			else if( Mode->screen_mode < MD_SC5_256L ){
+				ecode = _SavePaletteTable( hf, paltbl, Mode->color_palette, &outadr );
+				if( ecode != BSV_NOERR ) break;
+			}
 		}
 
 		//	カラーテーブル( SCREEN 2/4 )
-		if( Mode->screen_mode == MD_SC2 ) {
+		if( Mode->screen_mode == MD_SC2 || Mode->screen_mode == MD_SC2P ) {
 			ecode = _SaveColorS2( hf, ptr, &outadr );
 			if( ecode != BSV_NOERR ) break;
 		}
@@ -230,6 +251,21 @@ void bsvSavePLFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 		MessageBox( hWnd,WriteErr,MsgCap,MB_OK | MB_ICONWARNING );
 		return;		// ファイルが作れない
 	}
+	if( cnvIsEpalMode( Mode->screen_mode ) ) {
+		// EPAL形式 (色数×3バイト: R,G,B 各5bit) を 8回繰り返す
+		byte EBuf[ 48 ] = {0};
+		int palnum = cnvEpalColorCount( Mode->screen_mode );
+		for( i=0;i<palnum;++i ) {
+			EBuf[ i*3+0 ] = (byte)( Mode->color_palette_epal[i].red   & 31 );
+			EBuf[ i*3+1 ] = (byte)( Mode->color_palette_epal[i].green & 31 );
+			EBuf[ i*3+2 ] = (byte)( Mode->color_palette_epal[i].blue  & 31 );
+		}
+		for( i=0;i<8;++i ) {
+			fu_write( hf,EBuf, palnum * 3 );
+		}
+		fu_close( hf );
+		return;
+	}
 	// 出力データを作成する
 	for( i=0;i<16;++i ) {
 		Buf[ i*2+0 ] = (Mode->color_palette[i].red<<4) | Mode->color_palette[i].blue;
@@ -272,6 +308,11 @@ void bsvLoadPLBsaveFile( SETTING *screen_mode, const char *szFileName ) {
 	case '5':	i = MD_SC5;	break;
 	case '6':	i = MD_SC6;	break;
 	case '7':	i = MD_SC7;	break;
+	case 'B':	i = MD_SC2P;	break;
+	case 'D':	i = MD_SC3P;	break;
+	case 'F':	i = MD_SC5P;	break;
+	case 'G':	i = MD_SC6P;	break;
+	case 'H':	i = MD_SC7P;	break;
 	default:	return;				//	モード不明画像
 	}
 
@@ -284,6 +325,26 @@ void bsvLoadPLBsaveFile( SETTING *screen_mode, const char *szFileName ) {
 
 	//	パレットテーブルをシーク
 	fu_seek( hf, adr, FU_SEEK_TOP );
+
+	if( cnvIsEpalMode( (uint32_t) i ) ) {
+		// EPAL形式 (色数×3バイト: R,G,B 各5bit)
+		byte EBuf[ 48 ];
+		int palnum = cnvEpalColorCount( (uint32_t) i );
+		int k;
+		memset( EBuf, 0, sizeof( EBuf ) );
+		if( fu_read( hf, EBuf, palnum * 3 ) ) {
+			for( k = 0; k < palnum; ++k ) {
+				screen_mode->color_palette_epal[ k ].red   = EBuf[ k * 3 + 0 ] & 31;
+				screen_mode->color_palette_epal[ k ].green = EBuf[ k * 3 + 1 ] & 31;
+				screen_mode->color_palette_epal[ k ].blue  = EBuf[ k * 3 + 2 ] & 31;
+				screen_mode->color_palette[ k ].red   = convert_rgb_to_palette( convert7to255_r, 8, cnvEpalTo255( EBuf[ k * 3 + 0 ] & 31 ) );
+				screen_mode->color_palette[ k ].green = convert_rgb_to_palette( convert7to255_g, 8, cnvEpalTo255( EBuf[ k * 3 + 1 ] & 31 ) );
+				screen_mode->color_palette[ k ].blue  = convert_rgb_to_palette( convert7to255_b, 8, cnvEpalTo255( EBuf[ k * 3 + 2 ] & 31 ) );
+			}
+		}
+		fu_close( hf );
+		return;
+	}
 
 	// データを入力する
 	memset( Buf, 0, sizeof( Buf ) );
@@ -359,6 +420,44 @@ static int _SavePaletteTable( FU_FILE *hf, int paltbl, C_PALETTE *pal, int *outa
 		dmy[1]=(byte)(  pal[i].green );
 		if( !fu_write( hf, dmy, 2 ) ) return BSV_ERR_WRITE;
 		*outadr += 2;
+	}
+
+	return BSV_NOERR;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		パレットテーブルの保存 (EPAL形式)
+//	2.	引数
+//		hf		...	(I)	ファイルハンドル
+//		paltbl	...	(I)	パレットテーブルのアドレス
+//		pal		...	(I)	パレット値 (5bit)
+//		palnum	...	(I)	色数
+//		outadr	...	(I/O)	出力バイト数を格納している変数のアドレス
+//	3.	返値
+//		エラーコード
+//	4.	備考
+//		EPAL形式は 1色につき R,G,B の順に 5bit値を1バイトずつ
+//		(色数×3バイト) を Port#3 への書き込み順で並べたもの。
+// -------------------------------------------------------------
+static int _SavePaletteTableEpal( FU_FILE *hf, int paltbl, C_PALETTE *pal, int palnum, int *outadr ) {
+	int		i;
+	byte	dmy = 0;
+	byte	buf[ 3 ];
+
+	// パレットテーブルまでを 0 で埋める
+	while( *outadr < paltbl ) {
+		if( !fu_write( hf, &dmy, 1 ) ) return BSV_ERR_WRITE;
+		(*outadr)++;
+	}
+
+	// パレットを出力する (R,G,B 各5bit)
+	for( i = 0; i < palnum; ++i ) {
+		buf[0] = (byte)( pal[i].red   & 31 );
+		buf[1] = (byte)( pal[i].green & 31 );
+		buf[2] = (byte)( pal[i].blue  & 31 );
+		if( !fu_write( hf, buf, 3 ) ) return BSV_ERR_WRITE;
+		*outadr += 3;
 	}
 
 	return BSV_NOERR;
@@ -479,6 +578,7 @@ static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int
 	bsh.start	= 0;
 	switch( screen_mode ) {
 	case MD_SC2:
+	case MD_SC2P:
 		bsh.end	= 0x37FF;
 		break;
 	default:
@@ -487,7 +587,12 @@ static int _SaveHeader( FU_FILE *hf, int screen_mode, int width, int height, int
 		}
 		else {
 			if( paltbl ){
-				bsh.end = paltbl + 32 - 1;
+				if( cnvIsEpalMode( (uint32_t) screen_mode ) ){
+					bsh.end = paltbl + cnvEpalColorCount( (uint32_t) screen_mode ) * 3 - 1;
+				}
+				else {
+					bsh.end = paltbl + 32 - 1;
+				}
 			}
 			else{
 				bsh.end = width * height - 1;
@@ -578,6 +683,20 @@ static void _SaveCSVFile( HWND hWnd, const char *szFileName, SETTING *Mode ) {
 
 	// データを出力する
 	fu_write( hf, cszCSVHead, lstrlen(cszCSVHead) );
+	if( cnvIsEpalMode( Mode->screen_mode ) ) {
+		// EPAL形式 (R,G,B 各5bit) で出力する
+		palnum = cnvEpalColorCount( Mode->screen_mode );
+		for( i = 0; i < palnum; ++i ){
+			wsprintf( szBuf,"%02X,%02X,%02X%s",
+				Mode->color_palette_epal[i].red & 31,
+				Mode->color_palette_epal[i].green & 31,
+				Mode->color_palette_epal[i].blue & 31,
+				(i==palnum-1)?"\x0D\x0A":"," );
+			fu_write( hf, szBuf, lstrlen(szBuf) );
+		}
+		fu_close( hf );
+		return;
+	}
 	palnum = ( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L ) ? 4 : 16;
 	for( i = 0; i < palnum; ++i ){
 		Buf[ 0 ] = (Mode->color_palette[i].red<<4) | Mode->color_palette[i].blue;
@@ -606,7 +725,8 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	FU_FILE *hf;
 	int line_no = 100;
 	int i;
-	bool epal = ( Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L );
+	bool epal = ( Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L || cnvIsEpalMode( Mode->screen_mode ) );
+	int epal_count = epal ? cnvEpalColorCount( Mode->screen_mode ) : 0;
 
 	strcpy( s_basic_name, szFileName );
 	p = strrchr( s_basic_name, '.' );
@@ -671,12 +791,12 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 	}
 
 	if( epal ) {
-		//	V9968 EPAL 用: EPAL を有効にし、256色パレットを Port#2 へ流し込む (DATA 文は末尾)
+		//	V9968 EPAL 用: EPAL を有効にし、パレットを Port#2 へ流し込む (DATA 文は末尾)
 		fu_printf( hf, "%d OUT &H99,16:OUT &H99,&H94\r\n", line_no );	// R#20 = 16 (EPAL = 1)
 		line_no += 10;
 		fu_printf( hf, "%d OUT &H99,0:OUT &H99,&H90\r\n", line_no );	// R#16 = 0
 		line_no += 10;
-		fu_printf( hf, "%d RESTORE 60000:FOR I=0 TO 255:READ R,G,B:OUT &H9A,R:OUT &H9A,G:OUT &H9A,B:NEXT\r\n", line_no );
+		fu_printf( hf, "%d RESTORE 60000:FOR I=0 TO %d:READ R,G,B:OUT &H9A,R:OUT &H9A,G:OUT &H9A,B:NEXT\r\n", line_no, epal_count - 1 );
 		line_no += 10;
 	}
 	else if( Mode->PltMode == PLT_BSAVE ) {
@@ -737,7 +857,7 @@ static bool _save_basic_file( SETTING *Mode, const char *szFileName ) {
 		//	EPAL 用パレットデータ (R,G,B 各5bit、Port#2 への書き込み順)
 		int data_line = 60000;
 		int j;
-		for( i = 0; i < 256; i += 4 ){
+		for( i = 0; i < epal_count; i += 4 ){
 			fu_printf( hf, "%d DATA ", data_line );
 			for( j = 0; j < 4; ++j ){
 				fu_printf( hf, "%d,%d,%d%s",

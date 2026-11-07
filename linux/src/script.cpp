@@ -217,12 +217,21 @@ bool cmd_comment( Script& s ) {
 }
 
 bool cmd_screen( Script& s ) {
-	// CLI extension: SCREEN 8P / SCREEN 8P256 (Phase 3 EPAL modes)
+	// CLI extension: SCREEN 8P / SCREEN 8P256 (Phase 3 EPAL modes) and
+	// SCREEN 2P/3P/5P/6P/7P (+256) for the SCREEN2-7 EPAL modes
 	{
 		size_t save = s.ptr;
 		std::string w = get_word( s );
 		if( iequals( w, "8P" ) ) { s.set.screen_mode = MD_SC8P; return true; }
 		if( iequals( w, "8P256" ) ) { s.set.screen_mode = MD_SC8P_256L; return true; }
+		if( iequals( w, "2P" ) ) { s.set.screen_mode = MD_SC2P; return true; }
+		if( iequals( w, "3P" ) ) { s.set.screen_mode = MD_SC3P; return true; }
+		if( iequals( w, "5P" ) ) { s.set.screen_mode = MD_SC5P; return true; }
+		if( iequals( w, "6P" ) ) { s.set.screen_mode = MD_SC6P; return true; }
+		if( iequals( w, "7P" ) ) { s.set.screen_mode = MD_SC7P; return true; }
+		if( iequals( w, "5P256" ) ) { s.set.screen_mode = MD_SC5P_256L; return true; }
+		if( iequals( w, "6P256" ) ) { s.set.screen_mode = MD_SC6P_256L; return true; }
+		if( iequals( w, "7P256" ) ) { s.set.screen_mode = MD_SC7P_256L; return true; }
 		s.ptr = save;
 	}
 	int m;

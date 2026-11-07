@@ -773,7 +773,7 @@ EVENT( onMenuSave ) {
 
 	if( pvIndex < 0 ) return 0;
 	w = screen_size[ tPreview[ pvIndex ].tMode.screen_mode ].w;
-	if( ( tPreview[ pvIndex ].tMode.screen_mode >= MD_SC5 ) && !tPreview[ pvIndex ].tMode.b192 ){
+	if( ( screen_mode[ tPreview[ pvIndex ].tMode.screen_mode ] >= 5 ) && !tPreview[ pvIndex ].tMode.b192 ){
 		h = screen_size[ tPreview[ pvIndex ].tMode.screen_mode ].h;
 	}
 	else{
@@ -812,7 +812,7 @@ EVENT( onMenuSaveAs ) {
 	if( pvIndex < 0 ) return 0;
 	tMode = tPreview[pvIndex].tMode;
 	w=screen_size[ tMode.screen_mode ].w; 
-	if( (tMode.screen_mode >= MD_SC5) && !tMode.b192 ) {
+	if( (screen_mode[ tMode.screen_mode ] >= 5) && !tMode.b192 ) {
 		h=screen_size[ tMode.screen_mode ].h;
 	} else {
 		h=192;
@@ -1202,7 +1202,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 	}
 	// 変換後のサイズを求め、メモリを確保する
 	owidth  = screen_size[ Mode->screen_mode ].w;
-	if( (Mode->screen_mode >= MD_SC5) && Mode->b192 ) {
+	if( (screen_mode[ Mode->screen_mode ] >= 5) && Mode->b192 ) {
 		oheight = 192;
 	} else {
 		oheight = screen_size[ Mode->screen_mode ].h;
@@ -1223,7 +1223,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		//	アスペクト比
 		switch( Mode->SizeMode ) {
 		case RM_MSX:
-			if( (Mode->screen_mode == MD_SC6) || (Mode->screen_mode == MD_SC7) || (Mode->screen_mode == MD_SC6_256L) || (Mode->screen_mode == MD_SC7_256L) ) {
+			if( (Mode->screen_mode == MD_SC6) || (Mode->screen_mode == MD_SC7) || (Mode->screen_mode == MD_SC6_256L) || (Mode->screen_mode == MD_SC7_256L) || (Mode->screen_mode == MD_SC6P) || (Mode->screen_mode == MD_SC7P) || (Mode->screen_mode == MD_SC6P_256L) || (Mode->screen_mode == MD_SC7P_256L) ) {
 				wwidth  = width  * 5 / 3;	//	横に 1.66倍
 				wheight = height;
 			} else {
@@ -1258,7 +1258,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 			cnvAntiResize( in, width, height, out, owidth, oheight, wwidth, wheight, prProg,Mode->Seido );
 			break;
 		default:			//	サイズ調節無し
-			if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L ) {
+			if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L && Mode->screen_mode != MD_SC6P && Mode->screen_mode != MD_SC7P && Mode->screen_mode != MD_SC6P_256L && Mode->screen_mode != MD_SC7P_256L ) {
 				cnvCopyInter( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
 			}else{
 				cnvCopy( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
@@ -1266,7 +1266,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		}
 	} else {
 		//	サイズ調整無し
-		if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L ) {
+		if( Mode->interlace && Mode->screen_mode != MD_SC6 && Mode->screen_mode != MD_SC7 && Mode->screen_mode != MD_SC6_256L && Mode->screen_mode != MD_SC7_256L && Mode->screen_mode != MD_SC6P && Mode->screen_mode != MD_SC7P && Mode->screen_mode != MD_SC6P_256L && Mode->screen_mode != MD_SC7P_256L ) {
 			cnvCopyInter( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
 		}else{
 			cnvCopy( in, width, height, out, owidth, oheight, prProg, Mode->Seido );
@@ -1283,7 +1283,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	//	ﾊﾟﾚｯﾄをｿｰﾄする
-	if( Mode->screen_mode < MD_SC8 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC8_256L) ) {
+	if( Mode->screen_mode < MD_SC8 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC8_256L) || cnvIsEpalMode( Mode->screen_mode ) ) {
 		if( !( Mode->fixed_palette && (Mode->SortMode == SM_INCAUTO) ) ) {
 			cnvSortPalette( Mode, Pal );
 		}
@@ -1299,6 +1299,14 @@ void Converter( SETTING *Mode, int nSrc ) {
 		case MD_SC5_256L:
 		case MD_SC6_256L:
 		case MD_SC7_256L:
+		case MD_SC2P:
+		case MD_SC3P:
+		case MD_SC5P:
+		case MD_SC6P:
+		case MD_SC7P:
+		case MD_SC5P_256L:
+		case MD_SC6P_256L:
+		case MD_SC7P_256L:
 			tailcnt = cnvCreateTail4( Mode->color_palette, Mode->PalEn, !Mode->NonZero, tail, Mode->screen_mode );
 			break;
 		}
@@ -1310,7 +1318,7 @@ void Converter( SETTING *Mode, int nSrc ) {
 		return;
 	}
 	// 変換する(COLORREF配列→ＭＳＸ画像)
-	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC10_256L) || Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L ) {	// Screen10/12 以外
+	if( Mode->screen_mode < MD_SC10 || (Mode->screen_mode >= MD_SC5_256L && Mode->screen_mode < MD_SC10_256L) || Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L || cnvIsEpalMode( Mode->screen_mode ) ) {	// Screen10/12 以外
 		cnvRecolor( out, owidth, oheight, bmp, Mode, prProg, Pal, tail, tailcnt );
 	}else{							// Screen10/12
 		cnvNtcolor( out, owidth, oheight, bmp, Mode, prProg );
@@ -1391,6 +1399,40 @@ static inline C_COLOR GetPix( C_COLOR *in,int width,int height,int x,int y )
 //	4.	備考
 //		なし
 // -----------------------------------------------------
+//	EPAL (SCREEN2/3/5/6/7) 用パレット換算ヘルパ
+//	color_palette (3bit) と color_palette_epal (5bit) の換算は、
+//	従来から CreatePal が維持してきた関係を使う。
+//	3bit から 5bit: ( convert7to255[v] * 31 + 127 ) / 255
+//	5bit から 3bit: cnvEpalTo255 の展開値に対する convert_rgb_to_palette
+// -----------------------------------------------------
+static int EpalDerive5( const int *tbl, int v3 )
+{
+	return ( tbl[ v3 & 7 ] * 31 + 127 ) / 255;
+}
+
+static int EpalReflect3( const int *tbl, int v5 )
+{
+	return convert_rgb_to_palette( tbl, 8, cnvEpalTo255( v5 ) );
+}
+
+//	そのチャンネルが 5bit 主体 (設定ダイアログで 5bit 編集された値) か否か。
+//	3bit 換算と一致せず、かつ 3bit 側が 5bit 値の反射と一致する場合のみ真。
+//	従来のビルドが作る設定 (常に 3bit から導出される) では決して真に
+//	ならないため、従来の設定に対する変換結果は変わらない。
+static bool EpalIsEdited( const int *tbl, int v3, int v5 )
+{
+	return ( v5 & 31 ) != EpalDerive5( tbl, v3 ) && ( v3 & 7 ) == EpalReflect3( tbl, v5 );
+}
+
+//	固定色の 8bit 値。編集済みのチャンネルは 5bit 値を展開し、
+//	そうでなければ従来どおり 3bit 値を展開する。
+static int EpalFixedPal8( const int *tbl, int v3, int v5 )
+{
+	if( EpalIsEdited( tbl, v3, v5 ) ) return cnvEpalTo255( v5 );
+	return tbl[ v3 & 7 ];
+}
+
+// -----------------------------------------------------
 static bool CreatePal( int &n, SETTING *Mode, C_COLOR *in, int w, int h, C_COLOR *Pal )
 {
 	C_COLOR	*t;
@@ -1445,6 +1487,100 @@ static bool CreatePal( int &n, SETTING *Mode, C_COLOR *in, int w, int h, C_COLOR
 							convert7to255_g[ Mode->color_palette[i].green ],
 							convert7to255_b[ Mode->color_palette[i].blue  ] );
 		}
+	}else if( cnvIsEpalMode( Mode->screen_mode ) ){	// Screen 2/3/5/6/7 (V9968 EPAL)
+		// 16色モードと同じパレット構成を、RGB各5bit精度で生成する
+		C_COLOR	AutoPal[ 16 ];
+		int		auto_count = 0;
+		int		k;
+		bool	keep_epal[ 16 ] = {};
+		j = 0;
+		pp = 0;
+		pnum = cnvEpalColorCount( Mode->screen_mode );
+		for( i = 0 ; i < pnum; ++i ){
+			if( Mode->NonZero && i == 0 ) continue;
+			if( Mode->PalEn[ i ] == PALEN_NONE ) continue;
+			++n;
+			if( Mode->PalEn[ i ] == PALEN_USE ){
+				Pal[pp]=GET_RGB( EpalFixedPal8( convert7to255_r, Mode->color_palette[i].red,   Mode->color_palette_epal[i].red   ),
+							 EpalFixedPal8( convert7to255_g, Mode->color_palette[i].green, Mode->color_palette_epal[i].green ),
+							 EpalFixedPal8( convert7to255_b, Mode->color_palette[i].blue,  Mode->color_palette_epal[i].blue  ) );
+				++pp;
+			}
+		}
+		if( n<2 ){
+			MessageBox( hWnd, cszPalCnt, MsgCap, MB_OK | MB_ICONWARNING );
+			return false;
+		}
+		if( !Mode->fixed_palette ){		// 最適パレット (RGB各5bitで選択する)
+			t = (C_COLOR*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,sizeof( C_COLOR)*w*h );	// 作業領域の確保
+			if( t==NULL ){
+				MessageBox( hWnd, cszNotEnoughMem, MsgCap, MB_OK | MB_ICONWARNING );
+				return false;
+			}
+			CopyMemory( t, in, w * h * sizeof( C_COLOR ) );
+			if( Mode->EpalHGuard ){
+				// 土台は Wu + k-means (Convert.cpp)、その後で特徴色改善
+				cnvGetPaletteEpalWu( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			} else {
+				cnvGetPaletteEpalN( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			}
+			if( Mode->EpalHGuard && auto_count > 0 ){
+				// 特徴色改善: 提案はhドメイン、受理は真SSEガード (Convert.cpp)
+				int pal5[ 16 ][ 3 ];
+				int fixed5[ 16 ][ 3 ];
+				int i2;
+				for( i2 = 0; i2 < pp; ++i2 ){
+					cnvEpalColorTo5bit( Pal[ i2 ], &fixed5[ i2 ][ 0 ], &fixed5[ i2 ][ 1 ], &fixed5[ i2 ][ 2 ] );
+				}
+				for( i2 = 0; i2 < auto_count; ++i2 ){
+					cnvEpalColorTo5bit( AutoPal[ i2 ], &pal5[ i2 ][ 0 ], &pal5[ i2 ][ 1 ], &pal5[ i2 ][ 2 ] );
+				}
+				cnvEpalImprovePalette( t, w, h, pal5, auto_count, (const int (*)[ 3 ])fixed5, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+				for( i2 = 0; i2 < auto_count; ++i2 ){
+					AutoPal[ i2 ] = GET_RGB( cnvEpalTo255( pal5[ i2 ][ 0 ] ), cnvEpalTo255( pal5[ i2 ][ 1 ] ), cnvEpalTo255( pal5[ i2 ][ 2 ] ) );
+				}
+			}
+			LocalFree( t );
+			// 自動選択分を Pal の固定色の後ろへ並べる
+			k = pp;
+			for( i = 0; i < auto_count; ++i ){
+				Pal[k++] = AutoPal[i];
+			}
+			// 最適パレットを固定パレットへ反映 (color_palette は3bit近似、EPAL用は5bitで記録)
+			j = pp;
+			for( i = 0; i < pnum; ++i ){
+				if( Mode->NonZero && i==0 ) continue;
+				if( Mode->PalEn[i]==PALEN_AUTO ){
+					Mode->color_palette[i].red	= convert_rgb_to_palette( convert7to255_r, 8, GET_RED( Pal[j] ) );
+					Mode->color_palette[i].green	= convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( Pal[j] ) );
+					Mode->color_palette[i].blue	= convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE( Pal[j] ) );
+					// EPAL では自動選択分を 5bit のまま記録する (keep_epal)
+					Mode->color_palette_epal[ i ].red	= ( GET_RED(   Pal[ j ] ) * 31 + 127 ) / 255;
+					Mode->color_palette_epal[ i ].green	= ( GET_GREEN( Pal[ j ] ) * 31 + 127 ) / 255;
+					Mode->color_palette_epal[ i ].blue	= ( GET_BLUE(  Pal[ j ] ) * 31 + 127 ) / 255;
+					keep_epal[ i ] = true;
+					++j;
+				}
+			}
+		}
+		n = pnum;
+		// 最終パレットを EPAL 用 (RGB各5bit) に記録し、Pal は 5bit→8bit 展開で作り直す
+		for( i = 0; i < pnum; ++i ){
+			n = 256;
+			bool user_spec = Mode->fixed_palette || Mode->PalEn[ i ] == PALEN_USE;
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_r, Mode->color_palette[i].red, Mode->color_palette_epal[i].red ) ) ){
+				Mode->color_palette_epal[i].red	= EpalDerive5( convert7to255_r, Mode->color_palette[i].red );
+			}
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_g, Mode->color_palette[i].green, Mode->color_palette_epal[i].green ) ) ){
+				Mode->color_palette_epal[i].green	= EpalDerive5( convert7to255_g, Mode->color_palette[i].green );
+			}
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_b, Mode->color_palette[i].blue, Mode->color_palette_epal[i].blue ) ) ){
+				Mode->color_palette_epal[i].blue	= EpalDerive5( convert7to255_b, Mode->color_palette[i].blue );
+			}
+			Pal[i] = GET_RGB(	cnvEpalTo255( Mode->color_palette_epal[i].red   ),
+							cnvEpalTo255( Mode->color_palette_epal[i].green ),
+							cnvEpalTo255( Mode->color_palette_epal[i].blue  ) );
+		}
 	}else if( Mode->screen_mode==MD_SC8P || Mode->screen_mode==MD_SC8P_256L ){	// Screen8 (V9968 EPAL)
 		int pal_count = 0;
 		t = (C_COLOR*)LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,sizeof( C_COLOR)*w*h );	// 作業領域の確保
@@ -1453,7 +1589,24 @@ static bool CreatePal( int &n, SETTING *Mode, C_COLOR *in, int w, int h, C_COLOR
 			return false;
 		}
 		CopyMemory( t, in, w * h * sizeof( C_COLOR ) );
-		cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		if( Mode->EpalHGuard ){
+			// 土台は Wu + k-means (Convert.cpp)、その後で特徴色改善
+			cnvGetPaletteEpalWu( t, w, h, Pal, &pal_count, 256, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		} else {
+			cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		}
+		if( Mode->EpalHGuard && pal_count > 0 ){
+			// 特徴色改善 (EPAL-N と共通のコア。固定色なし)
+			int pal5[ 256 ][ 3 ];
+			int i2;
+			for( i2 = 0; i2 < pal_count; ++i2 ){
+				cnvEpalColorTo5bit( Pal[ i2 ], &pal5[ i2 ][ 0 ], &pal5[ i2 ][ 1 ], &pal5[ i2 ][ 2 ] );
+			}
+			cnvEpalImprovePalette( t, w, h, pal5, pal_count, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			for( i2 = 0; i2 < pal_count; ++i2 ){
+				Pal[ i2 ] = GET_RGB( cnvEpalTo255( pal5[ i2 ][ 0 ] ), cnvEpalTo255( pal5[ i2 ][ 1 ] ), cnvEpalTo255( pal5[ i2 ][ 2 ] ) );
+			}
+		}
 		LocalFree( t );
 		for( i = pal_count; i < 256; ++i ){
 			Pal[ i ] = 0;

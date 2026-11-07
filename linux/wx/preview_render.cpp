@@ -199,6 +199,145 @@ void draw_screen8p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) 
 	}
 }
 
+// draw_screen2 with the EPAL (RGB555) palette.
+void draw_screen2p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
+	int r[ 2 ] = { 0 }, g[ 2 ] = { 0 }, b[ 2 ] = { 0 };
+	int x, y, adr, i, c, bit;
+
+	for( y = 0; y < 384; y += 2 ) {
+		for( x = 0; x < 512; x += 16 ) {
+			adr = y / 2;
+			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
+			r[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].red );
+			g[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].green );
+			b[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].blue );
+			r[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].red );
+			g[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].green );
+			b[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].blue );
+
+			c = bmp[ adr ];
+			for( i = 0; i < 8; ++i ) {
+				bit = ( c & 0x80 ) >> 7;
+				cv.plot( x + i * 2 + 0, y + 20, r[ bit ], g[ bit ], b[ bit ] );
+				cv.plot( x + i * 2 + 1, y + 20, r[ bit ], g[ bit ], b[ bit ] );
+				cv.plot( x + i * 2 + 0, y + 21, r[ bit ], g[ bit ], b[ bit ] );
+				cv.plot( x + i * 2 + 1, y + 21, r[ bit ], g[ bit ], b[ bit ] );
+				c = c << 1;
+			}
+		}
+	}
+}
+
+// draw_screen3 with the EPAL (RGB555) palette.
+void draw_screen3p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
+	int r, g, b;
+	int x, y, adr, i;
+
+	for( y = 0; y < 384; ++y ) {
+		for( x = 0; x < 512; x += 16 ) {
+			adr = y / 8;
+			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			for( i = 0; i < 8; ++i ) {
+				cv.plot( x + i, y + 20, r, g, b );
+			}
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			for( i = 0; i < 8; ++i ) {
+				cv.plot( x + i + 8, y + 20, r, g, b );
+			}
+		}
+	}
+}
+
+// draw_screen5 with the EPAL (RGB555) palette.
+void draw_screen5p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
+	int r, g, b;
+	int x, y, adr, t, h;
+
+	h = get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ) {
+		for( x = 0; x < 512; x += 4 ) {
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 128 + x / 4;
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			cv.plot( x + 0, y + t, r, g, b );
+			cv.plot( x + 1, y + t, r, g, b );
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			cv.plot( x + 2, y + t, r, g, b );
+			cv.plot( x + 3, y + t, r, g, b );
+		}
+	}
+}
+
+// draw_screen6 with the EPAL (RGB555) palette.
+void draw_screen6p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
+	int r, g, b;
+	int x, y, adr, t, h;
+
+	h = get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ) {
+		for( x = 0; x < 512; x += 4 ) {
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 128 + x / 4;
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].blue );
+			cv.plot( x + 0, y + t, r, g, b );
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].blue );
+			cv.plot( x + 1, y + t, r, g, b );
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].blue );
+			cv.plot( x + 2, y + t, r, g, b );
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x03 ].blue );
+			cv.plot( x + 3, y + t, r, g, b );
+		}
+	}
+}
+
+// draw_screen7 with the EPAL (RGB555) palette.
+void draw_screen7p( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
+	int r, g, b;
+	int x, y, adr, t, h;
+
+	h = get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ) {
+		for( x = 0; x < 512; x += 2 ) {
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 256 + x / 2;
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			cv.plot( x + 0, y + t, r, g, b );
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			cv.plot( x + 1, y + t, r, g, b );
+		}
+	}
+}
+
 void draw_screen12( Canvas& cv, const unsigned char* bmp, const SETTING* Mode ) {
 	int r, g, b, j, k, yy[ 4 ] = { 0 };
 	int x, y, z, adr, t, h;
@@ -250,6 +389,14 @@ void render_converted_preview( const unsigned char* bmp, const SETTING* mode,
 	case MD_SC8_256L:	draw_screen8( cv, bmp, mode );	break;
 	case MD_SC8P:
 	case MD_SC8P_256L:	draw_screen8p( cv, bmp, mode );	break;
+	case MD_SC2P:	draw_screen2p( cv, bmp, mode );	break;
+	case MD_SC3P:	draw_screen3p( cv, bmp, mode );	break;
+	case MD_SC5P:
+	case MD_SC5P_256L:	draw_screen5p( cv, bmp, mode );	break;
+	case MD_SC6P:
+	case MD_SC6P_256L:	draw_screen6p( cv, bmp, mode );	break;
+	case MD_SC7P:
+	case MD_SC7P_256L:	draw_screen7p( cv, bmp, mode );	break;
 	case MD_SC10:
 	case MD_SC12:
 	case MD_SC10_256L:

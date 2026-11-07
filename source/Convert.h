@@ -58,6 +58,14 @@ enum{
 	MD_SC12_256L,		// SCREEN 12 (256 lines)
 	MD_SC8P,			// SCREEN 8 (V9968 EPAL palette)
 	MD_SC8P_256L,		// SCREEN 8 (V9968 EPAL palette) (256 lines)
+	MD_SC2P,			// SCREEN 2/4 (V9968 EPAL palette)
+	MD_SC3P,			// SCREEN 3 (V9968 EPAL palette)
+	MD_SC5P,			// SCREEN 5 (V9968 EPAL palette)
+	MD_SC6P,			// SCREEN 6 (V9968 EPAL palette)
+	MD_SC7P,			// SCREEN 7 (V9968 EPAL palette)
+	MD_SC5P_256L,		// SCREEN 5 (V9968 EPAL palette) (256 lines)
+	MD_SC6P_256L,		// SCREEN 6 (V9968 EPAL palette) (256 lines)
+	MD_SC7P_256L,		// SCREEN 7 (V9968 EPAL palette) (256 lines)
 	MD_MAX,
 };
 
@@ -200,6 +208,7 @@ struct SETTING {
 	float			diffusion_error_x_weight;	// 誤差拡散 X-Y比
 	bool			output_basic_enable;		// BAS出力
 	C_PALETTE		color_palette_epal[256];	// SCREEN8 EPAL用 256色パレット (RGB各5bit) ※旧設定ファイルとの互換のため構造体の末尾に追加
+	bool			EpalHGuard;					// EPAL特徴色改善 (土台=Wu+k-means、提案=hドメイン、受理=真SSEガード) ※旧設定ファイルとの互換のため構造体の末尾に追加
 };
 
 //	値の上限下限に従って値をクリップする
@@ -238,6 +247,42 @@ bool cnvGetPaletteS8( C_COLOR *pal );
 //	減色用パレット（256色・RGB各5bit）を求める (SCREEN8 EPAL用)
 bool cnvGetPalette256( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
 					   bool FourceZero, C_COLOR FZColor );
+
+//	減色用パレット（最大16色・RGB各5bit）を求める (SCREEN2/3/5/6/7 EPAL用)
+//	fixed[0..fixed_num) の色は選択対象から除外され、自動選択は max_colors - fixed_num 色まで。
+bool cnvGetPaletteEpalN( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+						 int max_colors, const C_COLOR *fixed, int fixed_num,
+						 bool FourceZero, C_COLOR FZColor );
+
+//	減色用パレット（RGB各5bit）を Wu + k-means 法で求める (EpalHGuard 有効時の土台選択)
+//	引数は cnvGetPaletteEpalN と同じ。メディアンカットの代わりに Wu の
+//	分散最適ボックス分割で初期パレットを作り、k-means (LBG) で
+//	生カウント SSE を磨く。固定色の扱いは cnvGetPaletteEpalN と同じ。
+bool cnvGetPaletteEpalWu( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+						  int max_colors, const C_COLOR *fixed, int fixed_num,
+						  bool FourceZero, C_COLOR FZColor );
+
+//	EPALモード (SCREEN8 EPALを除く SCREEN2/3/5/6/7 EPAL) かどうか
+bool cnvIsEpalMode( uint32_t screen_mode );
+//	EPALモードに対応するベースモードを返す (非EPALモードはそのまま返す)
+uint32_t cnvEpalBaseMode( uint32_t screen_mode );
+//	EPALモードの色数を返す (SCREEN6系=4, SCREEN8 EPAL=256, その他=16, 非EPAL時は0)
+int cnvEpalColorCount( uint32_t screen_mode );
+//	5bit値を8bitへ展開する (EPAL共通: floor(v*255/31))
+int cnvEpalTo255( int v5 );
+
+//	8bit色をRGB各5bitへ量子化する (EPAL共通)
+void cnvEpalColorTo5bit( C_COLOR c, int *r5, int *g5, int *b5 );
+
+//	EPAL自動選択パレットの特徴色改善 (EpalHGuard)
+//	メディアンカット (生カウント) で選ばれた pal5[0..pal_count) に対し、
+//	UVY応答の強い画素クラスタを h(c)=sqrt(n(c))+b(c) で提案・順位付けし、
+//	真の (無重み) SSE が増えない置換だけを受理する。fixed5 は置換対象外。
+//	受理した置換数を返す。pal5 / fixed5 は RGB各5bit の配列。
+int cnvEpalImprovePalette( C_COLOR *in, int width, int height,
+						   int (*pal5)[ 3 ], int pal_count,
+						   const int (*fixed5)[ 3 ], int fixed_num,
+						   bool FourceZero, C_COLOR FZColor );
 
 //	タイルパターン取得(SC5/SC7専用)
 int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *tail, int screen_mode );

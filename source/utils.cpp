@@ -461,6 +461,7 @@ void GetDefCfg( SETTING *Mode )
 	Mode->err = 0;					// 切り捨て誤差 0
 	Mode->diffusion_error_enable = true;				// 誤差拡散 ON
 	Mode->fixed_palette = false;				// 固定パレット 未使用
+	Mode->EpalHGuard = false;				// EPAL特徴色改善 未使用
 	Mode->interlace = false;			// インターレース 未使用
 	Mode->resize_enable = false;			// サイズ調節 未使用
 	Mode->SelCol = 0;				// 色選択モード
@@ -520,7 +521,7 @@ bool GetCfgFile( SETTING *Mode,const char *sCfgFile )
 	if( Mode->diffusion_error_coef > 0.5f ) Mode->diffusion_error_coef = 0.5f;
 	if( Mode->diffusion_error_x_weight < 0.0f ) Mode->diffusion_error_x_weight = 0.0f;
 	if( Mode->diffusion_error_x_weight > 1.0f ) Mode->diffusion_error_x_weight = 1.0f;
-	if( Mode->screen_mode == MD_SC2 || Mode->screen_mode == MD_SC3 ) {
+	if( Mode->screen_mode == MD_SC2 || Mode->screen_mode == MD_SC3 || Mode->screen_mode == MD_SC2P || Mode->screen_mode == MD_SC3P ) {
 		Mode->interlace = false;
 	}
 

@@ -361,6 +361,165 @@ static void _draw_screen12( const unsigned char *bmp, HDC hDC, const SETTING *Mo
 //		なし
 //	4.	備考
 //		なし
+// _draw_screen2p: _draw_screen2 の EPAL 版 (色は color_palette_epal の 5bit値を展開する)
+static void _draw_screen2p( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
+{
+	int r[2] = { 0 },g[2] = { 0 },b[2] = { 0 };
+	int x, y, adr, i, c, bit;
+
+	for( y = 0; y < 384; y += 2 ){
+		for( x = 0; x < 512; x += 16 ){
+			adr = y / 2;
+			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
+			// 下位４ビット（バックグランド）
+			r[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].red );
+			g[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].green );
+			b[ 0 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] & 0x0F ].blue );
+			// 上位４ビット（フォアグランド）
+			r[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].red );
+			g[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].green );
+			b[ 1 ] = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr + SC2COLOR ] >> 4 ].blue );
+
+			//	８ドットペアの描画
+			c = bmp[ adr ];
+			for( i = 0; i < 8; ++i ){
+				bit = ( c & 0x80 ) >> 7;
+				SetPixel( hDC, x + i * 2 + 0, y + 20, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 1, y + 20, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 0, y + 21, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				SetPixel( hDC, x + i * 2 + 1, y + 21, GET_RGB( r[ bit ], g[ bit ], b[ bit ] ) );
+				c = c << 1;
+			}
+
+		}
+	}
+}
+
+// _draw_screen3p: _draw_screen3 の EPAL 版 (色は color_palette_epal の 5bit値を展開する)
+static void _draw_screen3p( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
+{
+	int r,g,b;
+	int x,y,adr,i;
+
+	for( y = 0; y < 384; ++y ){
+		for( x = 0; x < 512; x += 16 ){
+			adr = y / 8;
+			adr = ( adr >> 3 ) * 256 + ( x / 16 ) * 8 + ( adr & 7 );
+			// 上位４ビット（左側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			for( i = 0; i < 8; ++i ){
+				SetPixel( hDC, x + i, y + 20, GET_RGB( r, g, b ) );
+			}
+			// 下位４ビット（右側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			for( i = 0; i < 8; ++i ){
+				SetPixel( hDC, x + i + 8, y + 20, GET_RGB( r, g, b ) );
+			}
+
+		}
+	}
+}
+
+// _draw_screen5p: _draw_screen5 の EPAL 版 (色は color_palette_epal の 5bit値を展開する)
+static void _draw_screen5p( const unsigned char *bmp,HDC hDC,const SETTING *Mode )
+{
+	int r,g,b;
+	int x,y,adr,t,h;
+
+	h = _get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < 512; x += 4 ){
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 128 + x / 4;
+			// 上位４ビット（左側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
+			// 下位４ビット（右側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			SetPixel( hDC, x + 2, y + t, GET_RGB( r, g, b ) );
+			SetPixel( hDC, x + 3, y + t, GET_RGB( r, g, b ) );
+		}
+	}
+}
+
+// _draw_screen6p: _draw_screen6 の EPAL 版 (色は color_palette_epal の 5bit値を展開する)
+static void _draw_screen6p( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
+{
+	int r,g,b;
+	int x,y,adr,t,h;
+
+	h = _get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < 512; x += 4 ){
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 128 + x / 4;
+			// 上位２ビット（左側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 6 ) & 0x03 ].blue );
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
+			// 上位２ビット（中左側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 4 ) & 0x03 ].blue );
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
+			// 下位２ビット（中右側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] >> 2 ) & 0x03 ].blue );
+			SetPixel( hDC, x + 2, y + t, GET_RGB( r, g, b ) );
+			// 下位２ビット（右側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] ) & 0x03 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] ) & 0x03 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ ( bmp[ adr ] ) & 0x03 ].blue );
+			SetPixel( hDC, x + 3, y + t, GET_RGB( r, g, b ) );
+		}
+	}
+}
+
+// _draw_screen7p: _draw_screen7 の EPAL 版 (色は color_palette_epal の 5bit値を展開する)
+static void _draw_screen7p( const unsigned char *bmp, HDC hDC, const SETTING *Mode )
+{
+	int r,g,b;
+	int x,y,adr,t,h;
+
+	h = _get_height( Mode );
+	t = 212 - h;
+	h = h * 2;
+
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < 512; x += 2 ){
+			if( Mode->interlace ) adr = y; else adr = y / 2;
+			adr = adr * 256 + x / 2;
+			// 上位４ビット（左側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] >> 4 ].blue );
+			SetPixel( hDC, x + 0, y + t, GET_RGB( r, g, b ) );
+			// 下位４ビット（右側）
+			r = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].red );
+			g = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].green );
+			b = cnvEpalTo255( Mode->color_palette_epal[ bmp[ adr ] & 0x0F ].blue );
+			SetPixel( hDC, x + 1, y + t, GET_RGB( r, g, b ) );
+		}
+	}
+}
+
 // -------------------------------------------------------------
 void draw_screen( const unsigned char *bmp, HDC hDC, const SETTING *Mode ){
 	RECT	rc = { 0, 0, 512, 424 };
@@ -381,6 +540,19 @@ void draw_screen( const unsigned char *bmp, HDC hDC, const SETTING *Mode ){
 	case MD_SC7:
 	case MD_SC7_256L:
 		_draw_screen7( bmp, hDC, Mode );	return;
+	case MD_SC2P:
+		_draw_screen2p( bmp, hDC, Mode );	return;
+	case MD_SC3P:
+		_draw_screen3p( bmp, hDC, Mode );	return;
+	case MD_SC5P:
+	case MD_SC5P_256L:
+		_draw_screen5p( bmp, hDC, Mode );	return;
+	case MD_SC6P:
+	case MD_SC6P_256L:
+		_draw_screen6p( bmp, hDC, Mode );	return;
+	case MD_SC7P:
+	case MD_SC7P_256L:
+		_draw_screen7p( bmp, hDC, Mode );	return;
 	case MD_SC8:
 	case MD_SC8_256L:
 		_draw_screen8( bmp, hDC, Mode );	return;

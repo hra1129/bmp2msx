@@ -103,6 +103,7 @@
 #define IDC_COLORBAR                    1064
 #define IDC_BTN_LOAD_DEFAULT2           1065
 #define IDC_BTN_UNDO                    1065
+#define IDC_EPALHG                      1066
 #define IDM_OPEN                        40001
 #define IDM_EXIT                        40002
 #define IDM_SETTING                     40003
@@ -138,7 +139,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        123
 #define _APS_NEXT_COMMAND_VALUE         40033
-#define _APS_NEXT_CONTROL_VALUE         1065
+#define _APS_NEXT_CONTROL_VALUE         1067
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

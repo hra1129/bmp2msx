@@ -1,22 +1,7 @@
-﻿  bsave.cpp
-  calc.cpp
-  Convert.cpp
-  fileuty.cpp
-  main.cpp
-  PreView.cpp
-  ProgProc.cpp
-  ScriptProc.cpp
-  Setting.cpp
-  SpitProc.cpp
-  SubProc.cpp
-  utils.cpp
-  Ver.cpp
-  winuty.cpp
-  WndProc.cpp
-  CalibrationProc.cpp
-  script_engine.cpp
-C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\logic\script_engine.cpp(1,1): warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
-  winConvert.cpp
-  winImage.cpp
-WndProc.obj : error LNK2001: 外部シンボル "bool __cdecl cnvGetPalette256(unsigned int *,int,int,unsigned int *,int *,bool,unsigned int)" (?cnvGetPalette256@@YA_NPAIHH0PAH_NI@Z) は未解決です
-Release\BMP2MSX.exe : fatal error LNK1120: 1 件の未解決の外部参照
+﻿  WndProc.cpp
+  コード生成しています。
+  2 of 562 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    6 functions had inline decision re-evaluated but remain unchanged
+  コード生成が終了しました。
+  BMP2MSX.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\Release\BMP2MSX.exe

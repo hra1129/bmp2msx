@@ -1,20 +1,7 @@
-﻿  bsave.cpp
-  calc.cpp
-  Convert.cpp
-  fileuty.cpp
-  main.cpp
-  PreView.cpp
-  ProgProc.cpp
-  ScriptProc.cpp
-  Setting.cpp
-  SpitProc.cpp
-  SubProc.cpp
-  utils.cpp
-  Ver.cpp
-  winuty.cpp
-  WndProc.cpp
-  CalibrationProc.cpp
-  winConvert.cpp
-  winImage.cpp
-WndProc.obj : error LNK2001: 外部シンボル "bool __cdecl cnvGetPalette256(unsigned int *,int,int,unsigned int *,int *,bool,unsigned int)" (?cnvGetPalette256@@YA_NPAIHH0PAH_NI@Z) は未解決です
-ReleaseE\BMP2MSXE.exe : fatal error LNK1120: 1 件の未解決の外部参照
+﻿  WndProc.cpp
+  コード生成しています。
+  2 of 426 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    6 functions had inline decision re-evaluated but remain unchanged
+  コード生成が終了しました。
+  BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\ReleaseE\BMP2MSXE.exe

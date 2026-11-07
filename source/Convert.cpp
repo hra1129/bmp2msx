@@ -21,7 +21,7 @@ struct C_COLOR_TABLE {
 // 設定
 // -------------------------------------------------------------
 
-const int screen_mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12 };	// 画面モード番号
+const int screen_mode[] = { 2, 3, 5, 6, 7, 8, 10, 12, 5, 6, 7, 8, 10, 12, 8, 8, 2, 3, 5, 6, 7, 5, 6, 7 };	// 画面モード番号
 
 // 画面サイズ
 const C_SCREEN_SIZE screen_size[] = {
@@ -39,6 +39,16 @@ const C_SCREEN_SIZE screen_size[] = {
 	{ 256, 256 },	// screen 8 (256 lines)
 	{ 256, 256 },	// screen 10/11 (256 lines)
 	{ 256, 256 },	// screen 12 (256 lines)
+	{ 256, 212 },	// screen 8 (V9968 EPAL palette)
+	{ 256, 256 },	// screen 8 (V9968 EPAL palette) (256 lines)
+	{ 256, 192 },	// screen 2/4 (V9968 EPAL palette)
+	{ 64, 48 },	// screen 3 (V9968 EPAL palette)
+	{ 256, 212 },	// screen 5 (V9968 EPAL palette)
+	{ 512, 212 },	// screen 6 (V9968 EPAL palette)
+	{ 512, 212 },	// screen 7 (V9968 EPAL palette)
+	{ 256, 256 },	// screen 5 (V9968 EPAL palette) (256 lines)
+	{ 512, 256 },	// screen 6 (V9968 EPAL palette) (256 lines)
+	{ 512, 256 },	// screen 7 (V9968 EPAL palette) (256 lines)
 };
 
 
@@ -206,12 +216,16 @@ static inline int _abs( int a );
 static inline void _put_dither_pattern( int *r, int *g, int *b, int screen_mode, int ErrAdd, int x, int y, C_COLOR c );
 static inline int _distance( int r1, int g1, int b1, int r2, int g2, int b2 );
 static inline int _distance_itp( int r1, int g1, int b1, int r2, int g2, int b2 );
+static void _rgb_to_itp( double *p_i, double *p_ct, double *p_cp, int r, int g, int b );
 
 static int cnvCreateHistgram( C_COLOR *in,int size,C_COLOR_TABLE **tbl,C_COLOR *pal,int pp,
 							  bool FourceZero,C_COLOR FZColor );
 static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 );
 
 static bool cnvRecolor8( C_COLOR *in,int width,int height,
+						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
+						C_TILE_PATTERN *tail,int tailcnt );
+static bool cnvRecolor8P( C_COLOR *in,int width,int height,
 						unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
 						C_TILE_PATTERN *tail,int tailcnt );
 static bool cnvRecolor5( C_COLOR *in,int width,int height,
@@ -664,7 +678,10 @@ bool cnvRecolor( C_COLOR *in,int width,int height,
 {
 	bool	bRet;
 
-	if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
+	if( CnvMode->screen_mode == MD_SC8P || CnvMode->screen_mode == MD_SC8P_256L ) {
+		//	256色パレットビットマップへ変換する (V9968 EPAL)
+		return cnvRecolor8P( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
+	} else if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
 		//	256色ビットマップへ変換する
 		return cnvRecolor8( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
 	} else {
@@ -674,9 +691,11 @@ bool cnvRecolor( C_COLOR *in,int width,int height,
 		//	特殊な画面（SC2/3/4) にあわせて変換する		
 		switch( CnvMode->screen_mode ) {
 		case MD_SC2:
+		case MD_SC2P:
 			bRet = bRet && cnvSC5toSC2( out, prog, pal );
 			break;
 		case MD_SC3:
+		case MD_SC3P:
 			bRet = bRet && cnvSC5toSC3( out, prog );
 			break;
 		}
@@ -858,6 +877,154 @@ l_exit:
 
 // -------------------------------------------------------------
 //	1.	日本語名
+//		減色ルーチン（SCREEN8 V9968 EPAL パレット用）
+//	2.	引数
+//		in		...	画像入力メモリ（内容は破壊されます）
+//		width	...	画像幅
+//		height	...	画像高さ
+//		out		...	画像出力メモリ（1ドット1バイトのパレット番号）
+//		CnvMode	...	現在の設定
+//		prog	...	経過表示関数
+//		pal		...	パレット（256色）
+//	3.	返値
+//		false	...	失敗
+//		true	...	成功
+//	4.	備考
+//		cnvRecolor5 の256色版。タイルモードには対応しない。
+// -------------------------------------------------------------
+static bool cnvRecolor8P( C_COLOR *in,int width,int height,
+					unsigned char *out,SETTING *CnvMode,PROGRESS prog,C_COLOR *pal,
+					C_TILE_PATTERN *tail,int tailcnt ) {
+	int x, y, z, ptr;
+	int cr, cg, cb;		// 元画素のＲＧＢ
+	int pr, pg, pb;		// 画素値
+	int er, eg, eb;		// 誤差（正数へ丸める）
+	int n;
+	double nr, r;
+	double pi, pt, pp;	// 画素の ICtCp 値
+	double pal_i[ 256 ], pal_t[ 256 ], pal_p[ 256 ];	// パレットの ICtCp 値
+	C_COLOR c, cc, *pin;
+	C_COLOR fource_zero_color = -1;
+	signed short *p_diffusion_error[2] = { nullptr, nullptr };
+	signed short *p_x_diffusion_error, *p_y_diffusion_error;
+	int diffusion_error_coef = 0;
+	int x_diffusion_error_coef = 0;
+	int y_diffusion_error_coef = 0;
+	C_COLOR bit_depth_mask;
+	bool ret = false;
+
+	(void)tail;		// タイルモード未対応
+	(void)tailcnt;
+
+	// 誤差拡散係数
+	if( CnvMode->diffusion_error_enable ){
+		diffusion_error_coef = int( CnvMode->diffusion_error_coef * 1024 );
+		x_diffusion_error_coef = int( CnvMode->diffusion_error_x_weight * 256. );
+		y_diffusion_error_coef = 256 - x_diffusion_error_coef;
+	}
+
+	// 誤差蓄積用バッファの作成
+	for( x = 0; x < 2; ++x ) {
+		p_diffusion_error[ x ] = (signed short*) malloc( ( width + 5 ) * 4 * sizeof( signed short ) );
+		if( p_diffusion_error[ x ]==NULL ) goto l_exit;
+		memset( p_diffusion_error[ x ], 0, ( width + 5 ) * 4 * sizeof( signed short ) );
+	}
+
+	// 精度制限用マスク作成
+	bit_depth_mask = _create_bit_depth_mask( CnvMode->Seido );
+	fource_zero_color = CnvMode->FourceZero ? CnvMode->FZColor & bit_depth_mask : -1;
+
+	// パレットの ICtCp 値を先に求めておく（距離計算の高速化）
+	for( z = 0; z < 256; ++z ){
+		_rgb_to_itp( &pal_i[ z ], &pal_t[ z ], &pal_p[ z ], GET_RED( pal[ z ] ), GET_GREEN( pal[ z ] ), GET_BLUE( pal[ z ] ) );
+	}
+
+	// 全ピクセルを舐める
+	ptr = 0;
+	pin = in;
+	n = 0;
+
+	for( y = 0; y < height; ++y ){
+		if( !prog( y * 100 / height ) ) goto l_exit;
+		p_x_diffusion_error = p_diffusion_error[ y & 1 ];
+		p_y_diffusion_error = p_diffusion_error[ 1 - ( y & 1 ) ];
+
+		for( x = 0; x < width; ++x ){
+			cc = c = *pin;
+			pin++;
+
+			// ディザ処理
+			_put_dither_pattern( &cr, &cg, &cb, CnvMode->ErrAlgo, CnvMode->ErrAdd, x, y, c );
+
+			if( diffusion_error_coef ) {
+				// 誤差を計算に入れる
+				cr += p_x_diffusion_error[ x * 4 + 0 ];
+				cg += p_x_diffusion_error[ x * 4 + 1 ];
+				cb += p_x_diffusion_error[ x * 4 + 2 ];
+			}
+
+			// 比較する色は実際に表示できる色で無ければならないため、範囲外をクリップする
+			pr = range_limiter( cr, 0, 255 );
+			pg = range_limiter( cg, 0, 255 );
+			pb = range_limiter( cb, 0, 255 );
+
+			// 最も近い色を見つける（_distance_itp の二乗に相当。大小関係は変わらない）
+			_rgb_to_itp( &pi, &pt, &pp, pr, pg, pb );
+			nr = 1.0e30;
+			if( CnvMode->NonZero ) {
+				z = 1;
+			}
+			else {
+				z = 0;
+			}
+			for( ; z < 256; ++z ){
+				double di = pi - pal_i[ z ];
+				double dt = pt - pal_t[ z ];
+				double dp = pp - pal_p[ z ];
+				r = di * di + dt * dt + dp * dp;
+				if( r < nr ){
+					nr = r;
+					n  = z;
+					cc = pal[ z ];
+					if( r == 0 ) break;	// 完全一致なら抜ける
+				}
+			}	// z
+
+			if( diffusion_error_coef ) {
+				// 誤差を周囲のピクセルへ拡散させる
+				er = range_limiter( ( cr - GET_RED(   cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eg = range_limiter( ( cg - GET_GREEN( cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				eb = range_limiter( ( cb - GET_BLUE(  cc )) * diffusion_error_coef / 1024 ,-32768, 32767 );
+				// 微細な誤差は消滅させる
+				if( _abs( er ) < (signed)CnvMode->err ) er = 0;
+				if( _abs( eg ) < (signed)CnvMode->err ) eg = 0;
+				if( _abs( eb ) < (signed)CnvMode->err ) eb = 0;
+				// 右に拡散
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 0 ] += (signed short)( ( er * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 1 ] += (signed short)( ( eg * x_diffusion_error_coef ) >> 8 );
+				p_x_diffusion_error[ ( x + 1 ) * 4 + 2 ] += (signed short)( ( eb * x_diffusion_error_coef ) >> 8 );
+				// 下に拡散
+				p_y_diffusion_error[ x * 4 + 0 ] = (signed short)( ( er * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 1 ] = (signed short)( ( eg * y_diffusion_error_coef ) >> 8 );
+				p_y_diffusion_error[ x * 4 + 2 ] = (signed short)( ( eb * y_diffusion_error_coef ) >> 8 );
+			}
+
+			// 結果を出力する
+			if( CnvMode->FourceZero && cc == fource_zero_color ) n = 0;	// 強制ゼロ化
+			out[ ptr ] = (unsigned char)n;
+			// 次の出力先
+			++ptr;
+		}	// x
+	}	// y
+	ret = true;
+l_exit:
+	if( p_diffusion_error[0] != nullptr ) free( p_diffusion_error[0] );
+	if( p_diffusion_error[1] != nullptr ) free( p_diffusion_error[1] );
+	return ret;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
 //		減色ルーチン（sc2(4)/3/5/6/7用）
 //	2.	引数
 //		in		...	画像入力メモリ（内容は破壊されます）
@@ -915,6 +1082,8 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 	switch( CnvMode->screen_mode ){
 	case MD_SC6:
 	case MD_SC6_256L:
+	case MD_SC6P:
+	case MD_SC6P_256L:
 		palnum = 4;		break;
 	default:
 		palnum = 16;	break;
@@ -1613,6 +1782,1168 @@ bool cnvGetPaletteS8( C_COLOR *pal ){
 }
 
 // -------------------------------------------------------------
+//	RGB各5bit 色空間のユーティリティ (SCREEN8 EPAL用)
+
+// 5bit値 → 8bit値 変換テーブル ( v * 255 / 31 )
+static const int epal_convert31to255[ 32 ] = {
+	 0,  8, 16, 24, 32, 41, 49, 57, 65, 74, 82, 90, 98,106,115,123,
+	131,139,148,156,164,172,180,189,197,205,213,222,230,238,246,255
+};
+
+// 8bit値 → 最も近い 5bit値
+static int epal_quantize31( int v )
+{
+	return convert_rgb_to_palette( epal_convert31to255, 32, v );
+}
+
+// メディアンカット用の色ビン
+struct C_EPAL_BIN {
+	int		r, g, b;		// RGB各5bit
+	int		n;				// その数
+};
+
+// メディアンカット用のボックス
+struct C_EPAL_BOX {
+	int		lo;				// ビン配列の開始位置
+	int		hi;				// ビン配列の終了位置（この値の手前まで）
+	long	pop;			// 総画素数
+	int		rmin, rmax, gmin, gmax, bmin, bmax;
+};
+
+static void _epal_box_update( C_EPAL_BOX *box, C_EPAL_BIN *bins )
+{
+	int i;
+
+	box->pop = 0;
+	box->rmin = box->gmin = box->bmin = 31;
+	box->rmax = box->gmax = box->bmax = 0;
+	for( i = box->lo; i < box->hi; ++i ){
+		box->pop += bins[ i ].n;
+		if( bins[ i ].r < box->rmin ) box->rmin = bins[ i ].r;
+		if( bins[ i ].r > box->rmax ) box->rmax = bins[ i ].r;
+		if( bins[ i ].g < box->gmin ) box->gmin = bins[ i ].g;
+		if( bins[ i ].g > box->gmax ) box->gmax = bins[ i ].g;
+		if( bins[ i ].b < box->bmin ) box->bmin = bins[ i ].b;
+		if( bins[ i ].b > box->bmax ) box->bmax = bins[ i ].b;
+	}
+}
+
+static int _epal_bin_key( const C_EPAL_BIN *bin, int channel )
+{
+	switch( channel ){
+	case 0:		return bin->r;
+	case 1:		return bin->g;
+	default:	return bin->b;
+	}
+}
+
+static int epal_sort_channel;	// ソート中のチャンネル（_epal_bin_compare 用）
+
+static int _epal_bin_compare( const void *a, const void *b )
+{
+	return _epal_bin_key( (const C_EPAL_BIN*)a, epal_sort_channel ) - _epal_bin_key( (const C_EPAL_BIN*)b, epal_sort_channel );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		減色用パレット（256色・RGB各5bit）を求める (SCREEN8 EPAL用)
+//	2.	引数
+//		in			...	(I)	画像
+//		width		...	(I)	幅
+//		height		...	(I)	高さ
+//		pal			...	(O)	パレット（256個）のアドレス
+//		p_pal_count	...	(O)	採用したパレット数を格納するアドレス
+//		FourceZero	...	(I)	強制ゼロ化の色がある true / ない false
+//		FZColor		...	(I)	強制ゼロ化の色
+//	3.	返値
+//		成功 true / 失敗 false
+//	4.	備考
+//		色空間は RGB各5bit (32768色)。使われている色が256色
+//		以下の場合は多い順にそのまま採用し、多い場合はメディ
+//		アンカット法で256色へ減色する。
+// -------------------------------------------------------------
+bool cnvGetPalette256( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+					   bool FourceZero, C_COLOR FZColor )
+{
+	uint32_t *hist = nullptr;
+	C_EPAL_BIN *bins = nullptr;
+	C_EPAL_BOX boxes[ 256 ];
+	int i, j, nbin, nbox;
+	C_COLOR c;
+
+	*p_pal_count = 0;
+	ZeroMemory( pal, sizeof( C_COLOR ) * 256 );
+
+	// ヒストグラムの作成 (RGB各5bit)
+	hist = (uint32_t*) malloc( sizeof( uint32_t ) * 32768 );
+	if( hist == NULL ) return false;
+	memset( hist, 0, sizeof( uint32_t ) * 32768 );
+	for( i = 0; i < width * height; ++i ){
+		c = in[ i ];
+		if( FourceZero && c == FZColor ) continue;
+		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ]++;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] ) ++nbin;
+	}
+	if( nbin == 0 ){
+		free( hist );
+		return false;
+	}
+	bins = (C_EPAL_BIN*) malloc( sizeof( C_EPAL_BIN ) * nbin );
+	if( bins == NULL ){
+		free( hist );
+		return false;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] == 0 ) continue;
+		bins[ nbin ].r = ( i >> 10 ) & 31;
+		bins[ nbin ].g = ( i >>  5 ) & 31;
+		bins[ nbin ].b =   i        & 31;
+		bins[ nbin ].n = (int)hist[ i ];
+		++nbin;
+	}
+	free( hist );
+	hist = nullptr;
+
+	if( nbin <= 256 ){
+		// 使われている色が256色以下なら、多い順にそのまま採用する
+		C_COLOR_TABLE *tbl = (C_COLOR_TABLE*) malloc( sizeof( C_COLOR_TABLE ) * nbin );
+		if( tbl == NULL ){
+			free( bins );
+			return false;
+		}
+		for( i = 0; i < nbin; ++i ){
+			tbl[ i ].c = GET_RGB( epal_convert31to255[ bins[ i ].r ], epal_convert31to255[ bins[ i ].g ], epal_convert31to255[ bins[ i ].b ] );
+			tbl[ i ].n = bins[ i ].n;
+		}
+		qsort( tbl, nbin, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
+		for( i = 0; i < nbin; ++i ){
+			pal[ i ] = tbl[ i ].c;
+		}
+		*p_pal_count = nbin;
+		free( tbl );
+		free( bins );
+		return true;
+	}
+
+	// メディアンカット法で256個のボックスへ分割する
+	boxes[ 0 ].lo = 0;
+	boxes[ 0 ].hi = nbin;
+	_epal_box_update( &boxes[ 0 ], bins );
+	nbox = 1;
+	while( nbox < 256 ){
+		// 分割するボックスを選ぶ（画素数が最大で、色の広がりがあるもの）
+		int target = -1;
+		long target_pop = -1;
+		int range, channel, split;
+		long acc, half;
+		C_EPAL_BOX *box;
+
+		for( i = 0; i < nbox; ++i ){
+			if( boxes[ i ].hi - boxes[ i ].lo < 2 ) continue;
+			range = boxes[ i ].rmax - boxes[ i ].rmin;
+			if( boxes[ i ].gmax - boxes[ i ].gmin > range ) range = boxes[ i ].gmax - boxes[ i ].gmin;
+			if( boxes[ i ].bmax - boxes[ i ].bmin > range ) range = boxes[ i ].bmax - boxes[ i ].bmin;
+			if( range == 0 ) continue;
+			if( boxes[ i ].pop > target_pop ){
+				target_pop = boxes[ i ].pop;
+				target = i;
+			}
+		}
+		if( target < 0 ) break;		// これ以上分割できない
+
+		// 最も広がりの大きいチャンネルで、画素数の中央値のところで分割する
+		box = &boxes[ target ];
+		channel = 0;
+		range = box->rmax - box->rmin;
+		if( box->gmax - box->gmin > range ){ channel = 1; range = box->gmax - box->gmin; }
+		if( box->bmax - box->bmin > range ){ channel = 2; range = box->bmax - box->bmin; }
+		epal_sort_channel = channel;
+		qsort( bins + box->lo, box->hi - box->lo, sizeof( C_EPAL_BIN ), _epal_bin_compare );
+		half = box->pop / 2;
+		acc = 0;
+		split = box->hi - 1;
+		for( i = box->lo; i < box->hi - 1; ++i ){
+			acc += bins[ i ].n;
+			if( acc >= half ){
+				split = i + 1;
+				break;
+			}
+		}
+		boxes[ nbox ].lo = split;
+		boxes[ nbox ].hi = box->hi;
+		box->hi = split;
+		_epal_box_update( box, bins );
+		_epal_box_update( &boxes[ nbox ], bins );
+		++nbox;
+	}
+
+	// 各ボックスの平均色をパレットにする
+	for( i = 0; i < nbox; ++i ){
+		long rsum = 0, gsum = 0, bsum = 0;
+		int r5, g5, b5;
+		for( j = boxes[ i ].lo; j < boxes[ i ].hi; ++j ){
+			rsum += (long)bins[ j ].r * bins[ j ].n;
+			gsum += (long)bins[ j ].g * bins[ j ].n;
+			bsum += (long)bins[ j ].b * bins[ j ].n;
+		}
+		r5 = (int)( ( rsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		g5 = (int)( ( gsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		b5 = (int)( ( bsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
+	}
+	*p_pal_count = nbox;
+	free( bins );
+	return true;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		EPALモード判定 (SCREEN8 EPALを除く)
+//	2.	引数
+//		screen_mode	...	(I)	画面モード
+//	3.	返値
+//		SCREEN2/3/5/6/7 の EPALモードなら true
+// -------------------------------------------------------------
+bool cnvIsEpalMode( uint32_t screen_mode )
+{
+	return screen_mode >= MD_SC2P && screen_mode <= MD_SC7P_256L;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		EPALモードに対応するベースモード
+//	2.	引数
+//		screen_mode	...	(I)	画面モード
+//	3.	返値
+//		ベースモード (非EPALモードはそのまま)
+// -------------------------------------------------------------
+uint32_t cnvEpalBaseMode( uint32_t screen_mode )
+{
+	switch( screen_mode ) {
+	case MD_SC2P:		return MD_SC2;
+	case MD_SC3P:		return MD_SC3;
+	case MD_SC5P:		return MD_SC5;
+	case MD_SC6P:		return MD_SC6;
+	case MD_SC7P:		return MD_SC7;
+	case MD_SC5P_256L:	return MD_SC5_256L;
+	case MD_SC6P_256L:	return MD_SC6_256L;
+	case MD_SC7P_256L:	return MD_SC7_256L;
+	}
+	return screen_mode;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		EPALモードの色数
+//	2.	引数
+//		screen_mode	...	(I)	画面モード
+//	3.	返値
+//		色数 (SCREEN6系=4, SCREEN8 EPAL=256, その他EPAL=16, 非EPAL時は0)
+// -------------------------------------------------------------
+int cnvEpalColorCount( uint32_t screen_mode )
+{
+	if( screen_mode == MD_SC8P || screen_mode == MD_SC8P_256L ) return 256;
+	if( !cnvIsEpalMode( screen_mode ) ) return 0;
+	switch( cnvEpalBaseMode( screen_mode ) ) {
+	case MD_SC6:
+	case MD_SC6_256L:
+		return 4;
+	}
+	return 16;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		EPAL 5bit値を8bitへ展開する
+//	2.	引数
+//		v5	...	(I)	5bit値 (0～31)
+//	3.	返値
+//		8bit値 (floor(v*255/31))
+// -------------------------------------------------------------
+int cnvEpalTo255( int v5 )
+{
+	return epal_convert31to255[ v5 & 31 ];
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		減色用パレット（最大16色・RGB各5bit）を求める
+//	2.	引数
+//		in			...	(I)	画像メモリ（読み取り専用）
+//		width		...	(I)	幅
+//		height		...	(I)	高さ
+//		pal			...	(O)	パレット（自動選択分のみ）のアドレス
+//		p_pal_count	...	(O)	採用したパレット数を格納するアドレス
+//		max_colors	...	(I)	パレット総数の上限 (固定色を含む)
+//		fixed		...	(I)	固定色の配列 (選択対象から除外する)
+//		fixed_num	...	(I)	fixed の数
+//		FourceZero	...	(I)	強制ゼロ化の色がある true / ない false
+//		FZColor		...	(I)	強制ゼロ化の色
+//	3.	返値
+//		成功 true / 失敗 false
+//	4.	備考
+//		cnvGetPalette256 (SCREEN8 EPAL用) の少数色版。色空間は
+//		RGB各5bit (32768色)。使われている色が上限以下なら多い順に
+//		そのまま採用し、多い場合はメディアンカット法で減色する。
+//		固定色と量子化後に重なる色は選択対象から除外される。
+// -------------------------------------------------------------
+bool cnvGetPaletteEpalN( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+						 int max_colors, const C_COLOR *fixed, int fixed_num,
+						 bool FourceZero, C_COLOR FZColor )
+{
+	uint32_t *hist = nullptr;
+	C_EPAL_BIN *bins = nullptr;
+	C_EPAL_BOX boxes[ 16 ];
+	int i, j, nbin, nbox;
+	int target;
+	C_COLOR c;
+
+	*p_pal_count = 0;
+	ZeroMemory( pal, sizeof( C_COLOR ) * max_colors );
+	target = max_colors - fixed_num;
+	if( target <= 0 ) return true;
+
+	// ヒストグラムの作成 (RGB各5bit)
+	hist = (uint32_t*) malloc( sizeof( uint32_t ) * 32768 );
+	if( hist == NULL ) return false;
+	memset( hist, 0, sizeof( uint32_t ) * 32768 );
+	for( i = 0; i < width * height; ++i ){
+		c = in[ i ];
+		if( FourceZero && c == FZColor ) continue;
+		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ]++;
+	}
+	// 固定色は選択対象から除外する
+	for( i = 0; i < fixed_num; ++i ){
+		c = fixed[ i ];
+		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ] = 0;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] ) ++nbin;
+	}
+	if( nbin == 0 ){
+		free( hist );
+		return false;
+	}
+	bins = (C_EPAL_BIN*) malloc( sizeof( C_EPAL_BIN ) * nbin );
+	if( bins == NULL ){
+		free( hist );
+		return false;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] == 0 ) continue;
+		bins[ nbin ].r = ( i >> 10 ) & 31;
+		bins[ nbin ].g = ( i >>  5 ) & 31;
+		bins[ nbin ].b =   i        & 31;
+		bins[ nbin ].n = (int)hist[ i ];
+		++nbin;
+	}
+	free( hist );
+	hist = nullptr;
+
+	if( nbin <= target ){
+		// 使われている色が上限以下なら、多い順にそのまま採用する
+		C_COLOR_TABLE *tbl = (C_COLOR_TABLE*) malloc( sizeof( C_COLOR_TABLE ) * nbin );
+		if( tbl == NULL ){
+			free( bins );
+			return false;
+		}
+		for( i = 0; i < nbin; ++i ){
+			tbl[ i ].c = GET_RGB( epal_convert31to255[ bins[ i ].r ], epal_convert31to255[ bins[ i ].g ], epal_convert31to255[ bins[ i ].b ] );
+			tbl[ i ].n = bins[ i ].n;
+		}
+		qsort( tbl, nbin, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
+		for( i = 0; i < nbin; ++i ){
+			pal[ i ] = tbl[ i ].c;
+		}
+		*p_pal_count = nbin;
+		free( tbl );
+		free( bins );
+		return true;
+	}
+
+	// メディアンカット法で target 個のボックスへ分割する
+	boxes[ 0 ].lo = 0;
+	boxes[ 0 ].hi = nbin;
+	_epal_box_update( &boxes[ 0 ], bins );
+	nbox = 1;
+	while( nbox < target ){
+		// 分割するボックスを選ぶ（画素数が最大で、色の広がりがあるもの）
+		int target_box = -1;
+		long target_pop = -1;
+		int range, channel, split;
+		long acc, half;
+		C_EPAL_BOX *box;
+
+		for( i = 0; i < nbox; ++i ){
+			if( boxes[ i ].hi - boxes[ i ].lo < 2 ) continue;
+			range = boxes[ i ].rmax - boxes[ i ].rmin;
+			if( boxes[ i ].gmax - boxes[ i ].gmin > range ) range = boxes[ i ].gmax - boxes[ i ].gmin;
+			if( boxes[ i ].bmax - boxes[ i ].bmin > range ) range = boxes[ i ].bmax - boxes[ i ].bmin;
+			if( range == 0 ) continue;
+			if( boxes[ i ].pop > target_pop ){
+				target_pop = boxes[ i ].pop;
+				target_box = i;
+			}
+		}
+		if( target_box < 0 ) break;		// これ以上分割できない
+
+		// 最も広がりの大きいチャンネルで、画素数の中央値のところで分割する
+		box = &boxes[ target_box ];
+		channel = 0;
+		range = box->rmax - box->rmin;
+		if( box->gmax - box->gmin > range ){ channel = 1; range = box->gmax - box->gmin; }
+		if( box->bmax - box->bmin > range ){ channel = 2; range = box->bmax - box->bmin; }
+		epal_sort_channel = channel;
+		qsort( bins + box->lo, box->hi - box->lo, sizeof( C_EPAL_BIN ), _epal_bin_compare );
+		half = box->pop / 2;
+		acc = 0;
+		split = box->hi - 1;
+		for( i = box->lo; i < box->hi - 1; ++i ){
+			acc += bins[ i ].n;
+			if( acc >= half ){
+				split = i + 1;
+				break;
+			}
+		}
+		boxes[ nbox ].lo = split;
+		boxes[ nbox ].hi = box->hi;
+		box->hi = split;
+		_epal_box_update( box, bins );
+		_epal_box_update( &boxes[ nbox ], bins );
+		++nbox;
+	}
+
+	// 各ボックスの平均色をパレットにする
+	for( i = 0; i < nbox; ++i ){
+		long rsum = 0, gsum = 0, bsum = 0;
+		int r5, g5, b5;
+		for( j = boxes[ i ].lo; j < boxes[ i ].hi; ++j ){
+			rsum += (long)bins[ j ].r * bins[ j ].n;
+			gsum += (long)bins[ j ].g * bins[ j ].n;
+			bsum += (long)bins[ j ].b * bins[ j ].n;
+		}
+		r5 = (int)( ( rsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		g5 = (int)( ( gsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		b5 = (int)( ( bsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
+	}
+	*p_pal_count = nbox;
+	free( bins );
+	return true;
+}
+
+// -------------------------------------------------------------
+//	Wu + k-means 法によるパレット選択用 (EpalHGuard の土台選択)
+// -------------------------------------------------------------
+
+struct C_WU_BOX {
+	int		lo, hi;			// ビン配列の範囲
+	long	pop;			// 総画素数
+	double	sr, sg, sb;		// Σ n*c
+	double	s2;				// Σ n*(r^2+g^2+b^2)
+};
+
+static void _wu_box_update( C_WU_BOX *box, C_EPAL_BIN *bins )
+{
+	int i;
+	box->pop = 0;
+	box->sr = box->sg = box->sb = box->s2 = 0.0;
+	for( i = box->lo; i < box->hi; ++i ){
+		double n = (double)bins[ i ].n;
+		box->pop += bins[ i ].n;
+		box->sr += n * bins[ i ].r;
+		box->sg += n * bins[ i ].g;
+		box->sb += n * bins[ i ].b;
+		box->s2 += n * ( bins[ i ].r * bins[ i ].r + bins[ i ].g * bins[ i ].g + bins[ i ].b * bins[ i ].b );
+	}
+}
+
+// ボックス内二乗誤差 (SSD)。Wu 法で最大化/最小化の対象になる量
+static double _wu_box_ssd( const C_WU_BOX *box )
+{
+	double v;
+	if( box->pop <= 0 ) return 0.0;
+	v = box->s2 - ( box->sr * box->sr + box->sg * box->sg + box->sb * box->sb ) / (double)box->pop;
+	return v > 0.0 ? v : 0.0;
+}
+
+static int _wu_bin_key( const C_EPAL_BIN *bin, int channel )
+{
+	switch( channel ){
+	case 0:		return bin->r;
+	case 1:		return bin->g;
+	default:	return bin->b;
+	}
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		減色用パレット (RGB各5bit) を Wu + k-means 法で求める
+//	2.	引数
+//		cnvGetPaletteEpalN と同じ
+//	3.	返値
+//		true: 成功 / false: 失敗
+//	4.	備考
+//		EpalHGuard 有効時の土台選択。メディアンカット (生カウント) の
+//		代わりに、Wu の分散最適ボックス分割 (モーメント法) で初期
+//		パレットを作り、k-means (LBG) で生カウント SSE を極小まで
+//		磨く。どちらも 555 ヒストグラム上で決定的に動作する。
+//		固定色のビンは選択対象から除外される (EpalN と同じ規則で、
+//		固定色が中心になることはない)。
+// -------------------------------------------------------------
+bool cnvGetPaletteEpalWu( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_pal_count,
+						  int max_colors, const C_COLOR *fixed, int fixed_num,
+						  bool FourceZero, C_COLOR FZColor )
+{
+	uint32_t *hist = nullptr;
+	C_EPAL_BIN *bins = nullptr;
+	C_EPAL_BIN *tmpbins = nullptr;
+	C_WU_BOX *boxes = nullptr;
+	double *ctr = nullptr;		// 中心 (nbox*3)。Wu の平均で初期化し k-means で磨く
+	int *owner = nullptr;
+	double *acc = nullptr;
+	int i, j, nbin, nbox;
+	int target;
+	C_COLOR c;
+
+	*p_pal_count = 0;
+	ZeroMemory( pal, sizeof( C_COLOR ) * max_colors );
+	target = max_colors - fixed_num;
+	if( target <= 0 ) return true;
+
+	// ヒストグラムの作成 (RGB各5bit、EpalN と同じ)
+	hist = (uint32_t*) malloc( sizeof( uint32_t ) * 32768 );
+	if( hist == NULL ) return false;
+	memset( hist, 0, sizeof( uint32_t ) * 32768 );
+	for( i = 0; i < width * height; ++i ){
+		c = in[ i ];
+		if( FourceZero && c == FZColor ) continue;
+		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ]++;
+	}
+	// 固定色は選択対象から除外する
+	for( i = 0; i < fixed_num; ++i ){
+		c = fixed[ i ];
+		hist[ ( epal_quantize31( GET_RED( c ) ) << 10 ) | ( epal_quantize31( GET_GREEN( c ) ) << 5 ) | epal_quantize31( GET_BLUE( c ) ) ] = 0;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] ) ++nbin;
+	}
+	if( nbin == 0 ){
+		free( hist );
+		return false;
+	}
+	bins = (C_EPAL_BIN*) malloc( sizeof( C_EPAL_BIN ) * nbin );
+	if( bins == NULL ){
+		free( hist );
+		return false;
+	}
+	nbin = 0;
+	for( i = 0; i < 32768; ++i ){
+		if( hist[ i ] == 0 ) continue;
+		bins[ nbin ].r = ( i >> 10 ) & 31;
+		bins[ nbin ].g = ( i >>  5 ) & 31;
+		bins[ nbin ].b =   i        & 31;
+		bins[ nbin ].n = (int)hist[ i ];
+		++nbin;
+	}
+	free( hist );
+	hist = nullptr;
+
+	if( nbin <= target ){
+		// 使われている色が上限以下なら、多い順にそのまま採用する (EpalN と同じ)
+		C_COLOR_TABLE *tbl = (C_COLOR_TABLE*) malloc( sizeof( C_COLOR_TABLE ) * nbin );
+		if( tbl == NULL ){
+			free( bins );
+			return false;
+		}
+		for( i = 0; i < nbin; ++i ){
+			tbl[ i ].c = GET_RGB( epal_convert31to255[ bins[ i ].r ], epal_convert31to255[ bins[ i ].g ], epal_convert31to255[ bins[ i ].b ] );
+			tbl[ i ].n = bins[ i ].n;
+		}
+		qsort( tbl, nbin, sizeof( C_COLOR_TABLE ), cnvColorTblCompare );
+		for( i = 0; i < nbin; ++i ){
+			pal[ i ] = tbl[ i ].c;
+		}
+		*p_pal_count = nbin;
+		free( tbl );
+		free( bins );
+		return true;
+	}
+
+	boxes = (C_WU_BOX*) malloc( sizeof( C_WU_BOX ) * target );
+	tmpbins = (C_EPAL_BIN*) malloc( sizeof( C_EPAL_BIN ) * nbin );
+	if( boxes == NULL || tmpbins == NULL ){
+		free( boxes );
+		free( tmpbins );
+		free( bins );
+		return false;
+	}
+
+	// ---- Wu 法: SSD 最大のボックスを、分割後の Q が最大になる面で割る ----
+	//	Q(box) = ( (Σnr)^2 + (Σng)^2 + (Σnb)^2 ) / Σn で、2分割の Q の
+	//	合計を最大化することは、合計 SSD の最小化と等しい。
+	boxes[ 0 ].lo = 0;
+	boxes[ 0 ].hi = nbin;
+	_wu_box_update( &boxes[ 0 ], bins );
+	nbox = 1;
+	while( nbox < target ){
+		int bi2, best_box = -1;
+		double best_ssd = 0.0;
+		for( bi2 = 0; bi2 < nbox; ++bi2 ){
+			double v;
+			if( boxes[ bi2 ].hi - boxes[ bi2 ].lo < 2 ) continue;
+			v = _wu_box_ssd( &boxes[ bi2 ] );
+			if( v > best_ssd ){
+				best_ssd = v;
+				best_box = bi2;
+			}
+		}
+		if( best_box < 0 ) break;	// これ以上分割できない
+		{
+			C_WU_BOX *box = &boxes[ best_box ];
+			double totalq = ( box->sr * box->sr + box->sg * box->sg + box->sb * box->sb ) / (double)box->pop;
+			double bestq = totalq;
+			int best_axis = -1, best_cut = -1, axis, coord;
+			for( axis = 0; axis < 3; ++axis ){
+				double bpop[ 32 ], bsr[ 32 ], bsg[ 32 ], bsb[ 32 ];
+				double lpop = 0.0, lsr = 0.0, lsg = 0.0, lsb = 0.0;
+				for( coord = 0; coord < 32; ++coord ) bpop[ coord ] = bsr[ coord ] = bsg[ coord ] = bsb[ coord ] = 0.0;
+				for( i = box->lo; i < box->hi; ++i ){
+					int k = _wu_bin_key( &bins[ i ], axis );
+					bpop[ k ] += bins[ i ].n;
+					bsr[ k ] += (double)bins[ i ].n * bins[ i ].r;
+					bsg[ k ] += (double)bins[ i ].n * bins[ i ].g;
+					bsb[ k ] += (double)bins[ i ].n * bins[ i ].b;
+				}
+				for( coord = 0; coord < 31; ++coord ){
+					double rpop, q;
+					lpop += bpop[ coord ];
+					lsr += bsr[ coord ];
+					lsg += bsg[ coord ];
+					lsb += bsb[ coord ];
+					rpop = (double)box->pop - lpop;
+					if( lpop <= 0.0 || rpop <= 0.0 ) continue;
+					q = ( lsr * lsr + lsg * lsg + lsb * lsb ) / lpop
+					  + ( ( box->sr - lsr ) * ( box->sr - lsr )
+						+ ( box->sg - lsg ) * ( box->sg - lsg )
+						+ ( box->sb - lsb ) * ( box->sb - lsb ) ) / rpop;
+					if( q > bestq ){
+						bestq = q;
+						best_axis = axis;
+						best_cut = coord;
+					}
+				}
+			}
+			if( best_axis < 0 ) break;	// これ以上分割できない
+			// 安定分配: キーが best_cut 以下のビンを前へ集める
+			{
+				int m = 0, split;
+				for( i = box->lo; i < box->hi; ++i ){
+					if( _wu_bin_key( &bins[ i ], best_axis ) <= best_cut ) tmpbins[ m++ ] = bins[ i ];
+				}
+				split = box->lo + m;
+				for( i = box->lo; i < box->hi; ++i ){
+					if( _wu_bin_key( &bins[ i ], best_axis ) > best_cut ) tmpbins[ m++ ] = bins[ i ];
+				}
+				for( i = 0; i < m; ++i ) bins[ box->lo + i ] = tmpbins[ i ];
+				boxes[ nbox ].lo = split;
+				boxes[ nbox ].hi = box->hi;
+				box->hi = split;
+				_wu_box_update( box, bins );
+				_wu_box_update( &boxes[ nbox ], bins );
+				++nbox;
+			}
+		}
+	}
+
+	// ---- k-means (LBG): Wu の中心を種に生カウント SSE を磨く ----
+	ctr = (double*) malloc( sizeof( double ) * nbox * 3 );
+	if( ctr != NULL ){
+		for( i = 0; i < nbox; ++i ){
+			ctr[ i * 3 + 0 ] = boxes[ i ].sr / (double)boxes[ i ].pop;
+			ctr[ i * 3 + 1 ] = boxes[ i ].sg / (double)boxes[ i ].pop;
+			ctr[ i * 3 + 2 ] = boxes[ i ].sb / (double)boxes[ i ].pop;
+		}
+		owner = (int*) malloc( sizeof( int ) * nbin );
+		acc = (double*) malloc( sizeof( double ) * nbox * 4 );
+		if( owner != NULL && acc != NULL ){
+			int iter;
+			for( i = 0; i < nbin; ++i ) owner[ i ] = -1;
+			for( iter = 0; iter < 100; ++iter ){
+				int changed = 0;
+				// 割り当て: 最も近い中心へ (同距離なら小さい添字)
+				for( i = 0; i < nbin; ++i ){
+					int bj = 0;
+					double bd = 1e30;
+					for( j = 0; j < nbox; ++j ){
+						double dr = bins[ i ].r - ctr[ j * 3 + 0 ];
+						double dg = bins[ i ].g - ctr[ j * 3 + 1 ];
+						double db = bins[ i ].b - ctr[ j * 3 + 2 ];
+						double dd = dr * dr + dg * dg + db * db;
+						if( dd < bd ){
+							bd = dd;
+							bj = j;
+						}
+					}
+					if( owner[ i ] != bj ){
+						owner[ i ] = bj;
+						changed = 1;
+					}
+				}
+				// 中心の再計算: 担当ビンの画素数重み付き平均 (空の中心は据え置き)
+				for( j = 0; j < nbox * 4; ++j ) acc[ j ] = 0.0;
+				for( i = 0; i < nbin; ++i ){
+					double *a = &acc[ owner[ i ] * 4 ];
+					a[ 0 ] += bins[ i ].n;
+					a[ 1 ] += (double)bins[ i ].n * bins[ i ].r;
+					a[ 2 ] += (double)bins[ i ].n * bins[ i ].g;
+					a[ 3 ] += (double)bins[ i ].n * bins[ i ].b;
+				}
+				for( j = 0; j < nbox; ++j ){
+					double *a = &acc[ j * 4 ];
+					if( a[ 0 ] > 0.0 ){
+						ctr[ j * 3 + 0 ] = a[ 1 ] / a[ 0 ];
+						ctr[ j * 3 + 1 ] = a[ 2 ] / a[ 0 ];
+						ctr[ j * 3 + 2 ] = a[ 3 ] / a[ 0 ];
+					}
+				}
+				if( !changed ) break;	// 割り当てが安定したら収束
+			}
+		}
+	}
+
+	// パレット化
+	for( i = 0; i < nbox; ++i ){
+		int r5, g5, b5;
+		if( ctr != NULL ){
+			r5 = (int)( ctr[ i * 3 + 0 ] + 0.5 );
+			g5 = (int)( ctr[ i * 3 + 1 ] + 0.5 );
+			b5 = (int)( ctr[ i * 3 + 2 ] + 0.5 );
+		} else {
+			r5 = (int)( ( boxes[ i ].sr + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+			g5 = (int)( ( boxes[ i ].sg + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+			b5 = (int)( ( boxes[ i ].sb + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
+		}
+		if( r5 < 0 ) r5 = 0;
+		if( r5 > 31 ) r5 = 31;
+		if( g5 < 0 ) g5 = 0;
+		if( g5 > 31 ) g5 = 31;
+		if( b5 < 0 ) b5 = 0;
+		if( b5 > 31 ) b5 = 31;
+		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
+	}
+	*p_pal_count = nbox;
+	free( ctr );
+	free( owner );
+	free( acc );
+	free( boxes );
+	free( tmpbins );
+	free( bins );
+	return true;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		8bit色をRGB各5bitへ量子化する
+//	2.	引数
+//		c	...	(I)	8bit色
+//		r5,g5,b5	...	(O)	RGB各5bit値
+//	3.	返値
+//		なし
+// -------------------------------------------------------------
+void cnvEpalColorTo5bit( C_COLOR c, int *r5, int *g5, int *b5 )
+{
+	*r5 = epal_quantize31( GET_RED( c ) );
+	*g5 = epal_quantize31( GET_GREEN( c ) );
+	*b5 = epal_quantize31( GET_BLUE( c ) );
+}
+
+// -------------------------------------------------------------
+//	EPAL特徴色改善 (EpalHGuard) 用の小物
+// -------------------------------------------------------------
+
+// 分離型ボックスぼかし (端はクランプ)。img を書き換え、tmp を作業に使う
+static void _epal_hg_blur( double *img, double *tmp, int w, int h, int radius )
+{
+	int x, y, k, cnt;
+	double s;
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < w; ++x ){
+			s = 0.0; cnt = 0;
+			for( k = x - radius; k <= x + radius; ++k ){
+				int cx = k < 0 ? 0 : ( k >= w ? w - 1 : k );
+				s += img[ y * w + cx ];
+				++cnt;
+			}
+			tmp[ y * w + x ] = s / cnt;
+		}
+	}
+	for( y = 0; y < h; ++y ){
+		for( x = 0; x < w; ++x ){
+			s = 0.0; cnt = 0;
+			for( k = y - radius; k <= y + radius; ++k ){
+				int cy = k < 0 ? 0 : ( k >= h ? h - 1 : k );
+				s += tmp[ cy * w + x ];
+				++cnt;
+			}
+			img[ y * w + x ] = s / cnt;
+		}
+	}
+}
+
+static int _epal_hg_cmp_double( const void *a, const void *b )
+{
+	double d = *(const double *)a - *(const double *)b;
+	return ( d > 0 ) - ( d < 0 );
+}
+
+// デッドゾーンを引いた残りを p99 で [0,1] に正規化する (配列を書き換える)
+static void _epal_hg_normalize( double *a, int n, double deadzone )
+{
+	int i, m = 0;
+	double *pos, p99;
+	for( i = 0; i < n; ++i ) a[ i ] = a[ i ] > deadzone ? a[ i ] - deadzone : 0.0;
+	pos = (double *)malloc( sizeof( double ) * ( n > 0 ? n : 1 ) );
+	if( pos == NULL ) return;
+	for( i = 0; i < n; ++i ) if( a[ i ] > 0 ) pos[ m++ ] = a[ i ];
+	if( m == 0 ){ free( pos ); return; }
+	qsort( pos, (size_t)m, sizeof( double ), _epal_hg_cmp_double );
+	p99 = pos[ (int)( 0.99 * ( m - 1 ) ) ];
+	free( pos );
+	if( p99 <= 0 ) return;
+	for( i = 0; i < n; ++i ){
+		a[ i ] /= p99;
+		if( a[ i ] > 1.0 ) a[ i ] = 1.0;
+	}
+}
+
+// UVY応答マップ (画素ごと 0..1)。失敗時は NULL
+//	色差マグニチュード M=|(U,V)| と輝度 Y のハイパス応答 (半径2ぼかしとの
+//	絶対差) を、それぞれデッドゾーン (色差2.0 / 輝度6.0) + p99正規化し、
+//	sqrt( nM^2 + nY^2 ) を 1 でクランプしたもの。
+static double *_epal_hg_response( C_COLOR *in, int w, int h )
+{
+	int i, npix = w * h;
+	double *Y = NULL, *M = NULL, *tmp = NULL, *blur = NULL;
+	Y = (double *)malloc( sizeof( double ) * npix );
+	M = (double *)malloc( sizeof( double ) * npix );
+	tmp = (double *)malloc( sizeof( double ) * npix );
+	blur = (double *)malloc( sizeof( double ) * npix );
+	if( Y == NULL || M == NULL || tmp == NULL || blur == NULL ){
+		free( Y ); free( M ); free( tmp ); free( blur );
+		return NULL;
+	}
+	for( i = 0; i < npix; ++i ){
+		double r = GET_RED( in[ i ] ), g = GET_GREEN( in[ i ] ), b = GET_BLUE( in[ i ] );
+		double y = 0.299 * r + 0.587 * g + 0.114 * b;
+		double u = 0.492111 * ( b - y );
+		double v = 0.877283 * ( r - y );
+		Y[ i ] = y;
+		M[ i ] = sqrt( u * u + v * v );
+	}
+	memcpy( blur, M, sizeof( double ) * npix );
+	_epal_hg_blur( blur, tmp, w, h, 2 );
+	for( i = 0; i < npix; ++i ) M[ i ] = fabs( M[ i ] - blur[ i ] );
+	_epal_hg_normalize( M, npix, 2.0 );
+	memcpy( blur, Y, sizeof( double ) * npix );
+	_epal_hg_blur( blur, tmp, w, h, 2 );
+	for( i = 0; i < npix; ++i ) Y[ i ] = fabs( Y[ i ] - blur[ i ] );
+	_epal_hg_normalize( Y, npix, 6.0 );
+	for( i = 0; i < npix; ++i ){
+		double v = sqrt( M[ i ] * M[ i ] + Y[ i ] * Y[ i ] );
+		M[ i ] = v > 1.0 ? 1.0 : v;
+	}
+	free( Y ); free( tmp ); free( blur );
+	return M;
+}
+
+static double *_epal_hg_sort_key;	// 添字ソート用のキー配列
+
+static int _epal_hg_cmp_desc( const void *a, const void *b )
+{
+	double d = _epal_hg_sort_key[ *(const int *)b ] - _epal_hg_sort_key[ *(const int *)a ];
+	return ( d > 0 ) - ( d < 0 );
+}
+
+static int _epal_hg_cmp_asc( const void *a, const void *b )
+{
+	double d = _epal_hg_sort_key[ *(const int *)a ] - _epal_hg_sort_key[ *(const int *)b ];
+	return ( d > 0 ) - ( d < 0 );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		EPAL自動選択パレットの特徴色改善
+//	2.	引数
+//		in	...	(I)	画像メモリ (変換後のサイズ)
+//		width, height	...	(I)	画像サイズ
+//		pal5	...	(I/O)	自動選択されたパレット (RGB各5bit)
+//		pal_count	...	(I)	pal5 の色数
+//		fixed5	...	(I)	固定色 (RGB各5bit。置換対象にしない)
+//		fixed_num	...	(I)	fixed5 の色数 (0 のとき fixed5 は NULL でよい)
+//		FourceZero	...	(I)	除外する色がある true / ない false
+//		FZColor	...	(I)	除外する色
+//	3.	返値
+//		受理した置換数
+//	4.	備考
+//		メディアンカット (生カウント) の結果を出発点に、小さく目立つ
+//		特徴色を取りこぼさないための後処理。
+//		提案とスコアは h(c) = sqrt( n(c) ) + b(c) のドメインで行う。
+//		n(c) は 555 ヒストグラムの生カウント、b(c) は UVY応答の
+//		ビン別合計で、全面応答のビンでは b(c) = n(c) になる画素等価の
+//		正規化である。候補は単一ビンではなく、応答の強い画素の
+//		色空間クラスタ (種ビンから半径5以内) の応答重み付き重心とする。
+//		押し出しは h ドメインの増分が最も小さい順に試し、真の
+//		(無重み) SSE が増えない置換だけを受理する (真SSEガード)。
+//		固定色は決して押し出さず、受理された特徴色もその後の
+//		置換では固定色と同様に保護される。
+// -------------------------------------------------------------
+int cnvEpalImprovePalette( C_COLOR *in, int width, int height,
+						   int (*pal5)[ 3 ], int pal_count,
+						   const int (*fixed5)[ 3 ], int fixed_num,
+						   bool FourceZero, C_COLOR FZColor )
+{
+	const double RESPTH = 0.25;		// 強応答とみなす応答の下限
+	const int SUPMIN = 8;			// クラスタの最小支持画素数
+	const int MAXSWAP = 16;			// 置換回数の上限
+	const int MAXSEED = 64;			// 1反復で走査する種ビンの上限
+	int npix = width * height;
+	int i, e, bi, accepted = 0;
+	bool ok = true;
+	double *resp = NULL;
+	unsigned short *binidx = NULL;
+	int *hn = NULL;
+	double *hb = NULL;
+	int nb = 0;
+	int *br = NULL, *bg = NULL, *bb = NULL, *bown = NULL, *order = NULL, *eorder = NULL;
+	double *bn = NULL, *bh = NULL, *bd1 = NULL, *bd2 = NULL, *bscore = NULL;
+	double *csse = NULL, *cj = NULL, *ekey = NULL;
+	int (*ent)[ 3 ] = NULL;
+	bool *locked = NULL;		// 採用済みの特徴色 (以降の押し出し対象にしない)
+	int nsp = 0;				// 強応答画素の数
+	int *spidx = NULL;			// 強応答画素のビン番号
+	double *spresp = NULL;		// 強応答画素の応答値
+	int rej[ 64 ][ 3 ];
+	int nrej = 0;
+
+	if( pal_count <= 0 || npix <= 0 ) return 0;
+	resp = _epal_hg_response( in, width, height );
+	if( resp == NULL ) return 0;
+	binidx = (unsigned short *)malloc( sizeof( unsigned short ) * npix );
+	hn = (int *)calloc( 32768, sizeof( int ) );
+	hb = (double *)calloc( 32768, sizeof( double ) );
+	if( binidx == NULL || hn == NULL || hb == NULL ) ok = false;
+	if( ok ){
+		// 555 ヒストグラムと応答合計 (選択時と同じ除外規則)
+		for( i = 0; i < npix; ++i ){
+			int idx;
+			if( FourceZero && in[ i ] == FZColor ){ binidx[ i ] = 0xFFFF; continue; }
+			idx = ( epal_quantize31( GET_RED( in[ i ] ) ) << 10 )
+				| ( epal_quantize31( GET_GREEN( in[ i ] ) ) << 5 )
+				| epal_quantize31( GET_BLUE( in[ i ] ) );
+			binidx[ i ] = (unsigned short)idx;
+			hn[ idx ] += 1;
+			hb[ idx ] += resp[ i ];
+		}
+		for( e = 0; e < fixed_num; ++e ){
+			int idx = ( ( fixed5[ e ][ 0 ] & 31 ) << 10 )
+					| ( ( fixed5[ e ][ 1 ] & 31 ) << 5 )
+					| ( fixed5[ e ][ 2 ] & 31 );
+			hn[ idx ] = 0;
+			hb[ idx ] = 0.0;
+		}
+		for( i = 0; i < 32768; ++i ) if( hn[ i ] > 0 ) ++nb;
+		if( nb == 0 ) ok = false;
+		// 強応答画素のリスト (クラスタ抽出はこの画素だけを走査する)
+		spidx = (int *)malloc( sizeof( int ) * npix );
+		spresp = (double *)malloc( sizeof( double ) * npix );
+		if( spidx == NULL || spresp == NULL ) ok = false;
+		else {
+			for( i = 0; i < npix; ++i ){
+				if( resp[ i ] >= RESPTH && binidx[ i ] != 0xFFFF ){
+					spidx[ nsp ] = binidx[ i ];
+					spresp[ nsp ] = resp[ i ];
+					++nsp;
+				}
+			}
+		}
+	}
+	if( ok ){
+		br = (int *)malloc( sizeof( int ) * nb );
+		bg = (int *)malloc( sizeof( int ) * nb );
+		bb = (int *)malloc( sizeof( int ) * nb );
+		bown = (int *)malloc( sizeof( int ) * nb );
+		order = (int *)malloc( sizeof( int ) * nb );
+		bn = (double *)malloc( sizeof( double ) * nb );
+		bh = (double *)malloc( sizeof( double ) * nb );
+		bd1 = (double *)malloc( sizeof( double ) * nb );
+		bd2 = (double *)malloc( sizeof( double ) * nb );
+		bscore = (double *)malloc( sizeof( double ) * nb );
+		eorder = (int *)malloc( sizeof( int ) * pal_count );
+		locked = (bool *)calloc( pal_count, sizeof( bool ) );
+		csse = (double *)malloc( sizeof( double ) * pal_count );
+		cj = (double *)malloc( sizeof( double ) * pal_count );
+		ekey = (double *)malloc( sizeof( double ) * pal_count );
+		ent = (int (*)[ 3 ])malloc( sizeof( int ) * 3 * ( fixed_num + pal_count ) );
+		if( br == NULL || bg == NULL || bb == NULL || bown == NULL || order == NULL
+		 || bn == NULL || bh == NULL || bd1 == NULL || bd2 == NULL || bscore == NULL
+		 || eorder == NULL || csse == NULL || cj == NULL || ekey == NULL || ent == NULL
+		 || locked == NULL ) ok = false;
+	}
+	if( ok ){
+		nb = 0;
+		for( i = 0; i < 32768; ++i ) if( hn[ i ] > 0 ){
+			br[ nb ] = ( i >> 10 ) & 31;
+			bg[ nb ] = ( i >> 5 ) & 31;
+			bb[ nb ] = i & 31;
+			bn[ nb ] = (double)hn[ i ];
+			bh[ nb ] = sqrt( bn[ nb ] ) + hb[ i ];	// h(c) = sqrt( n(c) ) + 1.0 * b(c)
+			++nb;
+		}
+		while( accepted < MAXSWAP ){
+			int nent = 0, nseed = 0, f;
+			bool swapped = false;
+			double total_j = 0.0;
+			for( e = 0; e < fixed_num; ++e ){
+				ent[ nent ][ 0 ] = fixed5[ e ][ 0 ] & 31;
+				ent[ nent ][ 1 ] = fixed5[ e ][ 1 ] & 31;
+				ent[ nent ][ 2 ] = fixed5[ e ][ 2 ] & 31;
+				++nent;
+			}
+			for( e = 0; e < pal_count; ++e ){
+				ent[ nent ][ 0 ] = pal5[ e ][ 0 ] & 31;
+				ent[ nent ][ 1 ] = pal5[ e ][ 1 ] & 31;
+				ent[ nent ][ 2 ] = pal5[ e ][ 2 ] & 31;
+				++nent;
+			}
+			// 最近傍割り当て (d1 / d2 / 所有者) と種ビンのスコア
+			for( bi = 0; bi < nb; ++bi ){
+				double d1 = 1e30, d2 = 1e30;
+				int ow = -1;
+				for( e = 0; e < nent; ++e ){
+					int dr = br[ bi ] - ent[ e ][ 0 ], dg = bg[ bi ] - ent[ e ][ 1 ], db = bb[ bi ] - ent[ e ][ 2 ];
+					double dd = (double)( dr * dr + dg * dg + db * db );
+					if( dd < d1 ){ d2 = d1; d1 = dd; ow = e; }
+					else if( dd < d2 ){ d2 = dd; }
+				}
+				bd1[ bi ] = d1;
+				bd2[ bi ] = d2;
+				bown[ bi ] = ow;
+				bscore[ bi ] = bh[ bi ] * d1;
+				total_j += bh[ bi ] * d1;
+				order[ bi ] = bi;
+			}
+			_epal_hg_sort_key = bscore;
+			qsort( order, (size_t)nb, sizeof( int ), _epal_hg_cmp_desc );
+			nrej = 0;
+			for( f = 0; f < nb && nseed < MAXSEED; ++f ){
+				int sbi = order[ f ];
+				int sr, sg, sb, sup = 0, ci2;
+				double wsum = 0.0, rsum = 0.0, gsum = 0.0, bsum = 0.0;
+				int cand[ 3 ];
+				bool dup = false;
+				double add_sse = 0.0, add_j = 0.0, tol_j;
+				if( bscore[ sbi ] <= 0.0 ) break;
+				++nseed;
+				sr = br[ sbi ]; sg = bg[ sbi ]; sb = bb[ sbi ];
+				// 候補クラスタ: 強応答画素のうち色空間で種から半径5以内
+				for( i = 0; i < nsp; ++i ){
+					int idx = spidx[ i ], dr, dg, db;
+					dr = ( ( idx >> 10 ) & 31 ) - sr;
+					dg = ( ( idx >> 5 ) & 31 ) - sg;
+					db = ( idx & 31 ) - sb;
+					if( dr * dr + dg * dg + db * db > 25 ) continue;
+					++sup;
+					wsum += spresp[ i ];
+					rsum += spresp[ i ] * ( ( idx >> 10 ) & 31 );
+					gsum += spresp[ i ] * ( ( idx >> 5 ) & 31 );
+					bsum += spresp[ i ] * ( idx & 31 );
+				}
+				if( sup < SUPMIN || wsum <= 0.0 ) continue;
+				cand[ 0 ] = (int)( rsum / wsum + 0.5 );
+				cand[ 1 ] = (int)( gsum / wsum + 0.5 );
+				cand[ 2 ] = (int)( bsum / wsum + 0.5 );
+				for( e = 0; e < nent; ++e ){
+					if( ent[ e ][ 0 ] == cand[ 0 ] && ent[ e ][ 1 ] == cand[ 1 ] && ent[ e ][ 2 ] == cand[ 2 ] ){ dup = true; break; }
+				}
+				if( dup ) continue;
+				for( i = 0; i < nrej; ++i ){
+					if( rej[ i ][ 0 ] == cand[ 0 ] && rej[ i ][ 1 ] == cand[ 1 ] && rej[ i ][ 2 ] == cand[ 2 ] ){ dup = true; break; }
+				}
+				if( dup ) continue;
+				// 候補追加の寄与と、押し出される色が所有するビンの取り戻し分
+				for( e = 0; e < pal_count; ++e ){ csse[ e ] = 0.0; cj[ e ] = 0.0; }
+				for( bi = 0; bi < nb; ++bi ){
+					int dr = br[ bi ] - cand[ 0 ], dg = bg[ bi ] - cand[ 1 ], db = bb[ bi ] - cand[ 2 ];
+					double dc = (double)( dr * dr + dg * dg + db * db );
+					double keep = bd1[ bi ] < dc ? bd1[ bi ] : dc;
+					add_sse += bn[ bi ] * ( keep - bd1[ bi ] );
+					add_j += bh[ bi ] * ( keep - bd1[ bi ] );
+					if( bown[ bi ] >= fixed_num ){
+						double alt = bd2[ bi ] < dc ? bd2[ bi ] : dc;
+						csse[ bown[ bi ] - fixed_num ] += bn[ bi ] * ( alt - keep );
+						cj[ bown[ bi ] - fixed_num ] += bh[ bi ] * ( alt - keep );
+					}
+				}
+				// 押し出し順: ΔJ (hドメイン) の小さい順
+				// (採用済みの特徴色は固定色と同様に押し出し対象から外す)
+				{
+					int ne = 0;
+					for( e = 0; e < pal_count; ++e ){
+						if( locked[ e ] ) continue;
+						eorder[ ne ] = e;
+						ekey[ ne ] = add_j + cj[ e ];
+						++ne;
+					}
+					_epal_hg_sort_key = ekey;
+					qsort( eorder, (size_t)ne, sizeof( int ), _epal_hg_cmp_asc );
+					tol_j = 1e-6 * ( total_j > 0.0 ? total_j : 1.0 );
+					for( ci2 = 0; ci2 < ne; ++ci2 ){
+					double dj, ds;
+					e = eorder[ ci2 ];
+					dj = add_j + cj[ e ];
+					if( dj >= -tol_j ) break;
+					ds = add_sse + csse[ e ];
+					if( ds <= 0.0 ){	// 真SSEガード: 悪化する置換は受理しない
+						pal5[ e ][ 0 ] = cand[ 0 ];
+						pal5[ e ][ 1 ] = cand[ 1 ];
+						pal5[ e ][ 2 ] = cand[ 2 ];
+						locked[ e ] = true;	// 採用した特徴色は固定する
+						++accepted;
+						swapped = true;
+						break;
+					}
+					}
+				}
+				if( swapped ) break;
+				if( nrej < 64 ){
+					rej[ nrej ][ 0 ] = cand[ 0 ];
+					rej[ nrej ][ 1 ] = cand[ 1 ];
+					rej[ nrej ][ 2 ] = cand[ 2 ];
+					++nrej;
+				}
+			}
+			if( !swapped ) break;
+		}
+	}
+	free( resp ); free( binidx ); free( hn ); free( hb );
+	free( br ); free( bg ); free( bb ); free( bown ); free( order ); free( eorder );
+	free( bn ); free( bh ); free( bd1 ); free( bd2 ); free( bscore );
+	free( csse ); free( cj ); free( ekey ); free( ent );
+	free( spidx ); free( spresp );
+	free( locked );
+	return accepted;
+}
+
+
+// -------------------------------------------------------------
 // ヒストグラムを作成する
 //
 // 引数：	in			画像メモリ
@@ -1710,7 +3041,7 @@ int cnvCreateTail4( C_PALETTE *pal,uint8_t *palen,bool zeroen,C_TILE_PATTERN *ta
 	int	pnum;
 	// すべての色の組み合わせを処理する
 	l = zeroen ? 0 : 1;
-	pnum = ( screen_mode == MD_SC6 || screen_mode == MD_SC6_256L ) ? 4 : 16;
+	pnum = ( screen_mode == MD_SC6 || screen_mode == MD_SC6_256L || screen_mode == MD_SC6P || screen_mode == MD_SC6P_256L ) ? 4 : 16;
 	for( i = l; i < pnum; ++i ){
 		if( palen[ i ] == 1 ) continue;
 		r = pal[ i ].red;
@@ -1782,6 +3113,37 @@ static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 )
 
 // -------------------------------------------------------------
 //	1.	日本語名
+//		パレットの大小比較 (EPAL 5bit版)
+//	2.	引数
+//		Pal1	...	(I)	パレット１のアドレス
+//		Pal2	...	(I)	パレット２のアドレス
+//	3.	返値
+//		true	...	Pal2 の方が小さい
+//		false	...	Pal2 の方が大きい
+//	4.	備考
+//		cnvCompare の 5bit 版 (マスク 16,8,4,2,1)
+// -------------------------------------------------------------
+static bool cnvCompare5( C_PALETTE* Pal1, C_PALETTE* Pal2 )
+{
+	int	i;
+	int	mask;
+
+	mask = 16;
+	for( i = 0; i < 5; ++i ) {
+		if( ( Pal1->red   & mask ) > ( Pal2->red   & mask ) ) return true;
+		if( ( Pal1->red   & mask ) < ( Pal2->red   & mask ) ) return false;
+		if( ( Pal1->green & mask ) > ( Pal2->green & mask ) ) return true;
+		if( ( Pal1->green & mask ) < ( Pal2->green & mask ) ) return false;
+		if( ( Pal1->blue  & mask ) > ( Pal2->blue  & mask ) ) return true;
+		if( ( Pal1->blue  & mask ) < ( Pal2->blue  & mask ) ) return false;
+		mask = mask >> 1;
+	}
+	//	同じ
+	return false;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
 //		パレットのソート
 //	2.	引数
 //		Mode	...	(I)	設定内容
@@ -1794,13 +3156,15 @@ static bool cnvCompare( C_PALETTE* Pal1, C_PALETTE* Pal2 )
 void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 {
 	C_PALETTE			color_palette[16] = { 0 }, tBakCol;	// SC5/SC7 におけるＭＳＸ側パレット指定
+	C_PALETTE			epal_palette[16] = { 0 }, tBakEpal;	// EPAL用 5bitパレット (ソートに追随させる)
 	uint8_t		PalEn[16] = { 0 }, tBakEn;
 	C_COLOR	pal[16] = { 0 }, tBakPal;
 	int			cnt, z, x, pnum;
+	bool		epal = cnvIsEpalMode( Mode->screen_mode );
 
 	//	パレットをコピー
 	cnt  = 0;
-	pnum = ( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L ) ? 4 : 16;
+	pnum = ( Mode->screen_mode == MD_SC6 || Mode->screen_mode == MD_SC6_256L || Mode->screen_mode == MD_SC6P || Mode->screen_mode == MD_SC6P_256L ) ? 4 : 16;
 	for( z = 0; z < pnum; ++z ) {
 		if( z == 0 && Mode->NonZero ) continue;
 		switch( Mode->SortMode ) {
@@ -1808,6 +3172,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 		case SM_DECAUTO:
 			if( Mode->PalEn[ z ] != PALEN_AUTO ) continue;
 			color_palette[ cnt ]   = Mode->color_palette[ z ];
+			epal_palette[ cnt ]  = Mode->color_palette_epal[ z ];
 			PalEn[ cnt ] = Mode->PalEn[ z ];
 			pal[ cnt ]   = Pal[ z ];
 			++cnt;
@@ -1815,6 +3180,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 		case SM_INC:
 		case SM_DEC:
 			color_palette[ cnt ]   = Mode->color_palette[ z ];
+			epal_palette[ cnt ]  = Mode->color_palette_epal[ z ];
 			PalEn[ cnt ] = Mode->PalEn[ z ];
 			pal[ cnt ]   = Pal[ z ];
 			++cnt;
@@ -1829,7 +3195,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 	case SM_INC:
 		for( z = cnt - 1; z >= 0; --z ) {
 			for( x = 0; x < z; ++x ) {
-				if( cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) {
+				if( epal ? cnvCompare5( &epal_palette[ x ], &epal_palette[ x + 1 ] ) : cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) {
 					tBakCol        = color_palette[ x ];
 					color_palette[ x ]       = color_palette[ x + 1 ];
 					color_palette[ x + 1 ]   = tBakCol;
@@ -1839,6 +3205,9 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 					tBakPal        = pal[ x ];
 					pal[ x ]       = pal[ x + 1 ];
 					pal[ x + 1 ]   = tBakPal;
+					tBakEpal       = epal_palette[ x ];
+					epal_palette[ x ]     = epal_palette[ x + 1 ];
+					epal_palette[ x + 1 ] = tBakEpal;
 				}
 			}
 		}
@@ -1847,7 +3216,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 	case SM_DEC:
 		for( z = cnt - 1; z >= 0; --z ) {
 			for( x = 0; x < z; ++x ) {
-				if( !cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) {
+				if( !( epal ? cnvCompare5( &epal_palette[ x ], &epal_palette[ x + 1 ] ) : cnvCompare( &color_palette[ x ], &color_palette[ x + 1 ] ) ) ) {
 					tBakCol        = color_palette[ x ];
 					color_palette[ x ]       = color_palette[ x + 1 ];
 					color_palette[ x + 1 ]   = tBakCol;
@@ -1857,6 +3226,9 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 					tBakPal        = pal[ x ];
 					pal[ x ]       = pal[ x + 1 ];
 					pal[ x + 1 ]   = tBakPal;
+					tBakEpal       = epal_palette[ x ];
+					epal_palette[ x ]     = epal_palette[ x + 1 ];
+					epal_palette[ x + 1 ] = tBakEpal;
 				}
 			}
 		}
@@ -1872,6 +3244,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 		case SM_DECAUTO:
 			if( Mode->PalEn[ z ] != PALEN_AUTO ) continue;
 			Mode->color_palette[ z ]   = color_palette[ cnt ];
+			if( epal ) Mode->color_palette_epal[ z ] = epal_palette[ cnt ];
 			Mode->PalEn[ z ] = PalEn[ cnt ];
 			Pal[ z ]         = pal[ cnt ];
 			++cnt;
@@ -1879,6 +3252,7 @@ void cnvSortPalette( SETTING* Mode, C_COLOR* Pal )
 		case SM_INC:
 		case SM_DEC:
 			Mode->color_palette[ z ]   = color_palette[ cnt ];
+			if( epal ) Mode->color_palette_epal[ z ] = epal_palette[ cnt ];
 			Mode->PalEn[ z ] = PalEn[ cnt ];
 			Pal[ z ]         = pal[ cnt ];
 			++cnt;

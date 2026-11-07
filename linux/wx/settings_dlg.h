@@ -46,6 +46,7 @@ private:
 	void UpdateFourceZeroEnabled();
 	void RefreshPaletteControls();
 	void RefreshSliderLabels();
+	void ApplyPaletteRange();
 	void SelectPaletteEntry( int idx );
 
 	void OnModeChanged( wxCommandEvent& );
@@ -102,6 +103,7 @@ private:
 	wxCheckBox* m_selcol = nullptr;
 	wxCheckBox* m_nonzero = nullptr;
 	wxCheckBox* m_fixed_palette = nullptr;
+	wxCheckBox* m_epal_hguard = nullptr;
 	PalettePanel* m_pal_panel = nullptr;
 	wxStaticText* m_pal_note = nullptr;
 	wxStaticText* m_color_label = nullptr;

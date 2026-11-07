@@ -17,11 +17,14 @@ const char* const kModeNames[ MD_MAX ] = {
 	"SCREEN10", "SCREEN12", "SCREEN5 (256 lines)", "SCREEN6 (256 lines)",
 	"SCREEN7 (256 lines)", "SCREEN8 (256 lines)", "SCREEN10 (256 lines)",
 	"SCREEN12 (256 lines)", "SCREEN8 EPAL (V9968)",
-	"SCREEN8 EPAL (V9968) (256 lines)"
+	"SCREEN8 EPAL (V9968) (256 lines)", "SCREEN2/4 EPAL (V9968)",
+	"SCREEN3 EPAL (V9968)", "SCREEN5 EPAL (V9968)", "SCREEN6 EPAL (V9968)",
+	"SCREEN7 EPAL (V9968)", "SCREEN5 EPAL (V9968) (256 lines)",
+	"SCREEN6 EPAL (V9968) (256 lines)", "SCREEN7 EPAL (V9968) (256 lines)"
 };
 
 bool IsPaletteMode( uint32_t m ) {
-	return m < MD_SC8 || ( m >= MD_SC5_256L && m < MD_SC8_256L );
+	return m < MD_SC8 || ( m >= MD_SC5_256L && m < MD_SC8_256L ) || cnvIsEpalMode( m );
 }
 bool IsNaturalMode( uint32_t m ) {
 	return m == MD_SC10 || m == MD_SC12 || m == MD_SC10_256L || m == MD_SC12_256L;
@@ -29,12 +32,64 @@ bool IsNaturalMode( uint32_t m ) {
 bool IsTileMode( uint32_t m ) {
 	switch( m ) {
 	case MD_SC2: case MD_SC3: case MD_SC5: case MD_SC6: case MD_SC7:
-	case MD_SC5_256L: case MD_SC6_256L: case MD_SC7_256L: return true;
+	case MD_SC5_256L: case MD_SC6_256L: case MD_SC7_256L:
+	case MD_SC2P: case MD_SC3P: case MD_SC5P: case MD_SC6P: case MD_SC7P:
+	case MD_SC5P_256L: case MD_SC6P_256L: case MD_SC7P_256L: return true;
 	}
 	return false;
 }
 bool IsEpalMode( uint32_t m ) {
 	return m == MD_SC8P || m == MD_SC8P_256L;
+}
+
+// EPAL editor family helpers (SCREEN2-7 EPAL; cnvIsEpalMode() is exactly
+// that set).  The 3-bit <-> 5-bit palette relationship is the one the
+// converter (CreatePal) maintains: derive = (convert7to255[v]*31+127)/255,
+// reflect = convert_rgb_to_palette over the cnvEpalTo255 expansion.
+int EpalDerive5( const int* tbl, int v3 ) {
+	return ( tbl[ v3 & 7 ] * 31 + 127 ) / 255;
+}
+int EpalReflect3( const int* tbl, int v5 ) {
+	return convert_rgb_to_palette( tbl, 8, cnvEpalTo255( v5 ) );
+}
+// Re-derive color_palette_epal from color_palette wherever the pair is
+// inconsistent (e.g. a settings file written before 5-bit editing, where
+// the 5-bit side was never maintained).  Pairs the editor produced (the
+// 3-bit side equals the reflection of the 5-bit side) are kept untouched.
+void EpalHealPalette( SETTING& m ) {
+	for( int i = 0; i < 16; ++i ) {
+		if( ( m.color_palette[ i ].red & 7 ) != EpalReflect3( convert7to255_r, m.color_palette_epal[ i ].red ) )
+			m.color_palette_epal[ i ].red = EpalDerive5( convert7to255_r, m.color_palette[ i ].red );
+		if( ( m.color_palette[ i ].green & 7 ) != EpalReflect3( convert7to255_g, m.color_palette_epal[ i ].green ) )
+			m.color_palette_epal[ i ].green = EpalDerive5( convert7to255_g, m.color_palette[ i ].green );
+		if( ( m.color_palette[ i ].blue & 7 ) != EpalReflect3( convert7to255_b, m.color_palette_epal[ i ].blue ) )
+			m.color_palette_epal[ i ].blue = EpalDerive5( convert7to255_b, m.color_palette[ i ].blue );
+	}
+}
+// Force color_palette_epal to follow color_palette (palette presets and
+// classic-format palette loads define the palette at 3-bit precision).
+void EpalDerivePalette( SETTING& m ) {
+	for( int i = 0; i < 16; ++i ) {
+		m.color_palette_epal[ i ].red   = EpalDerive5( convert7to255_r, m.color_palette[ i ].red );
+		m.color_palette_epal[ i ].green = EpalDerive5( convert7to255_g, m.color_palette[ i ].green );
+		m.color_palette_epal[ i ].blue  = EpalDerive5( convert7to255_b, m.color_palette[ i ].blue );
+	}
+}
+// Palette format of a BSAVE file name, same extension rule as
+// bsvLoadPLBsaveFile(): 1 = EPAL (B/D/F/G/H), 2 = classic (2/3/4/5/6/7),
+// 0 = not a palette BSAVE name.
+int BsavePaletteKind( const char* name ) {
+	size_t n = strlen( name );
+	char c;
+	if( n == 0 ) return 0;
+	c = name[ n - 1 ];
+	if( c == '0' || c == '1' ) {
+		if( n < 2 ) return 0;
+		c = name[ n - 2 ];
+	}
+	if( c == 'B' || c == 'D' || c == 'F' || c == 'G' || c == 'H' ) return 1;
+	if( c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' ) return 2;
+	return 0;
 }
 
 wxChoice* MakeChoice( wxWindow* parent, const char* const* items, int count ) {
@@ -98,10 +153,17 @@ private:
 		wxPaintDC dc( this );
 		for( int i = 0; i < 16; ++i ) {
 			int x = 4 + ( i % 8 ) * kCell, y = 4 + ( i / 8 ) * kCell;
-			const C_PALETTE& p = m_mode->color_palette[ i ];
-			dc.SetBrush( wxBrush( wxColour( convert7to255_r[ p.red ],
-											convert7to255_g[ p.green ],
-											convert7to255_b[ p.blue ] ) ) );
+			wxColour col;
+			if( cnvIsEpalMode( m_mode->screen_mode ) ) {
+				const C_PALETTE& p = m_mode->color_palette_epal[ i ];
+				col = wxColour( cnvEpalTo255( p.red ), cnvEpalTo255( p.green ),
+								cnvEpalTo255( p.blue ) );
+			} else {
+				const C_PALETTE& p = m_mode->color_palette[ i ];
+				col = wxColour( convert7to255_r[ p.red ], convert7to255_g[ p.green ],
+								convert7to255_b[ p.blue ] );
+			}
+			dc.SetBrush( wxBrush( col ) );
 			dc.SetPen( *wxBLACK_PEN );
 			dc.DrawRectangle( x, y, kCell - 2, kCell - 2 );
 			if( m_mode->PalEn[ i ] == PALEN_NONE ) {
@@ -140,6 +202,11 @@ private:
 			uint8_t te = m_mode->PalEn[ m_drag_from ];
 			m_mode->PalEn[ m_drag_from ] = m_mode->PalEn[ idx ];
 			m_mode->PalEn[ idx ] = te;
+			if( cnvIsEpalMode( m_mode->screen_mode ) ) {
+				C_PALETTE tp = m_mode->color_palette_epal[ m_drag_from ];
+				m_mode->color_palette_epal[ m_drag_from ] = m_mode->color_palette_epal[ idx ];
+				m_mode->color_palette_epal[ idx ] = tp;
+			}
 			*m_sel = idx;
 			if( m_on_change ) m_on_change();
 			Refresh();
@@ -352,9 +419,11 @@ void SettingsDialog::BuildUi( Purpose purpose ) {
 		m_selcol = new wxCheckBox( this, wxID_ANY, "Prefer most-used colors" );
 		m_nonzero = new wxCheckBox( this, wxID_ANY, "Do not use color 0" );
 		m_fixed_palette = new wxCheckBox( this, wxID_ANY, "Fixed palette (use all entries as-is)" );
+		m_epal_hguard = new wxCheckBox( this, wxID_ANY, "Prefer distinctive colors (EPAL)" );
 		box->Add( m_selcol, 0, wxALL, 2 );
 		box->Add( m_nonzero, 0, wxALL, 2 );
 		box->Add( m_fixed_palette, 0, wxALL, 2 );
+		box->Add( m_epal_hguard, 0, wxALL, 2 );
 
 		m_pal_panel = new PalettePanel( this, &m_edit, &m_pal_sel,
 			[ this ]() { RefreshPaletteControls(); } );
@@ -461,9 +530,12 @@ void SettingsDialog::LoadAll() {
 	m_selcol->SetValue( m_edit.SelCol == SELCOL_TABUNPU );
 	m_nonzero->SetValue( m_edit.NonZero );
 	m_fixed_palette->SetValue( m_edit.fixed_palette );
+	m_epal_hguard->SetValue( m_edit.EpalHGuard );
 	m_sort->SetSelection( m_edit.SortMode >= 0 && m_edit.SortMode <= 4 ? m_edit.SortMode : 0 );
 	m_plt_mode->SetSelection( (int) ( m_edit.PltMode % PLT_COUNT ) );
 
+	if( cnvIsEpalMode( m_edit.screen_mode ) ) EpalHealPalette( m_edit );
+	ApplyPaletteRange();
 	SelectPaletteEntry( 0 );
 	RefreshSliderLabels();
 }
@@ -505,6 +577,7 @@ void SettingsDialog::StoreAll() {
 	m_edit.SelCol = m_selcol->GetValue() ? SELCOL_TABUNPU : SELCOL_BUNSAN;
 	m_edit.NonZero = m_nonzero->GetValue();
 	m_edit.fixed_palette = m_fixed_palette->GetValue();
+	m_edit.EpalHGuard = m_epal_hguard->GetValue();
 	m_edit.SortMode = m_sort->GetSelection();
 	m_edit.PltMode = (uint32_t) m_plt_mode->GetSelection();
 	// color_palette[] / PalEn[] are edited live by the palette controls.
@@ -520,6 +593,9 @@ void SettingsDialog::UpdateEnabled() {
 						 (wxWindow*) m_save_pal, (wxWindow*) m_sort, (wxWindow*) m_plt_mode } ) {
 		w->Enable( pal );
 	}
+	// The EPAL improved selection applies to the whole EPAL family
+	// (SCREEN2-7 EPAL via cnvIsEpalMode, SCREEN8 EPAL via IsEpalMode).
+	m_epal_hguard->Enable( cnvIsEpalMode( mode ) || IsEpalMode( mode ) );
 	if( IsEpalMode( mode ) ) {
 		m_pal_note->SetLabel( "SCREEN8 EPAL generates its 256-color palette automatically;\nthe 16-color palette settings do not apply." );
 	} else if( !pal ) {
@@ -534,7 +610,7 @@ void SettingsDialog::UpdateEnabled() {
 	m_coef->Enable( diff );
 	m_cuterr->Enable( diff );
 	m_xy->Enable( diff );
-	m_b192->Enable( mode >= MD_SC5 );
+	m_b192->Enable( screen_mode[ mode ] >= 5 );
 	m_resample->Enable( m_resize->GetValue() );
 	m_size_mode->Enable( m_resize->GetValue() );
 	UpdateFourceZeroEnabled();
@@ -553,16 +629,27 @@ void SettingsDialog::RefreshSliderLabels() {
 	m_xy_val->SetLabel( wxString::Format( "%.2f", m_xy->GetValue() / 100.0 ) );
 }
 
+void SettingsDialog::ApplyPaletteRange() {
+	int mx = cnvIsEpalMode( (uint32_t) m_mode->GetSelection() ) ? 31 : 7;
+	m_pal_r->SetRange( 0, mx );
+	m_pal_g->SetRange( 0, mx );
+	m_pal_b->SetRange( 0, mx );
+}
+
 void SettingsDialog::SelectPaletteEntry( int idx ) {
 	m_pal_sel = idx;
 	m_color_label->SetLabel( wxString::Format( "COLOR = %d", idx ) );
 	m_pal_en->SetSelection( m_edit.PalEn[ idx ] % PALEN_MAX );
-	m_pal_r->SetValue( m_edit.color_palette[ idx ].red );
-	m_pal_g->SetValue( m_edit.color_palette[ idx ].green );
-	m_pal_b->SetValue( m_edit.color_palette[ idx ].blue );
-	m_pal_r_val->SetLabel( wxString::Format( "%d", m_edit.color_palette[ idx ].red ) );
-	m_pal_g_val->SetLabel( wxString::Format( "%d", m_edit.color_palette[ idx ].green ) );
-	m_pal_b_val->SetLabel( wxString::Format( "%d", m_edit.color_palette[ idx ].blue ) );
+	bool epal = cnvIsEpalMode( m_edit.screen_mode );
+	int r = epal ? m_edit.color_palette_epal[ idx ].red   : m_edit.color_palette[ idx ].red;
+	int g = epal ? m_edit.color_palette_epal[ idx ].green : m_edit.color_palette[ idx ].green;
+	int b = epal ? m_edit.color_palette_epal[ idx ].blue  : m_edit.color_palette[ idx ].blue;
+	m_pal_r->SetValue( r );
+	m_pal_g->SetValue( g );
+	m_pal_b->SetValue( b );
+	m_pal_r_val->SetLabel( wxString::Format( "%d", r ) );
+	m_pal_g_val->SetLabel( wxString::Format( "%d", g ) );
+	m_pal_b_val->SetLabel( wxString::Format( "%d", b ) );
 }
 
 void SettingsDialog::RefreshPaletteControls() {
@@ -570,7 +657,16 @@ void SettingsDialog::RefreshPaletteControls() {
 	if( m_pal_panel ) m_pal_panel->Refresh();
 }
 
-void SettingsDialog::OnModeChanged( wxCommandEvent& ) { UpdateEnabled(); }
+void SettingsDialog::OnModeChanged( wxCommandEvent& ) {
+	// Keep m_edit.screen_mode in sync with the combo (the Windows dialog
+	// edits its SETTING copy live the same way), so the palette controls
+	// act on the selected mode family.
+	m_edit.screen_mode = (uint32_t) m_mode->GetSelection();
+	if( cnvIsEpalMode( m_edit.screen_mode ) ) EpalHealPalette( m_edit );
+	ApplyPaletteRange();
+	RefreshPaletteControls();
+	UpdateEnabled();
+}
 
 void SettingsDialog::OnFourceZeroChanged( wxCommandEvent& ) {
 	UpdateFourceZeroEnabled();
@@ -620,6 +716,9 @@ void SettingsDialog::OnPalettePreset( wxCommandEvent& e ) {
 	} else {
 		set_msx2_palette( m_edit.color_palette );
 	}
+	// The presets define 3-bit colors; in EPAL modes the 5-bit side
+	// follows them (expanded with the converter's own derivation).
+	if( cnvIsEpalMode( m_edit.screen_mode ) ) EpalDerivePalette( m_edit );
 	RefreshPaletteControls();
 }
 
@@ -634,9 +733,20 @@ void SettingsDialog::OnPalEnChanged( wxCommandEvent& ) {
 }
 
 void SettingsDialog::OnPaletteRgbSlider( wxCommandEvent& ) {
-	m_edit.color_palette[ m_pal_sel ].red   = m_pal_r->GetValue();
-	m_edit.color_palette[ m_pal_sel ].green = m_pal_g->GetValue();
-	m_edit.color_palette[ m_pal_sel ].blue  = m_pal_b->GetValue();
+	if( cnvIsEpalMode( m_edit.screen_mode ) ) {
+		// EPAL modes edit the 5-bit palette; the 3-bit side keeps the
+		// reflection of the edited values.
+		m_edit.color_palette_epal[ m_pal_sel ].red   = m_pal_r->GetValue();
+		m_edit.color_palette_epal[ m_pal_sel ].green = m_pal_g->GetValue();
+		m_edit.color_palette_epal[ m_pal_sel ].blue  = m_pal_b->GetValue();
+		m_edit.color_palette[ m_pal_sel ].red   = EpalReflect3( convert7to255_r, m_pal_r->GetValue() );
+		m_edit.color_palette[ m_pal_sel ].green = EpalReflect3( convert7to255_g, m_pal_g->GetValue() );
+		m_edit.color_palette[ m_pal_sel ].blue  = EpalReflect3( convert7to255_b, m_pal_b->GetValue() );
+	} else {
+		m_edit.color_palette[ m_pal_sel ].red   = m_pal_r->GetValue();
+		m_edit.color_palette[ m_pal_sel ].green = m_pal_g->GetValue();
+		m_edit.color_palette[ m_pal_sel ].blue  = m_pal_b->GetValue();
+	}
 	m_pal_r_val->SetLabel( wxString::Format( "%d", m_pal_r->GetValue() ) );
 	m_pal_g_val->SetLabel( wxString::Format( "%d", m_pal_g->GetValue() ) );
 	m_pal_b_val->SetLabel( wxString::Format( "%d", m_pal_b->GetValue() ) );
@@ -662,17 +772,41 @@ void SettingsDialog::OnLoadPalette( wxCommandEvent& ) {
 						  wxOK | wxICON_WARNING, this );
 			return;
 		}
-		unsigned char buf[ 32 ] = { 0 };
-		size_t got = fread( buf, 1, sizeof( buf ), f );
-		fclose( f );
-		if( got == 0 ) return;
-		for( int i = 0; i < 16; ++i ) {
-			m_edit.color_palette[ i ].red   = ( buf[ i * 2 + 0 ] >> 4 ) & 0x07;
-			m_edit.color_palette[ i ].blue  =   buf[ i * 2 + 0 ]        & 0x07;
-			m_edit.color_palette[ i ].green =   buf[ i * 2 + 1 ]        & 0x07;
+		if( cnvIsEpalMode( m_edit.screen_mode ) ) {
+			// EPAL format: color count x 3 bytes (R, G, B at 5 bits
+			// each), the block repeated 8 times; only the first
+			// block is read.  The 3-bit side keeps the reflection.
+			unsigned char buf[ 48 ] = { 0 };
+			size_t got = fread( buf, 1, sizeof( buf ), f );
+			fclose( f );
+			if( got == 0 ) return;
+			int palnum = cnvEpalColorCount( m_edit.screen_mode );
+			for( int i = 0; i < palnum; ++i ) {
+				m_edit.color_palette_epal[ i ].red   = buf[ i * 3 + 0 ] & 31;
+				m_edit.color_palette_epal[ i ].green = buf[ i * 3 + 1 ] & 31;
+				m_edit.color_palette_epal[ i ].blue  = buf[ i * 3 + 2 ] & 31;
+				m_edit.color_palette[ i ].red   = EpalReflect3( convert7to255_r, buf[ i * 3 + 0 ] & 31 );
+				m_edit.color_palette[ i ].green = EpalReflect3( convert7to255_g, buf[ i * 3 + 1 ] & 31 );
+				m_edit.color_palette[ i ].blue  = EpalReflect3( convert7to255_b, buf[ i * 3 + 2 ] & 31 );
+			}
+		} else {
+			unsigned char buf[ 32 ] = { 0 };
+			size_t got = fread( buf, 1, sizeof( buf ), f );
+			fclose( f );
+			if( got == 0 ) return;
+			for( int i = 0; i < 16; ++i ) {
+				m_edit.color_palette[ i ].red   = ( buf[ i * 2 + 0 ] >> 4 ) & 0x07;
+				m_edit.color_palette[ i ].blue  =   buf[ i * 2 + 0 ]        & 0x07;
+				m_edit.color_palette[ i ].green =   buf[ i * 2 + 1 ]        & 0x07;
+			}
 		}
 	} else {
 		bsvLoadPLBsaveFile( &m_edit, path.utf8_str().data() );
+		if( cnvIsEpalMode( m_edit.screen_mode ) &&
+			BsavePaletteKind( path.utf8_str().data() ) == 2 ) {
+			// A classic (3-bit) BSAVE palette: the 5-bit side follows it.
+			EpalDerivePalette( m_edit );
+		}
 	}
 	RefreshPaletteControls();
 }

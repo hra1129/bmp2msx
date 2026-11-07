@@ -27,6 +27,38 @@ static inline C_COLOR GetPix( C_COLOR* in, int width, int height, int x, int y )
 	return( *( in + x + ( height - y ) * width ) );
 }
 
+// ---------------------------------------------------------------------------
+// EPAL (SCREEN2/3/5/6/7) palette conversion helpers.
+// The 3-bit (color_palette) <-> 5-bit (color_palette_epal) relationship is
+// the one CreatePal has always maintained:
+//   3-bit to 5-bit: ( convert7to255[v] * 31 + 127 ) / 255
+//   5-bit to 3-bit: convert_rgb_to_palette over the cnvEpalTo255 expansion
+// ---------------------------------------------------------------------------
+static int EpalDerive5( const int *tbl, int v3 ) {
+	return ( tbl[ v3 & 7 ] * 31 + 127 ) / 255;
+}
+
+static int EpalReflect3( const int *tbl, int v5 ) {
+	return convert_rgb_to_palette( tbl, 8, cnvEpalTo255( v5 ) );
+}
+
+// True when a channel is 5-bit authoritative, i.e. it was edited at 5-bit
+// precision in the settings dialog: its 5-bit value differs from the value
+// derived from the 3-bit side, while the 3-bit side equals the reflection
+// of the 5-bit value.  Settings produced by earlier builds always derive
+// the 5-bit side from the 3-bit side, so this is never true for them and
+// their conversion results do not change.
+static bool EpalIsEdited( const int *tbl, int v3, int v5 ) {
+	return ( v5 & 31 ) != EpalDerive5( tbl, v3 ) && ( v3 & 7 ) == EpalReflect3( tbl, v5 );
+}
+
+// 8-bit value of a fixed palette color: edited channels expand their
+// 5-bit value, everything else expands the 3-bit value as before.
+static int EpalFixedPal8( const int *tbl, int v3, int v5 ) {
+	if( EpalIsEdited( tbl, v3, v5 ) ) return cnvEpalTo255( v5 );
+	return tbl[ v3 & 7 ];
+}
+
 // WndProc.cpp: CreatePal (MessageBox error reports replaced by `err`)
 static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR* Pal, std::string* err ) {
 	C_COLOR* t;
@@ -79,6 +111,102 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 								convert7to255_g[ Mode->color_palette[ i ].green ],
 								convert7to255_b[ Mode->color_palette[ i ].blue ] );
 		}
+	} else if( cnvIsEpalMode( Mode->screen_mode ) ) {
+		// SCREEN2/3/5/6/7 EPAL (V9968): same palette structure as the
+		// 16-color branch, but generated at RGB555 precision.
+		C_COLOR AutoPal[ 16 ];
+		int auto_count = 0;
+		int k;
+		bool keep_epal[ 16 ] = {};
+		j = 0;
+		pp = 0;
+		pnum = cnvEpalColorCount( Mode->screen_mode );
+		for( i = 0; i < pnum; ++i ) {
+			if( Mode->NonZero && i == 0 ) continue;
+			if( Mode->PalEn[ i ] == PALEN_NONE ) continue;
+			++n;
+			if( Mode->PalEn[ i ] == PALEN_USE ) {
+				Pal[ pp ] = GET_RGB( EpalFixedPal8( convert7to255_r, Mode->color_palette[ i ].red,   Mode->color_palette_epal[ i ].red ),
+									 EpalFixedPal8( convert7to255_g, Mode->color_palette[ i ].green, Mode->color_palette_epal[ i ].green ),
+									 EpalFixedPal8( convert7to255_b, Mode->color_palette[ i ].blue,  Mode->color_palette_epal[ i ].blue ) );
+				++pp;
+			}
+		}
+		if( n < 2 ) {
+			if( err ) *err = "fewer than 2 usable palette entries";
+			return false;
+		}
+		if( !Mode->fixed_palette ) {
+			t = (C_COLOR*) malloc( sizeof( C_COLOR ) * w * h );
+			if( t == NULL ) {
+				if( err ) *err = "out of memory";
+				return false;
+			}
+			memcpy( t, in, w * h * sizeof( C_COLOR ) );
+			if( Mode->EpalHGuard ) {
+				// Base selection is Wu + k-means (Convert.cpp); the
+				// feature-color improvement runs below.
+				cnvGetPaletteEpalWu( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			} else {
+				cnvGetPaletteEpalN( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			}
+			if( Mode->EpalHGuard && auto_count > 0 ) {
+				// Feature-color improvement: proposals in the h domain,
+				// acceptance by the true-SSE guard (Convert.cpp).
+				int hgpal5[ 16 ][ 3 ];
+				int hgfixed5[ 16 ][ 3 ];
+				int i2;
+				for( i2 = 0; i2 < pp; ++i2 ) {
+					cnvEpalColorTo5bit( Pal[ i2 ], &hgfixed5[ i2 ][ 0 ], &hgfixed5[ i2 ][ 1 ], &hgfixed5[ i2 ][ 2 ] );
+				}
+				for( i2 = 0; i2 < auto_count; ++i2 ) {
+					cnvEpalColorTo5bit( AutoPal[ i2 ], &hgpal5[ i2 ][ 0 ], &hgpal5[ i2 ][ 1 ], &hgpal5[ i2 ][ 2 ] );
+				}
+				cnvEpalImprovePalette( t, w, h, hgpal5, auto_count, (const int (*)[ 3 ]) hgfixed5, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+				for( i2 = 0; i2 < auto_count; ++i2 ) {
+					AutoPal[ i2 ] = GET_RGB( cnvEpalTo255( hgpal5[ i2 ][ 0 ] ), cnvEpalTo255( hgpal5[ i2 ][ 1 ] ), cnvEpalTo255( hgpal5[ i2 ][ 2 ] ) );
+				}
+			}
+			free( t );
+			k = pp;
+			for( i = 0; i < auto_count; ++i ) {
+				Pal[ k++ ] = AutoPal[ i ];
+			}
+			j = pp;
+			for( i = 0; i < pnum; ++i ) {
+				if( Mode->NonZero && i == 0 ) continue;
+				if( Mode->PalEn[ i ] == PALEN_AUTO ) {
+					Mode->color_palette[ i ].red   = convert_rgb_to_palette( convert7to255_r, 8, GET_RED( Pal[ j ] ) );
+					Mode->color_palette[ i ].green = convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( Pal[ j ] ) );
+					Mode->color_palette[ i ].blue  = convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE( Pal[ j ] ) );
+					// EPAL records AUTO entries at full 5-bit precision
+					// (author ruling 2026-11-07: snap to 5-bit, not 3-bit;
+					// the final loop honors keep_epal).
+					Mode->color_palette_epal[ i ].red   = ( GET_RED(   Pal[ j ] ) * 31 + 127 ) / 255;
+					Mode->color_palette_epal[ i ].green = ( GET_GREEN( Pal[ j ] ) * 31 + 127 ) / 255;
+					Mode->color_palette_epal[ i ].blue  = ( GET_BLUE(  Pal[ j ] ) * 31 + 127 ) / 255;
+					keep_epal[ i ] = true;
+					++j;
+				}
+			}
+		}
+		n = pnum;
+		for( i = 0; i < pnum; ++i ) {
+			n = 256;
+			bool user_spec = Mode->fixed_palette || Mode->PalEn[ i ] == PALEN_USE;
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_r, Mode->color_palette[ i ].red, Mode->color_palette_epal[ i ].red ) ) ) {
+				Mode->color_palette_epal[ i ].red   = EpalDerive5( convert7to255_r, Mode->color_palette[ i ].red );
+			}
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_g, Mode->color_palette[ i ].green, Mode->color_palette_epal[ i ].green ) ) ) {
+				Mode->color_palette_epal[ i ].green = EpalDerive5( convert7to255_g, Mode->color_palette[ i ].green );
+			}
+			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_b, Mode->color_palette[ i ].blue, Mode->color_palette_epal[ i ].blue ) ) ) {
+				Mode->color_palette_epal[ i ].blue  = EpalDerive5( convert7to255_b, Mode->color_palette[ i ].blue );
+			}
+			Pal[ i ] = GET_RGB( cnvEpalTo255( Mode->color_palette_epal[ i ].red ),
+								cnvEpalTo255( Mode->color_palette_epal[ i ].green ),
+								cnvEpalTo255( Mode->color_palette_epal[ i ].blue ) );
+		}
 	} else if( Mode->screen_mode == MD_SC8P || Mode->screen_mode == MD_SC8P_256L ) {
 		int pal_count = 0;
 		t = (C_COLOR*) malloc( sizeof( C_COLOR ) * w * h );
@@ -87,7 +215,25 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 			return false;
 		}
 		memcpy( t, in, w * h * sizeof( C_COLOR ) );
-		cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		if( Mode->EpalHGuard ) {
+			// Base selection is Wu + k-means (Convert.cpp).
+			cnvGetPaletteEpalWu( t, w, h, Pal, &pal_count, 256, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		} else {
+			cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		}
+		if( Mode->EpalHGuard && pal_count > 0 ) {
+			// Feature-color improvement (same core as EPAL-N;
+			// there are no fixed entries in this mode).
+			int hgpal5[ 256 ][ 3 ];
+			int i2;
+			for( i2 = 0; i2 < pal_count; ++i2 ) {
+				cnvEpalColorTo5bit( Pal[ i2 ], &hgpal5[ i2 ][ 0 ], &hgpal5[ i2 ][ 1 ], &hgpal5[ i2 ][ 2 ] );
+			}
+			cnvEpalImprovePalette( t, w, h, hgpal5, pal_count, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			for( i2 = 0; i2 < pal_count; ++i2 ) {
+				Pal[ i2 ] = GET_RGB( cnvEpalTo255( hgpal5[ i2 ][ 0 ] ), cnvEpalTo255( hgpal5[ i2 ][ 1 ] ), cnvEpalTo255( hgpal5[ i2 ][ 2 ] ) );
+			}
+		}
 		free( t );
 		for( i = pal_count; i < 256; ++i ) {
 			Pal[ i ] = 0;
@@ -121,9 +267,10 @@ static std::string path_stem( const std::string& path ) {
 // SCREEN7/10 family, PL2/PL3 for SCREEN2/3).
 static char palette_digit( uint32_t screen_mode ) {
 	switch( screen_mode ) {
-	case MD_SC2: return '2';
-	case MD_SC3: return '3';
-	case MD_SC5: case MD_SC6: case MD_SC5_256L: case MD_SC6_256L: return '5';
+	case MD_SC2: case MD_SC2P: return '2';
+	case MD_SC3: case MD_SC3P: return '3';
+	case MD_SC5: case MD_SC6: case MD_SC5_256L: case MD_SC6_256L:
+	case MD_SC5P: case MD_SC6P: case MD_SC5P_256L: case MD_SC6P_256L: return '5';
 	default: return '7';
 	}
 }
@@ -170,7 +317,7 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 		Mode.FZColor = GetPix( in, width, height, Mode.FZX, Mode.FZY );
 	}
 	owidth = screen_size[ Mode.screen_mode ].w;
-	if( ( Mode.screen_mode >= MD_SC5 ) && Mode.b192 ) {
+	if( ( screen_mode[ Mode.screen_mode ] >= 5 ) && Mode.b192 ) {
 		oheight = 192;
 	} else {
 		oheight = screen_size[ Mode.screen_mode ].h;
@@ -187,7 +334,7 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 	if( Mode.resize_enable ) {
 		switch( Mode.SizeMode ) {
 		case RM_MSX:
-			if( ( Mode.screen_mode == MD_SC6 ) || ( Mode.screen_mode == MD_SC7 ) || ( Mode.screen_mode == MD_SC6_256L ) || ( Mode.screen_mode == MD_SC7_256L ) ) {
+			if( ( Mode.screen_mode == MD_SC6 ) || ( Mode.screen_mode == MD_SC7 ) || ( Mode.screen_mode == MD_SC6_256L ) || ( Mode.screen_mode == MD_SC7_256L ) || ( Mode.screen_mode == MD_SC6P ) || ( Mode.screen_mode == MD_SC7P ) || ( Mode.screen_mode == MD_SC6P_256L ) || ( Mode.screen_mode == MD_SC7P_256L ) ) {
 				wwidth  = width * 5 / 3;
 				wheight = height;
 			} else {
@@ -219,14 +366,14 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 			cnvAntiResize( in, width, height, out, owidth, oheight, wwidth, wheight, prog_quiet, Mode.Seido );
 			break;
 		default:
-			if( Mode.interlace && Mode.screen_mode != MD_SC6 && Mode.screen_mode != MD_SC7 && Mode.screen_mode != MD_SC6_256L && Mode.screen_mode != MD_SC7_256L ) {
+			if( Mode.interlace && Mode.screen_mode != MD_SC6 && Mode.screen_mode != MD_SC7 && Mode.screen_mode != MD_SC6_256L && Mode.screen_mode != MD_SC7_256L && Mode.screen_mode != MD_SC6P && Mode.screen_mode != MD_SC7P && Mode.screen_mode != MD_SC6P_256L && Mode.screen_mode != MD_SC7P_256L ) {
 				cnvCopyInter( in, width, height, out, owidth, oheight, prog_quiet, Mode.Seido );
 			} else {
 				cnvCopy( in, width, height, out, owidth, oheight, prog_quiet, Mode.Seido );
 			}
 		}
 	} else {
-		if( Mode.interlace && Mode.screen_mode != MD_SC6 && Mode.screen_mode != MD_SC7 && Mode.screen_mode != MD_SC6_256L && Mode.screen_mode != MD_SC7_256L ) {
+		if( Mode.interlace && Mode.screen_mode != MD_SC6 && Mode.screen_mode != MD_SC7 && Mode.screen_mode != MD_SC6_256L && Mode.screen_mode != MD_SC7_256L && Mode.screen_mode != MD_SC6P && Mode.screen_mode != MD_SC7P && Mode.screen_mode != MD_SC6P_256L && Mode.screen_mode != MD_SC7P_256L ) {
 			cnvCopyInter( in, width, height, out, owidth, oheight, prog_quiet, Mode.Seido );
 		} else {
 			cnvCopy( in, width, height, out, owidth, oheight, prog_quiet, Mode.Seido );
@@ -238,7 +385,7 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 	if( !CreatePal( n, &Mode, out, owidth, oheight, Pal, err ) ) {
 		goto done;
 	}
-	if( Mode.screen_mode < MD_SC8 || ( Mode.screen_mode >= MD_SC5_256L && Mode.screen_mode < MD_SC8_256L ) ) {
+	if( Mode.screen_mode < MD_SC8 || ( Mode.screen_mode >= MD_SC5_256L && Mode.screen_mode < MD_SC8_256L ) || cnvIsEpalMode( Mode.screen_mode ) ) {
 		if( !( Mode.fixed_palette && ( Mode.SortMode == SM_INCAUTO ) ) ) {
 			cnvSortPalette( &Mode, Pal );
 		}
@@ -247,6 +394,8 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 		switch( Mode.screen_mode ) {
 		case MD_SC2: case MD_SC3: case MD_SC5: case MD_SC6: case MD_SC7:
 		case MD_SC5_256L: case MD_SC6_256L: case MD_SC7_256L:
+		case MD_SC2P: case MD_SC3P: case MD_SC5P: case MD_SC6P: case MD_SC7P:
+		case MD_SC5P_256L: case MD_SC6P_256L: case MD_SC7P_256L:
 			tailcnt = cnvCreateTail4( Mode.color_palette, Mode.PalEn, !Mode.NonZero, tail, Mode.screen_mode );
 			break;
 		}
@@ -256,7 +405,7 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 		if( err ) *err = "out of memory";
 		goto done;
 	}
-	if( Mode.screen_mode < MD_SC10 || ( Mode.screen_mode >= MD_SC5_256L && Mode.screen_mode < MD_SC10_256L ) || Mode.screen_mode == MD_SC8P || Mode.screen_mode == MD_SC8P_256L ) {
+	if( Mode.screen_mode < MD_SC10 || ( Mode.screen_mode >= MD_SC5_256L && Mode.screen_mode < MD_SC10_256L ) || Mode.screen_mode == MD_SC8P || Mode.screen_mode == MD_SC8P_256L || cnvIsEpalMode( Mode.screen_mode ) ) {
 		cnvRecolor( out, owidth, oheight, bmp, &Mode, prog_quiet, Pal, tail, tailcnt );
 	} else {
 		cnvNtcolor( out, owidth, oheight, bmp, &Mode, prog_quiet );
@@ -297,7 +446,10 @@ std::string cli_describe_setting( const SETTING& m ) {
 		"SCREEN2", "SCREEN3", "SCREEN5", "SCREEN6", "SCREEN7", "SCREEN8",
 		"SCREEN10", "SCREEN12", "SCREEN5 (256 lines)", "SCREEN6 (256 lines)",
 		"SCREEN7 (256 lines)", "SCREEN8 (256 lines)", "SCREEN10 (256 lines)",
-		"SCREEN12 (256 lines)", "SCREEN8 EPAL (V9968)", "SCREEN8 EPAL (V9968) (256 lines)"
+		"SCREEN12 (256 lines)", "SCREEN8 EPAL (V9968)", "SCREEN8 EPAL (V9968) (256 lines)",
+		"SCREEN2/4 EPAL (V9968)", "SCREEN3 EPAL (V9968)", "SCREEN5 EPAL (V9968)",
+		"SCREEN6 EPAL (V9968)", "SCREEN7 EPAL (V9968)", "SCREEN5 EPAL (V9968) (256 lines)",
+		"SCREEN6 EPAL (V9968) (256 lines)", "SCREEN7 EPAL (V9968) (256 lines)"
 	};
 	char buf[ 1024 ];
 	const char* mode_name = ( m.screen_mode < MD_MAX ) ? mode_names[ m.screen_mode ] : "?";
@@ -305,13 +457,14 @@ std::string cli_describe_setting( const SETTING& m ) {
 		"screen_mode=%s diffusion=%s coef=%.3f x_weight=%.3f cuterr=%u interlace=%s "
 		"fixed_palette=%s resize=%s resample=%d size_mode=%d selcol=%u pltmode=%u basic=%s "
 		"algo=%u jk_rc=%s dither=%u dither_add=%u seido=%u nonzero=%s force_zero=%u tile=%s "
-		"sort=%d lines192=%s",
+		"sort=%d lines192=%s epal_hguard=%s",
 		mode_name,
 		m.diffusion_error_enable ? "on" : "off", m.diffusion_error_coef, m.diffusion_error_x_weight,
 		m.err, m.interlace ? "on" : "off", m.fixed_palette ? "on" : "off",
 		m.resize_enable ? "on" : "off", m.Resample, m.SizeMode, m.SelCol, m.PltMode,
 		m.output_basic_enable ? "on" : "off", m.AlgoMode, m.JKrc ? "on" : "off",
 		m.ErrAlgo, m.ErrAdd, m.Seido, m.NonZero ? "on" : "off", m.FourceZero,
-		m.Tile ? "on" : "off", m.SortMode, m.b192 ? "on" : "off" );
+		m.Tile ? "on" : "off", m.SortMode, m.b192 ? "on" : "off",
+		m.EpalHGuard ? "on" : "off" );
 	return buf;
 }

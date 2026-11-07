@@ -53,6 +53,12 @@ static int screen_mode_from_name( const std::string& name ) {
 		{ "8-256", MD_SC8_256L }, { "10-256", MD_SC10_256L }, { "12-256", MD_SC12_256L },
 		{ "8p", MD_SC8P }, { "8P", MD_SC8P },
 		{ "8p-256", MD_SC8P_256L }, { "8P-256", MD_SC8P_256L }, { "8p256", MD_SC8P_256L },
+		{ "2p", MD_SC2P }, { "2P", MD_SC2P }, { "3p", MD_SC3P }, { "3P", MD_SC3P },
+		{ "5p", MD_SC5P }, { "5P", MD_SC5P }, { "6p", MD_SC6P }, { "6P", MD_SC6P },
+		{ "7p", MD_SC7P }, { "7P", MD_SC7P },
+		{ "5p-256", MD_SC5P_256L }, { "5P-256", MD_SC5P_256L }, { "5p256", MD_SC5P_256L },
+		{ "6p-256", MD_SC6P_256L }, { "6P-256", MD_SC6P_256L }, { "6p256", MD_SC6P_256L },
+		{ "7p-256", MD_SC7P_256L }, { "7P-256", MD_SC7P_256L }, { "7p256", MD_SC7P_256L },
 	};
 	for( auto& e : table ) if( name == e.name ) return e.mode;
 	return -1;
@@ -66,7 +72,8 @@ static void usage( const char* argv0 ) {
 		"\n"
 		"Options (conversion settings; defaults are the application's own):\n"
 		"  --screen <mode>        2,3,4,5,6,7,8,10,11,12, *-256 for 256-line\n"
-		"                         variants, 8p / 8p-256 for SCREEN8 EPAL (V9968)\n"
+		"                         variants, 8p / 8p-256 for SCREEN8 EPAL (V9968),\n"
+		"                         2p/3p/5p/6p/7p (and *-256) for SCREEN2-7 EPAL\n"
 		"  --output-dir <dir>     write outputs here (default: beside the input)\n"
 		"  --load-setting <file>  load a .B2M setting file before converting\n"
 		"  --palette-output <bsave|pl|csv|none>\n"
@@ -87,6 +94,7 @@ static void usage( const char* argv0 ) {
 		"  --color-recalc <on|off>\n"
 		"  --accuracy <24|21|18|15|12>    color reproduction accuracy (bits)\n"
 		"  --fixed-palette <on|off>\n"
+		"  --epal-hguard <on|off> EPAL improved selection (Wu + k-means base, h-domain feature proposals, true-SSE guard)\n"
 		"  --palette-preset <msx1|msx2>\n"
 		"  --palette <n>=<r>,<g>,<b>      palette entry n (values 0..7)\n"
 		"  --palette-mode <n>=<auto|nouse|custom>\n"
@@ -238,6 +246,7 @@ int main( int argc, char** argv ) {
 			}
 		}
 		else if( arg == "--fixed-palette" ) { need_value( "--fixed-palette", v ); if( !parse_onoff( v, onoff ) ) return 1; set.fixed_palette = onoff; }
+		else if( arg == "--epal-hguard" ) { need_value( "--epal-hguard", v ); if( !parse_onoff( v, onoff ) ) return 1; set.EpalHGuard = onoff; }
 		else if( arg == "--palette-preset" ) {
 			need_value( "--palette-preset", v );
 			if( !strcmp( v, "msx1" ) ) set_msx1_palette( set.color_palette );
