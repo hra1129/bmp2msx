@@ -29,6 +29,7 @@ CORE_SRCS := $(SRCROOT)/Convert.cpp $(SRCROOT)/bsave.cpp \
              $(SRCROOT)/utils.cpp $(SRCROOT)/calc.cpp
 CLI_SRCS  := src/main_cli.cpp src/convert_run.cpp src/script.cpp \
              src/image_load.cpp src/fileuty_stdio.cpp src/platform_linux.cpp \
+             src/epal_refine.cpp src/sc2_pair.cpp \
              third_party/stb_image_impl.cpp
 
 CORE_OBJS := $(addprefix $(OBJDIR)/core_, $(notdir $(CORE_SRCS:.cpp=.o)))

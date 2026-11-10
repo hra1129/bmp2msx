@@ -2336,8 +2336,8 @@ bool cnvGetPaletteS8( C_COLOR *pal ){
 
 	for( i = 0; i < 256; ++i ){
 		// 着目色（選択色を使用の色）を取得
-		r = convert7to255_r[ ( i >> 2 ) & 7 ];
-		g = convert7to255_g[ ( i >> 5 ) & 7 ];
+		r = convert7to255_s8r[ ( i >> 2 ) & 7 ];
+		g = convert7to255_s8g[ ( i >> 5 ) & 7 ];
 		b = convert3to255_s8b[ i & 3 ];
 		pal[ i ] = GET_RGB( r, g, b );
 	}

@@ -864,6 +864,20 @@ bool scrComment( const char *szText,int *ptr )
 	return true;
 }
 
+// SCREEN 命令の EPAL モード指定子（Linux 版スクリプトと共通の書式）
+static SCRWORD scrmode_epal[] = {
+	{"8P"			,MD_SC8P      },
+	{"8P256"		,MD_SC8P_256L },
+	{"2P"			,MD_SC2P      },
+	{"3P"			,MD_SC3P      },
+	{"5P"			,MD_SC5P      },
+	{"6P"			,MD_SC6P      },
+	{"7P"			,MD_SC7P      },
+	{"5P256"		,MD_SC5P_256L },
+	{"6P256"		,MD_SC6P_256L },
+	{"7P256"		,MD_SC7P_256L },
+};
+
 // -------------------------------------------------------------
 //	1.	日本語名
 //		出力モードを変更する
@@ -879,6 +893,18 @@ bool scrComment( const char *szText,int *ptr )
 bool scrScreen( const char *szText,int *ptr )
 {
 	int m;
+	// EPAL モード指定子は数値で表せないため、先に単語として判定する
+	{
+		int save = *ptr;
+		char word[ WORD_MAX ];
+		scrGetWord( szText, ptr, word, WORD_MAX );
+		m = scrSearch( word, scrmode_epal, ELMCNT( scrmode_epal ) );
+		if( m != SW_NONE ){
+			scrset.screen_mode = m;
+			return true;
+		}
+		*ptr = save;
+	}
 	// 数値を入力
 	if( !calc_exp( &m,szText,ptr ) ){
 		MessageBox( NULL,cszScrMode,MsgCap,MB_OK | MB_ICONWARNING );
