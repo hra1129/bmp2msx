@@ -95,6 +95,7 @@ static void usage( const char* argv0 ) {
 		"  --accuracy <24|21|18|15|12>    color reproduction accuracy (bits)\n"
 		"  --fixed-palette <on|off>\n"
 		"  --epal-hguard <on|off> EPAL improved selection (Wu + k-means base, h-domain feature proposals, true-SSE guard)\n"
+		"  --sc2-pair <on|off>    SCREEN2/4 line-pair quantization (blend flat areas over 2 lines; SC2/SC2P only)\n"
 		"  --palette-preset <msx1|msx2>\n"
 		"  --palette <n>=<r>,<g>,<b>      palette entry n (values 0..7)\n"
 		"  --palette-mode <n>=<auto|nouse|custom>\n"
@@ -247,6 +248,7 @@ int main( int argc, char** argv ) {
 		}
 		else if( arg == "--fixed-palette" ) { need_value( "--fixed-palette", v ); if( !parse_onoff( v, onoff ) ) return 1; set.fixed_palette = onoff; }
 		else if( arg == "--epal-hguard" ) { need_value( "--epal-hguard", v ); if( !parse_onoff( v, onoff ) ) return 1; set.EpalHGuard = onoff; }
+		else if( arg == "--sc2-pair" ) { need_value( "--sc2-pair", v ); if( !parse_onoff( v, onoff ) ) return 1; set.Sc2Pair = onoff; }
 		else if( arg == "--palette-preset" ) {
 			need_value( "--palette-preset", v );
 			if( !strcmp( v, "msx1" ) ) set_msx1_palette( set.color_palette );

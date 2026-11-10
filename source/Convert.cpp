@@ -234,6 +234,8 @@ static bool cnvRecolor5( C_COLOR *in,int width,int height,
 
 static bool cnvSC5toSC2( unsigned char *out, PROGRESS prog, C_COLOR *pal );
 static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog );
+static bool cnvRecolorSc2Pair( C_COLOR *in, int width, int height, unsigned char *out,
+							   SETTING *CnvMode, PROGRESS prog, C_COLOR *pal );
 
 // -----------------------------------------------------
 //	1.	日本語名
@@ -684,6 +686,11 @@ bool cnvRecolor( C_COLOR *in,int width,int height,
 	} else if( CnvMode->screen_mode == MD_SC8 || CnvMode->screen_mode == MD_SC8_256L ) {
 		//	256色ビットマップへ変換する
 		return cnvRecolor8( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
+	} else if( ( CnvMode->screen_mode == MD_SC2 || CnvMode->screen_mode == MD_SC2P ) &&
+				CnvMode->Sc2Pair && !CnvMode->Tile && width == 256 && height == 192 ) {
+		//	SCREEN2/4 ラインペア量子化 (平坦部を2ラインで混合)
+		//	タイル使用時・インターレース時 (高さ384) は従来変換へ
+		return cnvRecolorSc2Pair( in, width, height, out, CnvMode, prog, pal );
 	} else {
 		//	16色ビットマップへ変換する
 		bRet = cnvRecolor5( in, width, height, out, CnvMode, prog, pal, tail, tailcnt );
@@ -1393,6 +1400,562 @@ static bool cnvSC5toSC3( unsigned char *out, PROGRESS prog )
 }
 
 // -------------------------------------------------------------
+//	SCREEN2/4 ラインペア量子化 (Sc2Pair)
+//
+//	平坦・緩勾配領域では、上下 2 ラインを 1 組として量子化し、
+//	2 ラインの平均色が目標に近づく色の組を選ぶことで、1 ライン
+//	2 色の制約のまま中間色を表現する。平坦領域の判定は 5x5 の
+//	ロバストレンジ (P90-P10、全チャンネル最大、閾値 32) と
+//	5x5 多数決 (13/25) で行う (固定値、設定項目にはしない)。
+//
+//	構成はプロトタイプ (sc2_pair.cpp の v3f_bl) と同一である。
+//	従来ストリームは cnvRecolor5 の出力そのものを使うため、
+//	誤差拡散・ディザパターンはマスク外では従来通り効く。
+//	(マスク内のドットにはディザパターンは加算されない。)
+//	マスク内はペア量子化＋ペア対応セルフィット、マスク外は
+//	従来量子化＋従来セルフィット、境界 (混在) ブロックは
+//	従来フィット固定とする。単一走査ループへの統合は将来課題
+//	(notes/sc2_pair_impl.md §5 参照)。
+// -------------------------------------------------------------
+#define SC2P_FLAT_RANGE	32		// 平坦判定の閾値 (5x5 ロバストレンジ)
+
+// ペア量子化の候補色 (cnvRecolor5 の探索集合と同じ)
+struct SC2P_CAND {
+	int idx;
+	int r, g, b;
+};
+
+static int _sc2p_build_candidates( SETTING *CnvMode, C_COLOR *pal, SC2P_CAND *cand )
+{
+	int n = 0;
+	int z0 = CnvMode->NonZero ? 1 : 0;
+	for( int z = z0; z < 16; ++z ){
+		if( CnvMode->PalEn[ z ] == PALEN_NONE ) continue;
+		cand[ n ].idx = z;
+		cand[ n ].r = GET_RED( pal[ z ] );
+		cand[ n ].g = GET_GREEN( pal[ z ] );
+		cand[ n ].b = GET_BLUE( pal[ z ] );
+		++n;
+	}
+	return n;
+}
+
+// 製品の整数距離 _distance_itp の二乗。
+// プロトタイプの dist2_product と同一値である。
+static inline double _sc2p_dist2( int r1, int g1, int b1, int r2, int g2, int b2 )
+{
+	int d = _distance_itp( r1, g1, b1, r2, g2, b2 );
+	return (double) d * (double) d;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		ペア量子化 (2 ライン同時量子化)
+//	2.	引数
+//		in		...	画像入力メモリ (256x192)
+//		width	...	画像幅
+//		height	...	画像高さ
+//		CnvMode	...	現在の設定
+//		pal		...	パレット
+//		weight	...	平均色の重み (SC2=2, SC2P=1)
+//		idx		...	出力するパレット番号 (width*height)
+//	3.	返値
+//		なし
+//	4.	備考
+//		各ドット列について (a,b) の全組合せを評価し、
+//		d(t1,a)^2 + d(t2,b)^2 + w*d(t1+t2,a+b)^2 を最小化する。
+//		同値は先勝ち (プロトタイプと同一のタイブレーク)。
+// -------------------------------------------------------------
+static void _sc2p_pair_quantize( C_COLOR *in, int width, int height, SETTING *CnvMode, C_COLOR *pal,
+								 double weight, unsigned char *idx )
+{
+	SC2P_CAND cand[ 16 ];
+	int nc = _sc2p_build_candidates( CnvMode, pal, cand );
+	int psum[ 16 ][ 16 ][ 3 ];
+	int x, y, a, b;
+	C_COLOR fz = CnvMode->FourceZero ? ( CnvMode->FZColor & _create_bit_depth_mask( CnvMode->Seido ) ) : (C_COLOR) -1;
+
+	if( nc <= 0 ) {
+		memset( idx, 0, (size_t) width * height );
+		return;
+	}
+	for( a = 0; a < nc; ++a ){
+		for( b = 0; b < nc; ++b ){
+			psum[ a ][ b ][ 0 ] = cand[ a ].r + cand[ b ].r;
+			psum[ a ][ b ][ 1 ] = cand[ a ].g + cand[ b ].g;
+			psum[ a ][ b ][ 2 ] = cand[ a ].b + cand[ b ].b;
+		}
+	}
+
+	for( y = 0; y < height; y += 2 ){
+		bool have2 = ( y + 1 < height );
+		for( x = 0; x < width; ++x ){
+			C_COLOR c1px = in[ (size_t) y * width + x ];
+			C_COLOR c2px = have2 ? in[ (size_t) ( y + 1 ) * width + x ] : c1px;
+			int t1r = GET_RED( c1px ), t1g = GET_GREEN( c1px ), t1b = GET_BLUE( c1px );
+			int t2r = GET_RED( c2px ), t2g = GET_GREEN( c2px ), t2b = GET_BLUE( c2px );
+			int tsr = t1r + t2r, tsg = t1g + t2g, tsb = t1b + t2b;
+			double e1[ 16 ], e2[ 16 ];
+			double best = 0;
+			int ba = 0, bb = 0;
+			bool first = true;
+			int i1, i2;
+
+			for( a = 0; a < nc; ++a ) e1[ a ] = _sc2p_dist2( t1r, t1g, t1b, cand[ a ].r, cand[ a ].g, cand[ a ].b );
+			for( b = 0; b < nc; ++b ) e2[ b ] = _sc2p_dist2( t2r, t2g, t2b, cand[ b ].r, cand[ b ].g, cand[ b ].b );
+			for( a = 0; a < nc; ++a ){
+				for( b = 0; b < nc; ++b ){
+					double e = e1[ a ] + e2[ b ];
+					if( weight != 0.0 ) e += weight * _sc2p_dist2( tsr, tsg, tsb, psum[ a ][ b ][ 0 ], psum[ a ][ b ][ 1 ], psum[ a ][ b ][ 2 ] );
+					if( first || e < best ){
+						best = e; ba = a; bb = b; first = false;
+					}
+				}
+			}
+			i1 = cand[ ba ].idx;
+			i2 = cand[ bb ].idx;
+			if( CnvMode->FourceZero ){
+				if( pal[ i1 ] == fz ) i1 = 0;
+				if( pal[ i2 ] == fz ) i2 = 0;
+			}
+			idx[ (size_t) y * width + x ] = (unsigned char) i1;
+			if( have2 ) idx[ (size_t) ( y + 1 ) * width + x ] = (unsigned char) i2;
+		}
+	}
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		平坦領域マスクの作成
+//	2.	引数
+//		in		...	画像入力メモリ (256x192)
+//		width	...	画像幅
+//		height	...	画像高さ
+//		mask	...	出力マスク (width*height、1=平坦)
+//	3.	返値
+//		なし
+//	4.	備考
+//		チャンネル毎に 5x5 の 25 サンプルをソートし
+//		P90-P10 (添字 [21]-[2]) の最大を全チャンネルで取る。
+//		閾値以下を平坦とし、5x5 多数決 (>=13/25) で整える。
+// -------------------------------------------------------------
+static void _sc2p_flat_mask( C_COLOR *in, int width, int height, unsigned char *mask )
+{
+	unsigned char *raw = (unsigned char*) malloc( (size_t) width * height );
+	int x, y, c, dx, dy;
+	if( !raw ){
+		memset( mask, 0, (size_t) width * height );
+		return;
+	}
+	for( y = 0; y < height; ++y ){
+		for( x = 0; x < width; ++x ){
+			int worst = 0;
+			for( c = 0; c < 3; ++c ){
+				int v[ 25 ];
+				int n = 0;
+				int a, b2, t;
+				for( dy = -2; dy <= 2; ++dy ){
+					int yy = y + dy; if( yy < 0 ) yy = 0; if( yy >= height ) yy = height - 1;
+					for( dx = -2; dx <= 2; ++dx ){
+						int xx = x + dx; if( xx < 0 ) xx = 0; if( xx >= width ) xx = width - 1;
+						C_COLOR px = in[ (size_t) yy * width + xx ];
+						v[ n++ ] = c == 0 ? GET_RED( px ) : c == 1 ? GET_GREEN( px ) : GET_BLUE( px );
+					}
+				}
+				// 挿入ソート (25 要素)
+				for( a = 1; a < 25; ++a ){
+					t = v[ a ];
+					b2 = a - 1;
+					while( b2 >= 0 && v[ b2 ] > t ){ v[ b2 + 1 ] = v[ b2 ]; --b2; }
+					v[ b2 + 1 ] = t;
+				}
+				if( v[ 21 ] - v[ 2 ] > worst ) worst = v[ 21 ] - v[ 2 ];
+			}
+			raw[ (size_t) y * width + x ] = worst <= SC2P_FLAT_RANGE ? 1 : 0;
+		}
+	}
+	for( y = 0; y < height; ++y ){
+		for( x = 0; x < width; ++x ){
+			int cnt = 0;
+			for( dy = -2; dy <= 2; ++dy ){
+				int yy = y + dy; if( yy < 0 ) yy = 0; if( yy >= height ) yy = height - 1;
+				for( dx = -2; dx <= 2; ++dx ){
+					int xx = x + dx; if( xx < 0 ) xx = 0; if( xx >= width ) xx = width - 1;
+					cnt += raw[ (size_t) yy * width + xx ];
+				}
+			}
+			mask[ (size_t) y * width + x ] = cnt >= 13 ? 1 : 0;
+		}
+	}
+	free( raw );
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		セル出力 (cnvSC5toSC2 の末尾と同一の規約)
+//	2.	引数
+//		dadr	...	VRAM 格納アドレス
+//		pal		...	パレット
+//		first	...	前景にしたい色 (bits=1)
+//		second	...	背景の色 (bits=0)
+//		bits	...	8 ドットのビット列 (bit(7-j)=1 で first)
+//	3.	返値
+//		なし
+//	4.	備考
+//		明るい色を前景 (パターン bit=1) へ正規化する。
+// -------------------------------------------------------------
+static void _sc2p_emit_cell( int dadr, C_COLOR *pal, int first, int second, int bits )
+{
+	int c, p;
+	if( first == second ){
+		c = first;
+		p = 0x00;
+		if( _get_palette_luminance( pal, c & 0x0F ) >= ( 128 << 8 ) ){
+			p = p ^ 255;
+			c = ( ( c << 4 ) & 0xF0 ) | ( ( c >> 4 ) & 0x0F );
+		}
+	} else {
+		c = ( first << 4 ) | second;
+		p = bits;
+		int lum1 = _get_palette_luminance( pal, c & 0x0F );
+		int lum2 = _get_palette_luminance( pal, ( c >> 4 ) & 0x0F );
+		if( ( lum1 == lum2 && ( c & 0x0F ) > ( ( c >> 4 ) & 0x0F ) ) || ( lum1 > lum2 ) ){
+			p = p ^ 255;
+			c = ( ( c << 4 ) & 0xF0 ) | ( ( c >> 4 ) & 0x0F );
+		}
+	}
+	vram[ dadr ] = (unsigned char) p;
+	vram[ dadr + SC2COLOR ] = (unsigned char) c;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		従来セルフィット (1 ライン分、cnvSC5toSC2 と同一)
+//	2.	引数
+//		idx		...	パレット番号画像
+//		width	...	画像幅
+//		y		...	ライン
+//		cx		...	セル (8 ドット単位)
+//		pal		...	パレット
+//		first	...	(出) 最も多い色
+//		second	...	(出) 最も異なる色
+//		assign	...	(出) 各ドットの割当て色
+//	3.	返値
+//		なし
+// -------------------------------------------------------------
+static void _sc2p_fit_line_cell( unsigned char *idx, int width, int y, int cx, C_COLOR *pal,
+								 int *first, int *second, int assign[ 8 ] )
+{
+	int cnt = 0, idx1 = 0, idx2 = 0;
+	int ccnt[ 8 ] = { 0 };
+	int ccol[ 8 ] = { 0 };
+	int i, j;
+	for( j = 0; j < 8; ++j ){
+		int cc = idx[ (size_t) y * width + cx * 8 + j ];
+		for( i = 0; i < cnt; ++i ){
+			if( cc == ccol[ i ] ){
+				ccnt[ i ]++;
+				if( ccnt[ i ] > ccnt[ idx1 ] ) idx1 = i;
+				break;
+			}
+		}
+		if( i == cnt ){
+			ccol[ cnt ] = cc;
+			ccnt[ cnt ] = 1;
+			cnt++;
+		}
+	}
+	if( cnt < 2 ){
+		*first = *second = ccol[ 0 ];
+		for( j = 0; j < 8; ++j ) assign[ j ] = ccol[ 0 ];
+		return;
+	}
+	{
+		C_COLOR c1 = pal[ ccol[ idx1 ] ];
+		int len = 0;
+		for( i = 0; i < cnt; ++i ){
+			if( i == idx1 ) continue;
+			C_COLOR pc = pal[ ccol[ i ] ];
+			int l = _distance_itp( GET_RED( pc ), GET_GREEN( pc ), GET_BLUE( pc ),
+								   GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ) );
+			if( l >= len ){
+				len = l;
+				idx2 = i;
+			}
+		}
+		{
+			C_COLOR c2 = pal[ ccol[ idx2 ] ];
+			*first = ccol[ idx1 ];
+			*second = ccol[ idx2 ];
+			for( j = 0; j < 8; ++j ){
+				int cc = idx[ (size_t) y * width + cx * 8 + j ];
+				C_COLOR pc = pal[ cc ];
+				assign[ j ] = ( _distance_itp( GET_RED( pc ), GET_GREEN( pc ), GET_BLUE( pc ),
+											  GET_RED( c1 ), GET_GREEN( c1 ), GET_BLUE( c1 ) )
+							  < _distance_itp( GET_RED( pc ), GET_GREEN( pc ), GET_BLUE( pc ),
+											  GET_RED( c2 ), GET_GREEN( c2 ), GET_BLUE( c2 ) ) )
+							? ccol[ idx1 ] : ccol[ idx2 ];
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		ペア対応セルフィット (8x2 ブロック)
+//	2.	引数
+//		in		...	画像入力メモリ
+//		idx		...	パレット番号画像 (合成済み)
+//		width	...	画像幅
+//		y		...	ブロック先頭ライン (偶数)
+//		cx		...	セル (8 ドット単位)
+//		CnvMode	...	現在の設定
+//		pal		...	パレット
+//		colw	...	列毎のペア重み (マスク内=weight、外=0)
+//		best_pair	...	(出) ライン毎の選出 2 色
+//		best_assign	...	(出) 各ドットの割当て色
+//	3.	返値
+//		true	...	フィット成功
+//		false	...	候補が無くフィット不能 (呼び出し側は従来フィットへ)
+//	4.	備考
+//		ライン毎に頻度上位 5 色までの短縮リストを作り、
+//		ペア (e1,e2)x(o1,o2) の全組合せを評価して、列毎の
+//		4 色同時割当てでブロック合計誤差を最小化する。
+//		候補に無い番号 (FourceZero の 0 など) だけの列は
+//		組合せが成立しないため false を返す。
+// -------------------------------------------------------------
+static bool _sc2p_fit_pair_block( C_COLOR *in, unsigned char *idx, int width, int y, int cx,
+								  SETTING *CnvMode, C_COLOR *pal, const double colw[ 8 ],
+								  int best_pair[ 2 ][ 2 ], int best_assign[ 2 ][ 8 ] )
+{
+	SC2P_CAND cand[ 16 ];
+	int nc = _sc2p_build_candidates( CnvMode, pal, cand );
+	int list[ 2 ][ 5 ];
+	int nlist[ 2 ] = { 0, 0 };
+	int ln, j, e1, e2, o1, o2;
+	double best_total = 0;
+	bool first = true;
+	int assign[ 2 ][ 8 ];
+
+	if( nc <= 0 ) return false;
+	for( ln = 0; ln < 2; ++ln ){
+		int yy = y + ln;
+		int order[ 16 ], freq[ 16 ], no = 0;
+		int a, b2, t;
+		for( j = 0; j < 8; ++j ){
+			int cc = idx[ (size_t) yy * width + cx * 8 + j ];
+			int i;
+			for( i = 0; i < no; ++i ) if( order[ i ] == cc ){ freq[ i ]++; break; }
+			if( i == no ){ order[ no ] = cc; freq[ no ] = 1; no++; }
+		}
+		// 頻度降順の安定ソート
+		for( a = 0; a < no; ++a ){
+			for( b2 = a + 1; b2 < no; ++b2 ){
+				if( freq[ b2 ] > freq[ a ] ){
+					t = order[ a ]; order[ a ] = order[ b2 ]; order[ b2 ] = t;
+					t = freq[ a ]; freq[ a ] = freq[ b2 ]; freq[ b2 ] = t;
+				}
+			}
+		}
+		for( int i = 0; i < no && nlist[ ln ] < 5; ++i ) list[ ln ][ nlist[ ln ]++ ] = order[ i ];
+		// 各ドットの最近傍色を補う
+		for( j = 0; j < 8 && nlist[ ln ] < 5; ++j ){
+			C_COLOR px = in[ (size_t) yy * width + cx * 8 + j ];
+			int besti = -1;
+			double bestd = 0;
+			for( int ci = 0; ci < nc; ++ci ){
+				double d = _sc2p_dist2( GET_RED( px ), GET_GREEN( px ), GET_BLUE( px ), cand[ ci ].r, cand[ ci ].g, cand[ ci ].b );
+				if( besti < 0 || d < bestd ){ bestd = d; besti = cand[ ci ].idx; }
+			}
+			bool have = false;
+			for( int i = 0; i < nlist[ ln ]; ++i ) if( list[ ln ][ i ] == besti ) have = true;
+			if( !have && besti >= 0 ) list[ ln ][ nlist[ ln ]++ ] = besti;
+		}
+		if( nlist[ ln ] == 0 ) list[ ln ][ nlist[ ln ]++ ] = cand[ 0 ].idx;
+	}
+
+	for( e1 = 0; e1 < nlist[ 0 ]; ++e1 )
+	for( e2 = e1; e2 < nlist[ 0 ]; ++e2 )
+	for( o1 = 0; o1 < nlist[ 1 ]; ++o1 )
+	for( o2 = o1; o2 < nlist[ 1 ]; ++o2 ){
+		int ep[ 2 ] = { list[ 0 ][ e1 ], list[ 0 ][ e2 ] };
+		int op[ 2 ] = { list[ 1 ][ o1 ], list[ 1 ][ o2 ] };
+		SC2P_CAND *epc[ 2 ] = { nullptr, nullptr };
+		SC2P_CAND *opc[ 2 ] = { nullptr, nullptr };
+		double total = 0;
+		for( int k = 0; k < nc; ++k ){
+			if( cand[ k ].idx == ep[ 0 ] ) epc[ 0 ] = &cand[ k ];
+			if( cand[ k ].idx == ep[ 1 ] ) epc[ 1 ] = &cand[ k ];
+			if( cand[ k ].idx == op[ 0 ] ) opc[ 0 ] = &cand[ k ];
+			if( cand[ k ].idx == op[ 1 ] ) opc[ 1 ] = &cand[ k ];
+		}
+		if( !epc[ 0 ] || !epc[ 1 ] || !opc[ 0 ] || !opc[ 1 ] ) continue;
+		for( j = 0; j < 8; ++j ){
+			C_COLOR ca = in[ (size_t) y * width + cx * 8 + j ];
+			C_COLOR cb = in[ (size_t) ( y + 1 ) * width + cx * 8 + j ];
+			int t1r = GET_RED( ca ), t1g = GET_GREEN( ca ), t1b = GET_BLUE( ca );
+			int t2r = GET_RED( cb ), t2g = GET_GREEN( cb ), t2b = GET_BLUE( cb );
+			int tsr = t1r + t2r, tsg = t1g + t2g, tsb = t1b + t2b;
+			double weff = colw[ j ];
+			double bj = 0;
+			int ba = 0, bb = 0;
+			bool fj = true;
+			for( int a = 0; a < 2; ++a ){
+				for( int b = 0; b < 2; ++b ){
+					double e = _sc2p_dist2( t1r, t1g, t1b, epc[ a ]->r, epc[ a ]->g, epc[ a ]->b )
+							 + _sc2p_dist2( t2r, t2g, t2b, opc[ b ]->r, opc[ b ]->g, opc[ b ]->b );
+					if( weff != 0.0 ) e += weff * _sc2p_dist2( tsr, tsg, tsb, epc[ a ]->r + opc[ b ]->r, epc[ a ]->g + opc[ b ]->g, epc[ a ]->b + opc[ b ]->b );
+					if( fj || e < bj ){ bj = e; ba = a; bb = b; fj = false; }
+				}
+			}
+			total += bj;
+			assign[ 0 ][ j ] = ep[ ba ];
+			assign[ 1 ][ j ] = op[ bb ];
+		}
+		if( first || total < best_total ){
+			best_total = total;
+			first = false;
+			memcpy( best_assign, assign, sizeof( assign ) );
+			best_pair[ 0 ][ 0 ] = ep[ 0 ];
+			best_pair[ 0 ][ 1 ] = ep[ 1 ];
+			best_pair[ 1 ][ 0 ] = op[ 0 ];
+			best_pair[ 1 ][ 1 ] = op[ 1 ];
+		}
+	}
+	return !first;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
+//		SCREEN2/4 ラインペア量子化の全体処理
+//	2.	引数
+//		in		...	画像入力メモリ (256x192)
+//		width	...	画像幅 (256)
+//		height	...	画像高さ (192)
+//		out		...	画像出力メモリ (VRAM 0x4000)
+//		CnvMode	...	現在の設定
+//		prog	...	経過表示関数
+//		pal		...	パレット
+//	3.	返値
+//		false	...	失敗
+//		true	...	成功
+//	4.	備考
+//		従来ストリームは cnvRecolor5 の出力をニブル展開して
+//		得る (誤差拡散・ディザパターンを含む)。ペアストリーム
+//		は _sc2p_pair_quantize で得る。マスクで両者を合成し、
+//		8x2 ブロック毎にフィットして vram へ出力する。
+//		境界ブロックは従来フィット固定 (v3f_bl)。
+// -------------------------------------------------------------
+static bool cnvRecolorSc2Pair( C_COLOR *in, int width, int height, unsigned char *out,
+							   SETTING *CnvMode, PROGRESS prog, C_COLOR *pal )
+{
+	double weight = ( CnvMode->screen_mode == MD_SC2P ) ? 1.0 : 2.0;
+	unsigned char *tmp = nullptr;
+	unsigned char *idx_pair = nullptr;
+	unsigned char *idx = nullptr;
+	unsigned char *mask = nullptr;
+	unsigned char *pairmode = nullptr;
+	bool ret = false;
+	int x, y;
+
+	{
+		SC2P_CAND cand[ 16 ];
+		if( _sc2p_build_candidates( CnvMode, pal, cand ) <= 0 ){
+			// 候補色が無い場合は従来変換へ
+			if( !cnvRecolor5( in, width, height, out, CnvMode, prog, pal, nullptr, 0 ) ) return false;
+			return cnvSC5toSC2( out, prog, pal );
+		}
+	}
+
+	tmp = (unsigned char*) malloc( (size_t) width * height / 2 );
+	idx_pair = (unsigned char*) malloc( (size_t) width * height );
+	idx = (unsigned char*) malloc( (size_t) width * height );
+	mask = (unsigned char*) malloc( (size_t) width * height );
+	pairmode = (unsigned char*) malloc( (size_t) ( height / 2 ) * width );
+	if( !tmp || !idx_pair || !idx || !mask || !pairmode ) goto l_exit;
+
+	// 従来ストリーム (誤差拡散・ディザパターンを含む)
+	if( !cnvRecolor5( in, width, height, tmp, CnvMode, prog, pal, nullptr, 0 ) ) goto l_exit;
+	// ニブル展開
+	for( int i = 0; i < width * height; ++i ){
+		unsigned char b = tmp[ i >> 1 ];
+		idx[ i ] = ( i & 1 ) ? ( b & 0x0F ) : ( ( b >> 4 ) & 0x0F );
+	}
+
+	// ペアストリーム
+	_sc2p_pair_quantize( in, width, height, CnvMode, pal, weight, idx_pair );
+	// 平坦マスク
+	_sc2p_flat_mask( in, width, height, mask );
+	// 合成: マスク内のドット列はペアストリームで置換
+	for( y = 0; y + 1 < height; y += 2 ){
+		for( x = 0; x < width; ++x ){
+			bool pm = mask[ (size_t) y * width + x ] && mask[ (size_t) ( y + 1 ) * width + x ];
+			pairmode[ (size_t) ( y / 2 ) * width + x ] = pm ? 1 : 0;
+			if( pm ){
+				idx[ (size_t) y * width + x ] = idx_pair[ (size_t) y * width + x ];
+				idx[ (size_t) ( y + 1 ) * width + x ] = idx_pair[ (size_t) ( y + 1 ) * width + x ];
+			}
+		}
+	}
+
+	// セルフィット＋出力
+	memset( vram, 0, sizeof( vram ) );
+	for( y = 0; y + 1 < height; y += 2 ){
+		for( int cx = 0; cx < 32; ++cx ){
+			int nmask = 0;
+			int ln, j;
+			for( ln = 0; ln < 2; ++ln ){
+				for( j = 0; j < 8; ++j ){
+					if( mask[ (size_t) ( y + ln ) * width + cx * 8 + j ] ) nmask++;
+				}
+			}
+			if( nmask == 16 ){
+				double colw[ 8 ];
+				int bp[ 2 ][ 2 ];
+				int ba[ 2 ][ 8 ];
+				for( j = 0; j < 8; ++j ) colw[ j ] = pairmode[ (size_t) ( y / 2 ) * width + cx * 8 + j ] ? weight : 0.0;
+				if( _sc2p_fit_pair_block( in, idx, width, y, cx, CnvMode, pal, colw, bp, ba ) ){
+					for( ln = 0; ln < 2; ++ln ){
+						int yy = y + ln;
+						int bits = 0;
+						for( j = 0; j < 8; ++j ){
+							bits <<= 1;
+							if( ba[ ln ][ j ] == bp[ ln ][ 0 ] ) bits |= 1;
+						}
+						int dadr = ( yy & 7 ) + ( cx * 8 ) + ( yy >> 3 ) * 256;
+						_sc2p_emit_cell( dadr, pal, bp[ ln ][ 0 ], bp[ ln ][ 1 ], bits );
+					}
+					continue;
+				}
+				// ペアフィット不能の場合は従来フィットへ落とす
+			}
+			for( ln = 0; ln < 2; ++ln ){
+				int yy = y + ln;
+				int first_c, second_c;
+				int assign[ 8 ];
+				int bits = 0;
+				_sc2p_fit_line_cell( idx, width, yy, cx, pal, &first_c, &second_c, assign );
+				for( j = 0; j < 8; ++j ){
+					bits <<= 1;
+					if( assign[ j ] == first_c ) bits |= 1;
+				}
+				int dadr = ( yy & 7 ) + ( cx * 8 ) + ( yy >> 3 ) * 256;
+				_sc2p_emit_cell( dadr, pal, first_c, second_c, bits );
+			}
+		}
+	}
+	memcpy( out, vram, sizeof( vram ) );
+	ret = true;
+l_exit:
+	if( tmp ) free( tmp );
+	if( idx_pair ) free( idx_pair );
+	if( idx ) free( idx );
+	if( mask ) free( mask );
+	if( pairmode ) free( pairmode );
+	return ret;
+}
+
+// -------------------------------------------------------------
 //	1.	日本語名
 //		減色ルーチン（自然画専用）
 //	2.	引数
@@ -1802,6 +2365,136 @@ struct C_EPAL_BIN {
 	int		n;				// その数
 };
 
+// -------------------------------------------------------------
+//	EPAL 自動選択パレットの重複排除 (後処理)
+//	自動選択された色の中に同値の色が複数あると、パレット枠が
+//	無駄になる。重複の判定は、選択結果が最終的に記録される
+//	形式で行う。
+//	- cnvGetPaletteEpalN (EpalHGuard OFF): CreatePal の各コピーは
+//	  AUTO 項目を 3bit へ引き戻してから 5bit へ再導出して記録
+//	  するため、5bit では異なる色同士でも記録後に同値になり
+//	  うる。記録変換 (引き戻し→再導出) を通した値で判定する。
+//	  記録変換は 5bit 値の関数なので、この重複を無くせば
+//	  5bit そのものの重複も無くなる。
+//	- cnvGetPaletteEpalWu / cnvGetPalette256: 記録は 5bit の
+//	  ままなので、5bit 値そのもので判定する。
+//	重複したスロットは、現在のパレット (自動選択分＋固定色)
+//	から最も遠いヒストグラムビン (画素数 × 距離^2 が最大) で
+//	置き換える。同点の場合はビン番号の小さい方を採る決定的
+//	動作。置換候補が尽きた場合はそのスロットをそのまま残す。
+// -------------------------------------------------------------
+static int _epal_recorded_channel( const int *tbl, int v5 )
+{
+	int idx = convert_rgb_to_palette( tbl, 8, epal_convert31to255[ v5 & 31 ] );
+	return ( tbl[ idx ] * 31 + 127 ) / 255;
+}
+
+static void _epal_recorded5( int r5, int g5, int b5, int *out )
+{
+	out[ 0 ] = _epal_recorded_channel( convert7to255_r, r5 );
+	out[ 1 ] = _epal_recorded_channel( convert7to255_g, g5 );
+	out[ 2 ] = _epal_recorded_channel( convert7to255_b, b5 );
+}
+
+static void _epal_dedup_palette( C_EPAL_BIN *bins, int nbin, C_COLOR *pal, int count,
+								 const C_COLOR *fixed, int fixed_num, bool key_recorded )
+{
+	int (*pal5)[ 3 ] = nullptr, (*rec5)[ 3 ] = nullptr;
+	int (*f5)[ 3 ] = nullptr, (*frec)[ 3 ] = nullptr;
+	int (*key)[ 3 ], (*fkey)[ 3 ];
+	int i, j, k, b;
+
+	if( count <= 0 ) return;
+	pal5 = (int (*)[ 3 ]) malloc( sizeof( int ) * 3 * count );
+	rec5 = (int (*)[ 3 ]) malloc( sizeof( int ) * 3 * count );
+	if( fixed_num > 0 ){
+		f5 = (int (*)[ 3 ]) malloc( sizeof( int ) * 3 * fixed_num );
+		frec = (int (*)[ 3 ]) malloc( sizeof( int ) * 3 * fixed_num );
+	}
+	if( pal5 == NULL || rec5 == NULL || ( fixed_num > 0 && ( f5 == NULL || frec == NULL ) ) ){
+		free( pal5 ); free( rec5 ); free( f5 ); free( frec );
+		return;		// 失敗時は選択結果をそのまま使う
+	}
+	for( i = 0; i < count; ++i ){
+		pal5[ i ][ 0 ] = epal_quantize31( GET_RED( pal[ i ] ) );
+		pal5[ i ][ 1 ] = epal_quantize31( GET_GREEN( pal[ i ] ) );
+		pal5[ i ][ 2 ] = epal_quantize31( GET_BLUE( pal[ i ] ) );
+		_epal_recorded5( pal5[ i ][ 0 ], pal5[ i ][ 1 ], pal5[ i ][ 2 ], rec5[ i ] );
+	}
+	for( k = 0; k < fixed_num; ++k ){
+		f5[ k ][ 0 ] = epal_quantize31( GET_RED( fixed[ k ] ) );
+		f5[ k ][ 1 ] = epal_quantize31( GET_GREEN( fixed[ k ] ) );
+		f5[ k ][ 2 ] = epal_quantize31( GET_BLUE( fixed[ k ] ) );
+		_epal_recorded5( f5[ k ][ 0 ], f5[ k ][ 1 ], f5[ k ][ 2 ], frec[ k ] );
+	}
+	key = key_recorded ? rec5 : pal5;
+	fkey = key_recorded ? frec : f5;
+
+	for( i = 0; i < count; ++i ){
+		bool dup = false;
+		for( j = 0; j < i && !dup; ++j ){
+			if( key[ j ][ 0 ] == key[ i ][ 0 ] && key[ j ][ 1 ] == key[ i ][ 1 ] && key[ j ][ 2 ] == key[ i ][ 2 ] ) dup = true;
+		}
+		for( k = 0; k < fixed_num && !dup; ++k ){
+			if( fkey[ k ][ 0 ] == key[ i ][ 0 ] && fkey[ k ][ 1 ] == key[ i ][ 1 ] && fkey[ k ][ 2 ] == key[ i ][ 2 ] ) dup = true;
+		}
+		if( !dup ) continue;
+
+		// 置換候補: キーが現在のどのキーとも重ならず、サービスの
+		// 悪さ (画素数 × 最寄りキーまでの距離^2) が最大のビン
+		int best_bin = -1;
+		long best_score = 0;
+		int best_key[ 3 ];
+		for( b = 0; b < nbin; ++b ){
+			int bkey[ 3 ];
+			long dmin = -1;
+			bool clash = false;
+			if( key_recorded ) _epal_recorded5( bins[ b ].r, bins[ b ].g, bins[ b ].b, bkey );
+			else { bkey[ 0 ] = bins[ b ].r; bkey[ 1 ] = bins[ b ].g; bkey[ 2 ] = bins[ b ].b; }
+			for( j = 0; j < count && !clash; ++j ){
+				long dr, dg, db, d2;
+				if( j == i ) continue;
+				if( key[ j ][ 0 ] == bkey[ 0 ] && key[ j ][ 1 ] == bkey[ 1 ] && key[ j ][ 2 ] == bkey[ 2 ] ) clash = true;
+				dr = (long)bkey[ 0 ] - key[ j ][ 0 ];
+				dg = (long)bkey[ 1 ] - key[ j ][ 1 ];
+				db = (long)bkey[ 2 ] - key[ j ][ 2 ];
+				d2 = dr * dr + dg * dg + db * db;
+				if( dmin < 0 || d2 < dmin ) dmin = d2;
+			}
+			for( k = 0; k < fixed_num && !clash; ++k ){
+				long dr, dg, db, d2;
+				if( fkey[ k ][ 0 ] == bkey[ 0 ] && fkey[ k ][ 1 ] == bkey[ 1 ] && fkey[ k ][ 2 ] == bkey[ 2 ] ) clash = true;
+				dr = (long)bkey[ 0 ] - fkey[ k ][ 0 ];
+				dg = (long)bkey[ 1 ] - fkey[ k ][ 1 ];
+				db = (long)bkey[ 2 ] - fkey[ k ][ 2 ];
+				d2 = dr * dr + dg * dg + db * db;
+				if( dmin < 0 || d2 < dmin ) dmin = d2;
+			}
+			if( clash || dmin <= 0 ) continue;
+			{
+				long score = (long)bins[ b ].n * dmin;
+				if( score > best_score ){
+					best_score = score;
+					best_bin = b;
+					best_key[ 0 ] = bkey[ 0 ];
+					best_key[ 1 ] = bkey[ 1 ];
+					best_key[ 2 ] = bkey[ 2 ];
+				}
+			}
+		}
+		if( best_bin >= 0 ){
+			pal[ i ] = GET_RGB( epal_convert31to255[ bins[ best_bin ].r ],
+								epal_convert31to255[ bins[ best_bin ].g ],
+								epal_convert31to255[ bins[ best_bin ].b ] );
+			pal5[ i ][ 0 ] = bins[ best_bin ].r;
+			pal5[ i ][ 1 ] = bins[ best_bin ].g;
+			pal5[ i ][ 2 ] = bins[ best_bin ].b;
+			_epal_recorded5( pal5[ i ][ 0 ], pal5[ i ][ 1 ], pal5[ i ][ 2 ], rec5[ i ] );
+		}
+	}
+	free( pal5 ); free( rec5 ); free( f5 ); free( frec );
+}
+
 // メディアンカット用のボックス
 struct C_EPAL_BOX {
 	int		lo;				// ビン配列の開始位置
@@ -1995,6 +2688,7 @@ bool cnvGetPalette256( C_COLOR *in, int width, int height, C_COLOR *pal, int *p_
 		b5 = (int)( ( bsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
 		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
 	}
+	_epal_dedup_palette( bins, nbin, pal, nbox, NULL, 0, false );
 	*p_pal_count = nbox;
 	free( bins );
 	return true;
@@ -2233,6 +2927,7 @@ bool cnvGetPaletteEpalN( C_COLOR *in, int width, int height, C_COLOR *pal, int *
 		b5 = (int)( ( bsum + boxes[ i ].pop / 2 ) / boxes[ i ].pop );
 		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
 	}
+	_epal_dedup_palette( bins, nbin, pal, nbox, fixed, fixed_num, true );
 	*p_pal_count = nbox;
 	free( bins );
 	return true;
@@ -2506,6 +3201,39 @@ bool cnvGetPaletteEpalWu( C_COLOR *in, int width, int height, C_COLOR *pal, int 
 					a[ 2 ] += (double)bins[ i ].n * bins[ i ].g;
 					a[ 3 ] += (double)bins[ i ].n * bins[ i ].b;
 				}
+				// 空クラスタの再シード: 中心が重なって潰れたクラスタを、
+				// 最もサービスが悪いビン (画素数 × 距離^2 が最大) へ移す。
+				// このまま据え置くと、丸め後に別の中心と重複する色に
+				// なることがあるため。
+				for( j = 0; j < nbox; ++j ){
+					int bi2, best_bin = -1;
+					double best_score = 0.0;
+					if( acc[ j * 4 ] > 0.0 ) continue;
+					for( bi2 = 0; bi2 < nbin; ++bi2 ){
+						double dr = bins[ bi2 ].r - ctr[ owner[ bi2 ] * 3 + 0 ];
+						double dg = bins[ bi2 ].g - ctr[ owner[ bi2 ] * 3 + 1 ];
+						double db = bins[ bi2 ].b - ctr[ owner[ bi2 ] * 3 + 2 ];
+						double score = bins[ bi2 ].n * ( dr * dr + dg * dg + db * db );
+						int j3;
+						bool clash = false;
+						if( score <= best_score ) continue;
+						for( j3 = 0; j3 < nbox; ++j3 ){
+							if( ctr[ j3 * 3 + 0 ] == bins[ bi2 ].r && ctr[ j3 * 3 + 1 ] == bins[ bi2 ].g && ctr[ j3 * 3 + 2 ] == bins[ bi2 ].b ){
+								clash = true;
+								break;
+							}
+						}
+						if( clash ) continue;
+						best_score = score;
+						best_bin = bi2;
+					}
+					if( best_bin >= 0 ){
+						ctr[ j * 3 + 0 ] = bins[ best_bin ].r;
+						ctr[ j * 3 + 1 ] = bins[ best_bin ].g;
+						ctr[ j * 3 + 2 ] = bins[ best_bin ].b;
+						changed = 1;
+					}
+				}
 				for( j = 0; j < nbox; ++j ){
 					double *a = &acc[ j * 4 ];
 					if( a[ 0 ] > 0.0 ){
@@ -2539,6 +3267,7 @@ bool cnvGetPaletteEpalWu( C_COLOR *in, int width, int height, C_COLOR *pal, int 
 		if( b5 > 31 ) b5 = 31;
 		pal[ i ] = GET_RGB( epal_convert31to255[ r5 ], epal_convert31to255[ g5 ], epal_convert31to255[ b5 ] );
 	}
+	_epal_dedup_palette( bins, nbin, pal, nbox, fixed, fixed_num, false );
 	*p_pal_count = nbox;
 	free( ctr );
 	free( owner );

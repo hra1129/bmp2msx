@@ -356,6 +356,8 @@ void SettingsDialog::BuildUi( Purpose purpose ) {
 		AddChoiceRow( "Natural image algorithm:", m_algo, algo, 5 );
 		m_jkrc = new wxCheckBox( this, wxID_ANY, "Recalculate color difference (JK)" );
 		box->Add( m_jkrc, 0, wxALL, 3 );
+		m_sc2_pair = new wxCheckBox( this, wxID_ANY, "Blend flat areas over 2 lines (SC2)" );
+		box->Add( m_sc2_pair, 0, wxALL, 3 );
 		left->Add( box, 0, wxEXPAND | wxALL, 4 );
 	}
 
@@ -531,6 +533,7 @@ void SettingsDialog::LoadAll() {
 	m_nonzero->SetValue( m_edit.NonZero );
 	m_fixed_palette->SetValue( m_edit.fixed_palette );
 	m_epal_hguard->SetValue( m_edit.EpalHGuard );
+	m_sc2_pair->SetValue( m_edit.Sc2Pair );
 	m_sort->SetSelection( m_edit.SortMode >= 0 && m_edit.SortMode <= 4 ? m_edit.SortMode : 0 );
 	m_plt_mode->SetSelection( (int) ( m_edit.PltMode % PLT_COUNT ) );
 
@@ -578,6 +581,7 @@ void SettingsDialog::StoreAll() {
 	m_edit.NonZero = m_nonzero->GetValue();
 	m_edit.fixed_palette = m_fixed_palette->GetValue();
 	m_edit.EpalHGuard = m_epal_hguard->GetValue();
+	m_edit.Sc2Pair = m_sc2_pair->GetValue();
 	m_edit.SortMode = m_sort->GetSelection();
 	m_edit.PltMode = (uint32_t) m_plt_mode->GetSelection();
 	// color_palette[] / PalEn[] are edited live by the palette controls.
@@ -596,6 +600,8 @@ void SettingsDialog::UpdateEnabled() {
 	// The EPAL improved selection applies to the whole EPAL family
 	// (SCREEN2-7 EPAL via cnvIsEpalMode, SCREEN8 EPAL via IsEpalMode).
 	m_epal_hguard->Enable( cnvIsEpalMode( mode ) || IsEpalMode( mode ) );
+	// The SC2 line-pair option applies to MD_SC2 / MD_SC2P only.
+	m_sc2_pair->Enable( mode == MD_SC2 || mode == MD_SC2P );
 	if( IsEpalMode( mode ) ) {
 		m_pal_note->SetLabel( "SCREEN8 EPAL generates its 256-color palette automatically;\nthe 16-color palette settings do not apply." );
 	} else if( !pal ) {

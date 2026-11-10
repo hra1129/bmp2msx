@@ -1,7 +1,20 @@
-﻿  WndProc.cpp
+﻿  Convert.cpp
+  PreView.cpp
+  ProgProc.cpp
+  ScriptProc.cpp
+  Setting.cpp
+  SpitProc.cpp
+  SubProc.cpp
+  Ver.cpp
+  WndProc.cpp
+  bsave.cpp
+  main.cpp
+  utils.cpp
+  CalibrationProc.cpp
+  winConvert.cpp
   コード生成しています。
-  2 of 426 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    6 functions had inline decision re-evaluated but remain unchanged
+  36 of 438 functions ( 8.2%) were compiled, the rest were copied from previous compilation.
+    12 functions were new in current compilation
+    23 functions had inline decision re-evaluated but remain unchanged
   コード生成が終了しました。
   BMP2MSXE.vcxproj -> C:\Users\hra\Documents\github\HRA_product\bmp2msx\source\ReleaseE\BMP2MSXE.exe

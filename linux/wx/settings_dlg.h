@@ -104,6 +104,7 @@ private:
 	wxCheckBox* m_nonzero = nullptr;
 	wxCheckBox* m_fixed_palette = nullptr;
 	wxCheckBox* m_epal_hguard = nullptr;
+	wxCheckBox* m_sc2_pair = nullptr;
 	PalettePanel* m_pal_panel = nullptr;
 	wxStaticText* m_pal_note = nullptr;
 	wxStaticText* m_color_label = nullptr;

@@ -11,6 +11,8 @@
 #include "bsave.h"
 #include "utils.h"
 #include "image_load.h"
+#include "epal_refine.h"
+#include "sc2_pair.h"
 
 // platform_linux.cpp: queue the name GetSaveFileName() should return.
 void cli_set_save_filename( const char* filename );
@@ -117,7 +119,13 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 		C_COLOR AutoPal[ 16 ];
 		int auto_count = 0;
 		int k;
+		// Experimental palette selection (epal_refine.h): completely
+		// inert unless one of its env vars is set.  keep_epal[i] marks
+		// AUTO entries whose 5-bit palette was recorded directly from
+		// the (possibly refined) selection, so the final loop below
+		// keeps it instead of re-deriving it from the 3-bit palette.
 		bool keep_epal[ 16 ] = {};
+		epal_maybe_histdump( in, w, h );
 		j = 0;
 		pp = 0;
 		pnum = cnvEpalColorCount( Mode->screen_mode );
@@ -143,16 +151,114 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 				return false;
 			}
 			memcpy( t, in, w * h * sizeof( C_COLOR ) );
-			if( Mode->EpalHGuard ) {
-				// Base selection is Wu + k-means (Convert.cpp); the
-				// feature-color improvement runs below.
-				cnvGetPaletteEpalWu( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
-			} else {
-				cnvGetPaletteEpalN( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			// Experimental selection paths (epal_refine.h): completely
+			// inert unless one of BMP2MSX_EPAL_REFINE / _ACCENT / _UVBONUS /
+			// _HPBONUS / _SQRTHIST is set.  With HPBONUS the histogram
+			// the median cut consumes is bonus-weighted first (the
+			// author's scheme); with SQRTHIST it is the compressed-
+			// domain histogram sqrt(n) + k * saliency mass; accent
+			// reservation then displaces the cheapest entries, and
+			// the swap refinement runs last.  Fixed-color bins and
+			// FourceZero pixels are excluded exactly as in
+			// cnvGetPaletteEpalN; fixed entries (and reserved accents)
+			// join the nearest-entry assignment but are never removed.
+			int pal5[ 16 ][ 3 ];
+			int fixed5[ 16 ][ 3 ];
+			int accent5[ 32 ][ 3 ];
+			int nacc = 0;
+			bool have_pal5 = false;
+			double* histw = NULL;
+			if( epal_sqrthist_enabled() || epal_hp_enabled() || epal_uv_enabled() ) {
+				if( epal_sqrthist_enabled() ) {
+					histw = epal_build_hist_sqrt555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+				} else {
+					double* pixw = epal_uv_enabled() ? epal_uv_pixel_weights( in, w, h )
+													  : epal_hp_pixel_weights( in, w, h );
+					histw = epal_build_histw555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor, pixw );
+					free( pixw );
+				}
+				if( histw != NULL ) {
+					int i2;
+					for( i2 = 0; i2 < pp; ++i2 ) {
+						epal_color_to_5bit( Pal[ i2 ], &fixed5[ i2 ][ 0 ], &fixed5[ i2 ][ 1 ], &fixed5[ i2 ][ 2 ] );
+						histw[ ( fixed5[ i2 ][ 0 ] << 10 ) | ( fixed5[ i2 ][ 1 ] << 5 ) | fixed5[ i2 ][ 2 ] ] = 0;
+					}
+					auto_count = epal_select_weighted( histw, pnum - pp, pal5 );
+					have_pal5 = true;
+					if( !epal_refine_enabled() ) { free( histw ); histw = NULL; }
+				}
+			}
+			if( !have_pal5 ) {
+				if( Mode->EpalHGuard ) {
+					// Product base selection for EpalHGuard: Wu + k-means.
+					cnvGetPaletteEpalWu( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+				} else {
+					cnvGetPaletteEpalN( t, w, h, AutoPal, &auto_count, pnum, Pal, pp, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+				}
+			}
+			if( epal_experiment_enabled() && auto_count > 0 ) {
+				uint32_t* hist = NULL;
+				if( epal_refine_enabled() || epal_accent_enabled() ) {
+					hist = epal_build_hist555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+					if( hist != NULL ) {
+						int i2;
+						for( i2 = 0; i2 < pp; ++i2 ) {
+							epal_color_to_5bit( Pal[ i2 ], &fixed5[ i2 ][ 0 ], &fixed5[ i2 ][ 1 ], &fixed5[ i2 ][ 2 ] );
+							hist[ ( fixed5[ i2 ][ 0 ] << 10 ) | ( fixed5[ i2 ][ 1 ] << 5 ) | fixed5[ i2 ][ 2 ] ] = 0;
+						}
+					}
+				}
+				if( !have_pal5 ) {
+					int i2;
+					for( i2 = 0; i2 < auto_count; ++i2 ) {
+						epal_color_to_5bit( AutoPal[ i2 ], &pal5[ i2 ][ 0 ], &pal5[ i2 ][ 1 ], &pal5[ i2 ][ 2 ] );
+					}
+				}
+				int npal_cur = auto_count;
+				if( hist != NULL && epal_accent_enabled() ) {
+					int want = epal_accent_k();
+					if( want > 32 ) want = 32;
+					nacc = epal_accent_reserve( hist, pal5, &npal_cur, (const int (*)[ 3 ]) fixed5, pp, accent5, want, "EPAL-N" );
+				}
+				if( epal_refine_enabled() && npal_cur > 0 ) {
+					int fixedall[ 48 ][ 3 ];
+					int nf = 0, i2;
+					for( i2 = 0; i2 < pp; ++i2 ) {
+						fixedall[ nf ][ 0 ] = fixed5[ i2 ][ 0 ];
+						fixedall[ nf ][ 1 ] = fixed5[ i2 ][ 1 ];
+						fixedall[ nf ][ 2 ] = fixed5[ i2 ][ 2 ];
+						++nf;
+					}
+					for( i2 = 0; i2 < nacc; ++i2 ) {
+						fixedall[ nf ][ 0 ] = accent5[ i2 ][ 0 ];
+						fixedall[ nf ][ 1 ] = accent5[ i2 ][ 1 ];
+						fixedall[ nf ][ 2 ] = accent5[ i2 ][ 2 ];
+						++nf;
+					}
+					if( histw != NULL ) {
+						epal_refine_palette_w( histw, pal5, npal_cur, (const int (*)[ 3 ]) fixedall, nf, "EPAL-N" );
+					} else if( hist != NULL ) {
+						epal_refine_palette( hist, pal5, npal_cur, (const int (*)[ 3 ]) fixedall, nf, "EPAL-N" );
+					}
+				}
+				{
+					int i2, k2 = 0;
+					for( i2 = 0; i2 < npal_cur; ++i2 ) {
+						AutoPal[ k2++ ] = GET_RGB( cnvEpalTo255( pal5[ i2 ][ 0 ] ), cnvEpalTo255( pal5[ i2 ][ 1 ] ), cnvEpalTo255( pal5[ i2 ][ 2 ] ) );
+					}
+					for( i2 = 0; i2 < nacc; ++i2 ) {
+						AutoPal[ k2++ ] = GET_RGB( cnvEpalTo255( accent5[ i2 ][ 0 ] ), cnvEpalTo255( accent5[ i2 ][ 1 ] ), cnvEpalTo255( accent5[ i2 ][ 2 ] ) );
+					}
+				}
+				free( hist );
 			}
 			if( Mode->EpalHGuard && auto_count > 0 ) {
-				// Feature-color improvement: proposals in the h domain,
-				// acceptance by the true-SSE guard (Convert.cpp).
+				// Product feature-color improvement (Convert.cpp):
+				// proposals and ranking in the h domain
+				// h(c) = sqrt( n(c) ) + b(c), acceptance by the exact
+				// true-SSE guard.  Runs on the median-cut result
+				// (after any experimental path above); AUTO entries
+				// are then recorded at full 5-bit precision.
 				int hgpal5[ 16 ][ 3 ];
 				int hgfixed5[ 16 ][ 3 ];
 				int i2;
@@ -167,6 +273,7 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 					AutoPal[ i2 ] = GET_RGB( cnvEpalTo255( hgpal5[ i2 ][ 0 ] ), cnvEpalTo255( hgpal5[ i2 ][ 1 ] ), cnvEpalTo255( hgpal5[ i2 ][ 2 ] ) );
 				}
 			}
+			free( histw );
 			free( t );
 			k = pp;
 			for( i = 0; i < auto_count; ++i ) {
@@ -179,12 +286,9 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 					Mode->color_palette[ i ].red   = convert_rgb_to_palette( convert7to255_r, 8, GET_RED( Pal[ j ] ) );
 					Mode->color_palette[ i ].green = convert_rgb_to_palette( convert7to255_g, 8, GET_GREEN( Pal[ j ] ) );
 					Mode->color_palette[ i ].blue  = convert_rgb_to_palette( convert7to255_b, 8, GET_BLUE( Pal[ j ] ) );
-					// EPAL records AUTO entries at full 5-bit precision
-					// (author ruling 2026-11-07: snap to 5-bit, not 3-bit;
-					// the final loop honors keep_epal).
-					Mode->color_palette_epal[ i ].red   = ( GET_RED(   Pal[ j ] ) * 31 + 127 ) / 255;
-					Mode->color_palette_epal[ i ].green = ( GET_GREEN( Pal[ j ] ) * 31 + 127 ) / 255;
-					Mode->color_palette_epal[ i ].blue  = ( GET_BLUE(  Pal[ j ] ) * 31 + 127 ) / 255;
+					// Record the selected color at full 5-bit
+					// precision (the final loop honors keep_epal).
+					epal_color_to_5bit( Pal[ j ], &Mode->color_palette_epal[ i ].red, &Mode->color_palette_epal[ i ].green, &Mode->color_palette_epal[ i ].blue );
 					keep_epal[ i ] = true;
 					++j;
 				}
@@ -194,13 +298,13 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 		for( i = 0; i < pnum; ++i ) {
 			n = 256;
 			bool user_spec = Mode->fixed_palette || Mode->PalEn[ i ] == PALEN_USE;
-			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_r, Mode->color_palette[ i ].red, Mode->color_palette_epal[ i ].red ) ) ) {
+			if( !( user_spec && EpalIsEdited( convert7to255_r, Mode->color_palette[ i ].red, Mode->color_palette_epal[ i ].red ) ) && !keep_epal[ i ] ) {
 				Mode->color_palette_epal[ i ].red   = EpalDerive5( convert7to255_r, Mode->color_palette[ i ].red );
 			}
-			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_g, Mode->color_palette[ i ].green, Mode->color_palette_epal[ i ].green ) ) ) {
+			if( !( user_spec && EpalIsEdited( convert7to255_g, Mode->color_palette[ i ].green, Mode->color_palette_epal[ i ].green ) ) && !keep_epal[ i ] ) {
 				Mode->color_palette_epal[ i ].green = EpalDerive5( convert7to255_g, Mode->color_palette[ i ].green );
 			}
-			if( !keep_epal[ i ] && !( user_spec && EpalIsEdited( convert7to255_b, Mode->color_palette[ i ].blue, Mode->color_palette_epal[ i ].blue ) ) ) {
+			if( !( user_spec && EpalIsEdited( convert7to255_b, Mode->color_palette[ i ].blue, Mode->color_palette_epal[ i ].blue ) ) && !keep_epal[ i ] ) {
 				Mode->color_palette_epal[ i ].blue  = EpalDerive5( convert7to255_b, Mode->color_palette[ i ].blue );
 			}
 			Pal[ i ] = GET_RGB( cnvEpalTo255( Mode->color_palette_epal[ i ].red ),
@@ -215,14 +319,75 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 			return false;
 		}
 		memcpy( t, in, w * h * sizeof( C_COLOR ) );
-		if( Mode->EpalHGuard ) {
-			// Base selection is Wu + k-means (Convert.cpp).
-			cnvGetPaletteEpalWu( t, w, h, Pal, &pal_count, 256, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
-		} else {
-			cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+		// Experimental selection paths (epal_refine.h): completely
+		// inert unless one of BMP2MSX_EPAL_REFINE / _ACCENT / _UVBONUS /
+		// _HPBONUS / _SQRTHIST is set.  Same structure as the EPAL-N
+		// branch; there are no fixed entries in this mode.
+		int pal5[ 256 ][ 3 ];
+		int accent5[ 32 ][ 3 ];
+		int nacc = 0;
+		bool have_pal5 = false;
+		double* histw = NULL;
+		if( epal_sqrthist_enabled() || epal_hp_enabled() || epal_uv_enabled() ) {
+			if( epal_sqrthist_enabled() ) {
+				histw = epal_build_hist_sqrt555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			} else {
+				double* pixw = epal_uv_enabled() ? epal_uv_pixel_weights( in, w, h )
+												  : epal_hp_pixel_weights( in, w, h );
+				histw = epal_build_histw555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor, pixw );
+				free( pixw );
+			}
+			if( histw != NULL ) {
+				pal_count = epal_select_weighted( histw, 256, pal5 );
+				have_pal5 = true;
+				if( !epal_refine_enabled() ) { free( histw ); histw = NULL; }
+			}
+		}
+		if( !have_pal5 ) {
+			if( Mode->EpalHGuard ) {
+				cnvGetPaletteEpalWu( t, w, h, Pal, &pal_count, 256, NULL, 0, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			} else {
+				cnvGetPalette256( t, w, h, Pal, &pal_count, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			}
+		}
+		epal_maybe_histdump( in, w, h );
+		if( epal_experiment_enabled() && pal_count > 0 ) {
+			uint32_t* hist = NULL;
+			if( epal_refine_enabled() || epal_accent_enabled() ) {
+				hist = epal_build_hist555( t, w, h, Mode->FourceZero != FZ_NONE, Mode->FZColor );
+			}
+			if( !have_pal5 ) {
+				int i2;
+				for( i2 = 0; i2 < pal_count; ++i2 ) {
+					epal_color_to_5bit( Pal[ i2 ], &pal5[ i2 ][ 0 ], &pal5[ i2 ][ 1 ], &pal5[ i2 ][ 2 ] );
+				}
+			}
+			int npal_cur = pal_count;
+			if( hist != NULL && epal_accent_enabled() ) {
+				int want = epal_accent_k();
+				if( want > 32 ) want = 32;
+				nacc = epal_accent_reserve( hist, pal5, &npal_cur, NULL, 0, accent5, want, "SC8P" );
+			}
+			if( epal_refine_enabled() && npal_cur > 0 ) {
+				if( histw != NULL ) {
+					epal_refine_palette_w( histw, pal5, npal_cur, (const int (*)[ 3 ]) accent5, nacc, "SC8P" );
+				} else if( hist != NULL ) {
+					epal_refine_palette( hist, pal5, npal_cur, (const int (*)[ 3 ]) accent5, nacc, "SC8P" );
+				}
+			}
+			{
+				int i2, k2 = 0;
+				for( i2 = 0; i2 < npal_cur; ++i2 ) {
+					Pal[ k2++ ] = GET_RGB( cnvEpalTo255( pal5[ i2 ][ 0 ] ), cnvEpalTo255( pal5[ i2 ][ 1 ] ), cnvEpalTo255( pal5[ i2 ][ 2 ] ) );
+				}
+				for( i2 = 0; i2 < nacc; ++i2 ) {
+					Pal[ k2++ ] = GET_RGB( cnvEpalTo255( accent5[ i2 ][ 0 ] ), cnvEpalTo255( accent5[ i2 ][ 1 ] ), cnvEpalTo255( accent5[ i2 ][ 2 ] ) );
+				}
+			}
+			free( hist );
 		}
 		if( Mode->EpalHGuard && pal_count > 0 ) {
-			// Feature-color improvement (same core as EPAL-N;
+			// Product feature-color improvement (same core as EPAL-N;
 			// there are no fixed entries in this mode).
 			int hgpal5[ 256 ][ 3 ];
 			int i2;
@@ -234,6 +399,7 @@ static bool CreatePal( int& n, SETTING* Mode, C_COLOR* in, int w, int h, C_COLOR
 				Pal[ i2 ] = GET_RGB( cnvEpalTo255( hgpal5[ i2 ][ 0 ] ), cnvEpalTo255( hgpal5[ i2 ][ 1 ] ), cnvEpalTo255( hgpal5[ i2 ][ 2 ] ) );
 			}
 		}
+		free( histw );
 		free( t );
 		for( i = pal_count; i < 256; ++i ) {
 			Pal[ i ] = 0;
@@ -406,7 +572,27 @@ bool cli_convert_file( const SETTING& mode_in, const std::string& input_path,
 		goto done;
 	}
 	if( Mode.screen_mode < MD_SC10 || ( Mode.screen_mode >= MD_SC5_256L && Mode.screen_mode < MD_SC10_256L ) || Mode.screen_mode == MD_SC8P || Mode.screen_mode == MD_SC8P_256L || cnvIsEpalMode( Mode.screen_mode ) ) {
-		cnvRecolor( out, owidth, oheight, bmp, &Mode, prog_quiet, Pal, tail, tailcnt );
+		// SCREEN2 line-pair prototype (sc2_pair.h): completely inert
+		// unless BMP2MSX_SC2_PAIR and/or BMP2MSX_SC2_DUMP is set.  The
+		// pair path replaces cnvRecolor() for MD_SC2 / MD_SC2P at
+		// 256x192 without Tile or interlace; anything else (and every
+		// non-SC2 mode) takes the product path unchanged.
+		bool is_sc2 = ( Mode.screen_mode == MD_SC2 || Mode.screen_mode == MD_SC2P );
+		bool pair_path = is_sc2 && sc2_pair_env_set() && !Mode.Tile && !Mode.interlace
+						 && owidth == 256 && oheight == 192;
+		if( is_sc2 && sc2_dump_env_set() ) {
+			sc2_dump_before( Mode, out, owidth, oheight, Pal );
+		}
+		if( pair_path ) {
+			if( !sc2_pair_convert( out, owidth, oheight, bmp, &Mode, Pal, err ) ) {
+				goto done;
+			}
+		} else {
+			cnvRecolor( out, owidth, oheight, bmp, &Mode, prog_quiet, Pal, tail, tailcnt );
+		}
+		if( is_sc2 && sc2_dump_env_set() ) {
+			sc2_dump_after( Mode, bmp, Pal );
+		}
 	} else {
 		cnvNtcolor( out, owidth, oheight, bmp, &Mode, prog_quiet );
 	}
@@ -457,7 +643,7 @@ std::string cli_describe_setting( const SETTING& m ) {
 		"screen_mode=%s diffusion=%s coef=%.3f x_weight=%.3f cuterr=%u interlace=%s "
 		"fixed_palette=%s resize=%s resample=%d size_mode=%d selcol=%u pltmode=%u basic=%s "
 		"algo=%u jk_rc=%s dither=%u dither_add=%u seido=%u nonzero=%s force_zero=%u tile=%s "
-		"sort=%d lines192=%s epal_hguard=%s",
+		"sort=%d lines192=%s epal_hguard=%s sc2_pair=%s",
 		mode_name,
 		m.diffusion_error_enable ? "on" : "off", m.diffusion_error_coef, m.diffusion_error_x_weight,
 		m.err, m.interlace ? "on" : "off", m.fixed_palette ? "on" : "off",
@@ -465,6 +651,6 @@ std::string cli_describe_setting( const SETTING& m ) {
 		m.output_basic_enable ? "on" : "off", m.AlgoMode, m.JKrc ? "on" : "off",
 		m.ErrAlgo, m.ErrAdd, m.Seido, m.NonZero ? "on" : "off", m.FourceZero,
 		m.Tile ? "on" : "off", m.SortMode, m.b192 ? "on" : "off",
-		m.EpalHGuard ? "on" : "off" );
+		m.EpalHGuard ? "on" : "off", m.Sc2Pair ? "on" : "off" );
 	return buf;
 }

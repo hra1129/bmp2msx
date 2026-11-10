@@ -209,6 +209,7 @@ struct SETTING {
 	bool			output_basic_enable;		// BAS出力
 	C_PALETTE		color_palette_epal[256];	// SCREEN8 EPAL用 256色パレット (RGB各5bit) ※旧設定ファイルとの互換のため構造体の末尾に追加
 	bool			EpalHGuard;					// EPAL特徴色改善 (土台=Wu+k-means、提案=hドメイン、受理=真SSEガード) ※旧設定ファイルとの互換のため構造体の末尾に追加
+	bool			Sc2Pair;						// SCREEN2/4 ラインペア量子化 (平坦部を2ラインで混合) ※旧設定ファイルとの互換のため構造体の末尾に追加
 };
 
 //	値の上限下限に従って値をクリップする

@@ -144,6 +144,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_PAL			,	"I do not generate a color of a palette automatically",
 	IDC_CHKZERO		,	"I do not use a color of the 0 and move it in other colors (for TPSET)",
 	IDC_EPALHG		,	"in EPAL modes, I prefer small distinctive colors when I select a palette",
+	IDC_SC2PAIR		,	"in SCREEN2/4, I express a flat part by a mixture of colors of two lines",
 	IDC_TILE		,	"A net of ratio handles a design as an usual color at 1:1 of extremely near color and increases a color",
 	IDC_ENREVS		,	"apply automatic decision setting of color set beneath to all palettes",
 	IDC_PALEN		,	"I select it whether I decide a color automatically whether I appoint a value",
@@ -284,6 +285,7 @@ static const TOOLTIPS ttips[] = {
 	IDC_PAL			,	"パレットの色を自動生成しません",
 	IDC_CHKZERO		,	"0番の色を使わず、別の色に置き換えます（TPSET用）",
 	IDC_EPALHG		,	"EPALモードで、小さい面積の特徴色も選ばれるように選色します",
+	IDC_SC2PAIR		,	"SCREEN2/4で、平坦な部分を上下2ラインの色の混合で表現します",
 	IDC_TILE		,	"ごく近い色の 1:1 比率の網がけ模様を通常の色として扱い擬似的に色を増やします",
 	IDC_ENREVS		,	"下に設定してある色の自動決定設定を全てのパレットに適用します",
 	IDC_PALEN		,	"色を自動的に決定するか、値を指定するか選択します",
@@ -336,34 +338,34 @@ const char *SizeMode[] = {
 
 // 各モードに応じたコントロールの有効・無効情報
 static const int nCtrlCode[]={
-	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_GOSARATIO,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR, IDC_MSX2COLOR,IDC_192,IDC_SAVEPLT,IDC_EPALHG,
+	IDC_GOSA,IDC_GOSAVAL,IDC_GOSAERR,IDC_GOSARATIO,IDC_PAL,IDC_SELCOL,IDC_CMBPLT,IDC_COLTBL,IDC_LOADPLT,IDC_RED,IDC_GREEN,IDC_BLUE,IDC_CMBALGO,IDC_JKRC,IDC_PALEN,IDC_ENREVS,IDC_CMBERR2,IDC_TILE,IDC_SORT,IDC_INTER,IDC_MSX1COLOR, IDC_MSX2COLOR,IDC_192,IDC_SAVEPLT,IDC_EPALHG,IDC_SC2PAIR,
 };
 
 static const BOOL nCtrlEnbl[][ ELMCNT(nCtrlCode) ]={
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,FALSE  },   // SCREEN2/4
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,FALSE  },   // SCREEN3
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN5
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN6
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN7
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN8
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN10/11
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN12
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN5 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN6 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  },   // SCREEN7 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN8 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN10/11 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE },   // SCREEN12 (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,TRUE  },   // SCREEN8 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,TRUE  },   // SCREEN8 EPAL(V9968) (256 lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,TRUE   },   // SCREEN2/4 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,TRUE   },   // SCREEN3 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN5 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN6 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN7 EPAL(V9968)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN5 EPAL(V9968)(256lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN6 EPAL(V9968)(256lines)
-	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   },   // SCREEN7 EPAL(V9968)(256lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,FALSE  ,TRUE},   // SCREEN2/4
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,FALSE  ,FALSE},   // SCREEN3
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN5
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN6
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN7
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN8
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN10/11
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN12
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN5 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN6 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,FALSE  ,FALSE},   // SCREEN7 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,TRUE    ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN8 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN10/11 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,TRUE       ,TRUE    ,FALSE    ,FALSE     ,FALSE      ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,FALSE ,FALSE},   // SCREEN12 (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,TRUE  ,FALSE},   // SCREEN8 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,FALSE   ,FALSE    ,FALSE      ,FALSE    ,FALSE       ,FALSE  ,FALSE    ,FALSE   ,FALSE      ,FALSE   ,FALSE    ,FALSE     ,TRUE       ,FALSE   ,FALSE   , TRUE    ,FALSE        ,FALSE		,TRUE    ,FALSE,TRUE  ,FALSE},   // SCREEN8 EPAL(V9968) (256 lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,TRUE   ,TRUE},   // SCREEN2/4 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , FALSE   ,TRUE         ,TRUE			,FALSE   ,TRUE,TRUE   ,FALSE},   // SCREEN3 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN5 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN6 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN7 EPAL(V9968)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN5 EPAL(V9968)(256lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN6 EPAL(V9968)(256lines)
+	{TRUE   ,TRUE       ,TRUE       ,TRUE        ,TRUE    ,TRUE     ,TRUE       ,TRUE     ,TRUE        ,TRUE   ,TRUE     ,TRUE    ,FALSE      ,FALSE   ,TRUE     ,TRUE      ,TRUE       ,TRUE    ,TRUE    , TRUE    ,TRUE         ,TRUE			,TRUE    ,TRUE,TRUE   ,FALSE},   // SCREEN7 EPAL(V9968)(256lines)
 };
 
 SETTING EdtMode;
@@ -471,6 +473,7 @@ EVENT( onSetResample	);
 EVENT( onSetSizeMode	);
 EVENT( onSetSelCol		);
 EVENT( onSetEpalHGuard	);
+EVENT( onSetSc2Pair	);
 EVENT( onSetAutoName	);
 EVENT( onSetBasicOutput	);
 EVENT( onSetAlgo		);
@@ -750,7 +753,8 @@ EVENT( onSetCommand )
 	ONEVENT( IDC_INTER			, onSetInter		);		// インターレース
 	ONEVENT( IDC_PAL			, onSetPal			);		// 固定パレット
 	ONEVENT( IDC_SELCOL			, onSetSelCol		);		// 選色モード
-	ONEVENT( IDC_EPALHG		, onSetEpalHGuard	);		// 特徴色優先(EPAL)
+	ONEVENT( IDC_EPALHG		, onSetEpalHGuard	);
+	ONEVENT( IDC_SC2PAIR		, onSetSc2Pair		);		// 平坦部を2ラインで混合(SC2)		// 特徴色優先(EPAL)
 	ONEVENT( IDC_AUTONAME		, onSetAutoName		);		// 自動ファイル名決定
 	ONEVENT( IDC_BASIC_OUTPUT	, onSetBasicOutput	);		// 自動ファイル名決定
 	ONEVENT( IDC_JKRC			, onSetJKrc			);		// 色差の再計算
@@ -1571,6 +1575,24 @@ EVENT( onSetEpalHGuard )
 
 // -------------------------------------------------------------
 //	1.	日本語名
+//		平坦部を2ラインで混合(SC2)チェックイベント
+//	2.	引数
+//		hWnd	...	(I)	ウィンドウハンドル
+//		wp		...	(I)	Ｗパラメータ
+//		lp		...	(I)	Ｌパラメータ
+//	3.	返値
+//		TRUE
+//	4.	備考
+//		なし
+// -------------------------------------------------------------
+EVENT( onSetSc2Pair )
+{
+	EdtMode.Sc2Pair = !EdtMode.Sc2Pair;
+	return TRUE;
+}
+
+// -------------------------------------------------------------
+//	1.	日本語名
 //		網がけタイルチェックイベント
 //	2.	引数
 //		hWnd	...	(I)	ウィンドウハンドル
@@ -1967,6 +1989,7 @@ static void UpdateAll( HWND hWnd )
 	Button_SetCheck( GetDlgItem( hWnd, IDC_PAL			), EdtMode.fixed_palette			? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_SELCOL		), EdtMode.SelCol					? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_EPALHG		), EdtMode.EpalHGuard			? BST_CHECKED : BST_UNCHECKED );
+	Button_SetCheck( GetDlgItem( hWnd, IDC_SC2PAIR		), EdtMode.Sc2Pair				? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_RESIZE		), EdtMode.resize_enable			? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_AUTONAME		), EdtMode.AutoName					? BST_CHECKED : BST_UNCHECKED );
 	Button_SetCheck( GetDlgItem( hWnd, IDC_JKRC			), EdtMode.JKrc						? BST_CHECKED : BST_UNCHECKED );

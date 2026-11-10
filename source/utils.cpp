@@ -462,6 +462,7 @@ void GetDefCfg( SETTING *Mode )
 	Mode->diffusion_error_enable = true;				// 誤差拡散 ON
 	Mode->fixed_palette = false;				// 固定パレット 未使用
 	Mode->EpalHGuard = false;				// EPAL特徴色改善 未使用
+	Mode->Sc2Pair = false;				// SCREEN2/4 ラインペア量子化 未使用
 	Mode->interlace = false;			// インターレース 未使用
 	Mode->resize_enable = false;			// サイズ調節 未使用
 	Mode->SelCol = 0;				// 色選択モード
