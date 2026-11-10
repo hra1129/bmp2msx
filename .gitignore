@@ -5,3 +5,6 @@
 *.ipdb
 *.iobj
 .vs
+obj
+.o
+.d
